@@ -1,0 +1,74 @@
+import type { AddressInfo } from "node:net";
+import { createServer } from "node:http";
+
+import { describe, expect, it } from "vitest";
+
+import { createApp } from "../src/server/app";
+
+type FetchFrankfurter = (url: string | URL) => Promise<Response>;
+type CreateConfiguredApp = (options: {
+  fetchFrankfurter: FetchFrankfurter;
+  frankfurterBaseUrl: string;
+}) => ReturnType<typeof createApp>;
+
+describe("GET /api/currencies", () => {
+  it("proxies Frankfurter supported currencies", async () => {
+    const upstreamRequests: string[] = [];
+    const fetchFrankfurter: FetchFrankfurter = async (url) => {
+      upstreamRequests.push(String(url));
+
+      return new Response(
+        JSON.stringify({
+          USD: "US Dollar",
+          EUR: "Euro",
+          JPY: "Japanese Yen",
+          GBP: "Pound Sterling",
+        }),
+        {
+          headers: { "Content-Type": "application/json" },
+          status: 200,
+        },
+      );
+    };
+
+    const server = createServer(
+      (createApp as CreateConfiguredApp)({
+        fetchFrankfurter,
+        frankfurterBaseUrl: "https://api.frankfurter.test",
+      }),
+    );
+
+    await new Promise<void>((resolve) => {
+      server.listen(0, "127.0.0.1", resolve);
+    });
+
+    try {
+      const { port } = server.address() as AddressInfo;
+      const response = await fetch(`http://127.0.0.1:${port}/api/currencies`);
+
+      expect(response.status).toBe(200);
+      await expect(response.json()).resolves.toEqual({
+        currencies: {
+          USD: "US Dollar",
+          EUR: "Euro",
+          JPY: "Japanese Yen",
+          GBP: "Pound Sterling",
+        },
+      });
+      expect(upstreamRequests).toEqual([
+        "https://api.frankfurter.test/currencies",
+      ]);
+    } finally {
+      await new Promise<void>((resolve, reject) => {
+        server.close((error: Error | undefined) => {
+          if (error) {
+            reject(error);
+            return;
+          }
+
+          resolve();
+        });
+      });
+    }
+  });
+});

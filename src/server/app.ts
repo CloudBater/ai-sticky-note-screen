@@ -41,6 +41,14 @@ export function createApp(options: CreateAppOptions = {}) {
       upstreamUrl.searchParams.set("to", symbols.join(","));
 
       const upstreamResponse = await fetchFrankfurter(upstreamUrl);
+
+      if (!upstreamResponse.ok) {
+        sendJson(response, 502, {
+          error: "Unable to fetch latest reference rates",
+        });
+        return;
+      }
+
       const upstreamBody =
         (await upstreamResponse.json()) as FrankfurterLatestResponse;
 

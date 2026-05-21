@@ -13,6 +13,8 @@ type FrankfurterLatestResponse = {
   rates: Record<string, number>;
 };
 
+type FrankfurterCurrenciesResponse = Record<string, string>;
+
 const DEFAULT_FRANKFURTER_BASE_URL = "https://api.frankfurter.app";
 
 export function createApp(options: CreateAppOptions = {}) {
@@ -23,6 +25,16 @@ export function createApp(options: CreateAppOptions = {}) {
   return async (request: IncomingMessage, response: ServerResponse) => {
     if (request.method === "GET" && request.url === "/api/health") {
       sendJson(response, 200, { status: "ok" });
+      return;
+    }
+
+    if (request.method === "GET" && request.url === "/api/currencies") {
+      const upstreamUrl = new URL("/currencies", frankfurterBaseUrl);
+      const upstreamResponse = await fetchFrankfurter(upstreamUrl);
+      const currencies =
+        (await upstreamResponse.json()) as FrankfurterCurrenciesResponse;
+
+      sendJson(response, 200, { currencies });
       return;
     }
 

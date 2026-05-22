@@ -155,4 +155,64 @@ describe("POST /api/simulations/conversion-preview", () => {
       });
     }
   });
+
+  it("returns a clear error response when Frankfurter cannot provide the reference rate", async () => {
+    const fetchFrankfurter: FetchFrankfurter = async () =>
+      new Response(
+        JSON.stringify({
+          amount: 1,
+          base: "USD",
+          date: "2024-08-23",
+          rates: {},
+        }),
+        {
+          headers: { "Content-Type": "application/json" },
+          status: 200,
+        },
+      );
+
+    const server = createServer(
+      (createApp as CreateConfiguredApp)({
+        fetchFrankfurter,
+        frankfurterBaseUrl: "https://api.frankfurter.test",
+      }),
+    );
+
+    await new Promise<void>((resolve) => {
+      server.listen(0, "127.0.0.1", resolve);
+    });
+
+    try {
+      const { port } = server.address() as AddressInfo;
+      const response = await fetch(
+        `http://127.0.0.1:${port}/api/simulations/conversion-preview`,
+        {
+          body: JSON.stringify({
+            sourceCurrency: "usd",
+            targetCurrency: "eur",
+            amount: 2500,
+            date: "2024-08-23",
+          }),
+          headers: { "Content-Type": "application/json" },
+          method: "POST",
+        },
+      );
+
+      expect(response.status).toBe(502);
+      await expect(response.json()).resolves.toEqual({
+        error: "Unable to fetch conversion reference rate",
+      });
+    } finally {
+      await new Promise<void>((resolve, reject) => {
+        server.close((error: Error | undefined) => {
+          if (error) {
+            reject(error);
+            return;
+          }
+
+          resolve();
+        });
+      });
+    }
+  });
 });

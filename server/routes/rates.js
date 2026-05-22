@@ -1,6 +1,16 @@
 import { Router } from 'express';
+import { rateLimit } from 'express-rate-limit';
 
 const router = Router();
+
+// Protect upstream: a runaway client can't hammer Frankfurter through our BE
+router.use(rateLimit({
+  windowMs: 60 * 1000,
+  max: 60,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many requests — please wait a moment and try again.' },
+}));
 
 const SUPPORTED_PAIRS = ['EUR', 'JPY', 'GBP', 'CNY', 'SGD'];
 const BASE_URL = 'https://api.frankfurter.app';

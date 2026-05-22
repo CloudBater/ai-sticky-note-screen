@@ -22,4 +22,16 @@ describe("previewSimulatedConversion", () => {
       kind: "simulation-preview",
     });
   });
+
+  it("rejects non-positive simulated conversion amounts", () => {
+    expect(() =>
+      previewSimulatedConversion({
+        sourceCurrency: "usd",
+        targetCurrency: "eur",
+        amount: -100,
+        date: "2025-08-23",
+        dailyReferenceRate: 0.901,
+      }),
+    ).toThrow("Simulated conversion amount must be greater than 0");
+  });
 });

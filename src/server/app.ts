@@ -51,8 +51,15 @@ export function createApp(options: CreateAppOptions = {}) {
       request.method === "POST" &&
       request.url === "/api/simulations/conversion-preview"
     ) {
-      const requestBody =
-        (await readJsonBody(request)) as ConversionPreviewRequest;
+      const requestBody = await readJsonBody(request);
+
+      if (!isConversionPreviewRequest(requestBody)) {
+        sendJson(response, 400, {
+          error: "Invalid conversion preview request",
+        });
+        return;
+      }
+
       const sourceCurrency = requestBody.sourceCurrency.toUpperCase();
       const targetCurrency = requestBody.targetCurrency.toUpperCase();
 
@@ -132,4 +139,26 @@ async function readJsonBody(request: IncomingMessage): Promise<unknown> {
   }
 
   return JSON.parse(rawBody);
+}
+
+function isConversionPreviewRequest(
+  value: unknown,
+): value is ConversionPreviewRequest {
+  if (typeof value !== "object" || value === null) {
+    return false;
+  }
+
+  const candidate = value as Record<string, unknown>;
+
+  return (
+    typeof candidate.sourceCurrency === "string" &&
+    candidate.sourceCurrency.length > 0 &&
+    typeof candidate.targetCurrency === "string" &&
+    candidate.targetCurrency.length > 0 &&
+    typeof candidate.amount === "number" &&
+    Number.isFinite(candidate.amount) &&
+    candidate.amount > 0 &&
+    typeof candidate.date === "string" &&
+    candidate.date.length > 0
+  );
 }

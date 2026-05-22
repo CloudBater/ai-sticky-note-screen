@@ -72,6 +72,16 @@ export function createApp(options: CreateAppOptions = {}) {
         (await upstreamResponse.json()) as FrankfurterLatestResponse;
       const dailyReferenceRate = upstreamBody.rates[targetCurrency];
 
+      if (
+        typeof dailyReferenceRate !== "number" ||
+        !Number.isFinite(dailyReferenceRate)
+      ) {
+        sendJson(response, 502, {
+          error: "Unable to fetch conversion reference rate",
+        });
+        return;
+      }
+
       sendJson(response, 200, {
         preview: previewSimulatedConversion({
           sourceCurrency,

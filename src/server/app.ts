@@ -1,5 +1,7 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
 
+import { previewSimulatedConversion } from "../shared/conversion-preview";
+
 type FetchFrankfurter = (url: string | URL) => Promise<Response>;
 
 type CreateAppOptions = {
@@ -14,6 +16,13 @@ type FrankfurterLatestResponse = {
 };
 
 type FrankfurterCurrenciesResponse = Record<string, string>;
+
+type ConversionPreviewRequest = {
+  sourceCurrency: string;
+  targetCurrency: string;
+  amount: number;
+  date: string;
+};
 
 const DEFAULT_FRANKFURTER_BASE_URL = "https://api.frankfurter.app";
 
@@ -35,6 +44,36 @@ export function createApp(options: CreateAppOptions = {}) {
         (await upstreamResponse.json()) as FrankfurterCurrenciesResponse;
 
       sendJson(response, 200, { currencies });
+      return;
+    }
+
+    if (
+      request.method === "POST" &&
+      request.url === "/api/simulations/conversion-preview"
+    ) {
+      const requestBody =
+        (await readJsonBody(request)) as ConversionPreviewRequest;
+      const sourceCurrency = requestBody.sourceCurrency.toUpperCase();
+      const targetCurrency = requestBody.targetCurrency.toUpperCase();
+
+      const upstreamUrl = new URL(`/${requestBody.date}`, frankfurterBaseUrl);
+      upstreamUrl.searchParams.set("from", sourceCurrency);
+      upstreamUrl.searchParams.set("to", targetCurrency);
+
+      const upstreamResponse = await fetchFrankfurter(upstreamUrl);
+      const upstreamBody =
+        (await upstreamResponse.json()) as FrankfurterLatestResponse;
+      const dailyReferenceRate = upstreamBody.rates[targetCurrency];
+
+      sendJson(response, 200, {
+        preview: previewSimulatedConversion({
+          sourceCurrency,
+          targetCurrency,
+          amount: requestBody.amount,
+          date: upstreamBody.date,
+          dailyReferenceRate,
+        }),
+      });
       return;
     }
 
@@ -83,4 +122,14 @@ function sendJson(
 ) {
   response.writeHead(statusCode, { "Content-Type": "application/json" });
   response.end(JSON.stringify(body));
+}
+
+async function readJsonBody(request: IncomingMessage): Promise<unknown> {
+  let rawBody = "";
+
+  for await (const chunk of request) {
+    rawBody += chunk;
+  }
+
+  return JSON.parse(rawBody);
 }

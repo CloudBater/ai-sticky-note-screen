@@ -88,4 +88,71 @@ describe("POST /api/simulations/conversion-preview", () => {
       });
     }
   });
+
+  it("rejects invalid request bodies before calling Frankfurter", async () => {
+    const upstreamRequests: string[] = [];
+    const fetchFrankfurter: FetchFrankfurter = async (url) => {
+      upstreamRequests.push(String(url));
+
+      return new Response(
+        JSON.stringify({
+          amount: 1,
+          base: "USD",
+          date: "2024-08-23",
+          rates: {
+            EUR: 0.901,
+          },
+        }),
+        {
+          headers: { "Content-Type": "application/json" },
+          status: 200,
+        },
+      );
+    };
+
+    const server = createServer(
+      (createApp as CreateConfiguredApp)({
+        fetchFrankfurter,
+        frankfurterBaseUrl: "https://api.frankfurter.test",
+      }),
+    );
+
+    await new Promise<void>((resolve) => {
+      server.listen(0, "127.0.0.1", resolve);
+    });
+
+    try {
+      const { port } = server.address() as AddressInfo;
+      const response = await fetch(
+        `http://127.0.0.1:${port}/api/simulations/conversion-preview`,
+        {
+          body: JSON.stringify({
+            sourceCurrency: "usd",
+            targetCurrency: "eur",
+            amount: 2500,
+            date: "",
+          }),
+          headers: { "Content-Type": "application/json" },
+          method: "POST",
+        },
+      );
+
+      expect(response.status).toBe(400);
+      await expect(response.json()).resolves.toEqual({
+        error: "Invalid conversion preview request",
+      });
+      expect(upstreamRequests).toEqual([]);
+    } finally {
+      await new Promise<void>((resolve, reject) => {
+        server.close((error: Error | undefined) => {
+          if (error) {
+            reject(error);
+            return;
+          }
+
+          resolve();
+        });
+      });
+    }
+  });
 });

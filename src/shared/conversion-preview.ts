@@ -19,6 +19,14 @@ export type SimulatedConversionPreview = {
 export function previewSimulatedConversion(
   input: SimulatedConversionInput,
 ): SimulatedConversionPreview {
+  if (
+    typeof input.amount !== "number" ||
+    !Number.isFinite(input.amount) ||
+    input.amount <= 0
+  ) {
+    throw new Error("Simulated conversion amount must be greater than 0");
+  }
+
   return {
     sourceCurrency: input.sourceCurrency.toUpperCase(),
     targetCurrency: input.targetCurrency.toUpperCase(),

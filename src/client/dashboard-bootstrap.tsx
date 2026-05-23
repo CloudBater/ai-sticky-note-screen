@@ -23,7 +23,12 @@ export async function mountDashboard({
     }),
 }: MountDashboardOptions): Promise<void> {
   render(<DashboardApp viewModel={buildFallbackViewModel()} />);
-  render(<DashboardApp viewModel={await loadViewModel()} />);
+
+  try {
+    render(<DashboardApp viewModel={await loadViewModel()} />);
+  } catch {
+    render(<p role="alert">Unable to load backend reference data.</p>);
+  }
 }
 
 function buildFallbackViewModel(): DashboardViewModel {

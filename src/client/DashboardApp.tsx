@@ -142,10 +142,30 @@ export function DashboardApp({ viewModel }: DashboardAppProps) {
             <p className="eyebrow">Review</p>
             <h2>Simulation history</h2>
           </div>
-          <p className="empty-state">
-            No simulated conversion entries yet. Preview a simulated conversion
-            to build a history.
-          </p>
+          {viewModel.simulationHistory.entries.length > 0 ? (
+            <ul className="history-list">
+              {viewModel.simulationHistory.entries.map((entry) => (
+                <li key={entry.id}>
+                  <strong>
+                    {entry.sourceAmount.toLocaleString("en-US")}{" "}
+                    {entry.sourceCurrency}
+                  </strong>
+                  <span>
+                    {entry.convertedAmount.toLocaleString("en-US")}{" "}
+                    {entry.targetCurrency}
+                  </span>
+                  <small>
+                    {entry.date} · reference rate {entry.rate}
+                  </small>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="empty-state">
+              No simulated conversion entries yet. Preview a simulated
+              conversion to build a history.
+            </p>
+          )}
         </section>
       </div>
 

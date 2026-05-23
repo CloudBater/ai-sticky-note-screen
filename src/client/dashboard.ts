@@ -1,4 +1,5 @@
 import { splitRequestedCurrenciesBySupport } from "../shared/currency-support";
+import type { SimulationHistoryEntry } from "./simulation-history";
 
 type FetchJson = (url: string) => Promise<unknown>;
 
@@ -31,6 +32,9 @@ export type DashboardViewModel = {
   };
   historicalTrend: {
     summary: string;
+  };
+  simulationHistory: {
+    entries: SimulationHistoryEntry[];
   };
 };
 
@@ -96,6 +100,9 @@ export function buildDashboardViewModel(
     historicalTrend: {
       summary:
         "Historical movement summary will appear after daily reference rates load.",
+    },
+    simulationHistory: {
+      entries: [],
     },
   };
 }

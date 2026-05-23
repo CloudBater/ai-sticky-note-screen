@@ -58,4 +58,39 @@ describe("fetchDashboardReferenceData", () => {
       "/api/rates/latest?base=USD&symbols=EUR%2CJPY",
     ]);
   });
+
+  it("skips latest rates when no requested target symbols are supported", async () => {
+    const requestedUrls: string[] = [];
+    const fetchJson = async (url: string): Promise<unknown> => {
+      requestedUrls.push(url);
+
+      if (url === "/api/currencies") {
+        return {
+          currencies: {
+            USD: "US Dollar",
+          },
+        };
+      }
+
+      throw new Error(`Unexpected URL: ${url}`);
+    };
+
+    await expect(
+      fetchDashboardReferenceData({
+        baseCurrency: "usd",
+        symbols: ["twd"],
+        fetchJson,
+      }),
+    ).resolves.toEqual({
+      currencies: {
+        USD: "US Dollar",
+      },
+      latestRates: {
+        base: "USD",
+        date: "Unavailable",
+        rates: {},
+      },
+    });
+    expect(requestedUrls).toEqual(["/api/currencies"]);
+  });
 });

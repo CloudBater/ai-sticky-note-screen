@@ -29,6 +29,9 @@ export type DashboardViewModel = {
     dataDate: string;
     cards: LatestRateCard[];
   };
+  historicalTrend: {
+    summary: string;
+  };
 };
 
 export type LatestRateCard = {
@@ -89,6 +92,10 @@ export function buildDashboardViewModel(
       baseCurrency,
       dataDate: input.dataDate,
       cards,
+    },
+    historicalTrend: {
+      summary:
+        "Historical movement summary will appear after daily reference rates load.",
     },
   };
 }

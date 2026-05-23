@@ -123,6 +123,7 @@ export function DashboardApp({ viewModel }: DashboardAppProps) {
             Historical movement will be shown as a daily line chart, not
             candlesticks.
           </p>
+          <p className="trend-summary">{viewModel.historicalTrend.summary}</p>
         </section>
 
         <section className="panel simulation-panel" id="simulation">

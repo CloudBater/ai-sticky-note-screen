@@ -8,6 +8,7 @@
     "test": "tests"
   },
   "scripts": {
+    "dev": "vite --host 127.0.0.1",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "check": "npm run typecheck && npm test"

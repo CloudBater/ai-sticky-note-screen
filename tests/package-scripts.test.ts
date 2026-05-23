@@ -3,12 +3,15 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 describe("package scripts", () => {
-  it("provides the one-command local dev script promised in PLAN.md", () => {
+  it("provides the one-command fullstack dev script promised in PLAN.md", () => {
     const packageJson = JSON.parse(readFileSync("package.json", "utf8")) as {
       scripts?: Record<string, string>;
+      devDependencies?: Record<string, string>;
     };
 
-    expect(packageJson.scripts?.dev).toBe("vite --host 127.0.0.1");
+    expect(packageJson.scripts?.dev).toBe("tsx src/dev.ts");
+    expect(packageJson.devDependencies?.tsx).toBeDefined();
+    expect(packageJson.devDependencies?.vite).toBeDefined();
   });
 
   it("declares the React dependencies needed by the planned Vite frontend", () => {

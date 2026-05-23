@@ -47,6 +47,14 @@ export function createApp(options: CreateAppOptions = {}) {
     if (request.method === "GET" && request.url === "/api/currencies") {
       const upstreamUrl = new URL("/currencies", frankfurterBaseUrl);
       const upstreamResponse = await fetchFrankfurter(upstreamUrl);
+
+      if (!upstreamResponse.ok) {
+        sendJson(response, 502, {
+          error: "Unable to fetch supported currencies",
+        });
+        return;
+      }
+
       const currencies =
         (await upstreamResponse.json()) as FrankfurterCurrenciesResponse;
 

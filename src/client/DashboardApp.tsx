@@ -40,10 +40,18 @@ export function DashboardApp({ viewModel }: DashboardAppProps) {
       </section>
 
       <section aria-label="Main actions" className="action-strip">
-        <button type="button">View Historical Trend</button>
-        <button type="button">Adjust Simulation Amount</button>
-        <button type="button">Preview Simulated Conversion</button>
-        <button type="button">Review Simulation History</button>
+        <button className="secondary-action" type="button">
+          View Historical Trend
+        </button>
+        <button className="secondary-action" type="button">
+          Adjust Simulation Amount
+        </button>
+        <button className="primary-action" type="button">
+          Preview Simulated Conversion
+        </button>
+        <button className="secondary-action" type="button">
+          Review Simulation History
+        </button>
       </section>
 
       <div className="dashboard-grid">
@@ -142,7 +150,11 @@ export function DashboardApp({ viewModel }: DashboardAppProps) {
 
       <nav aria-label="Dashboard sections" className="bottom-nav">
         {viewModel.navigationItems.map((item) => (
-          <a href={`#${item.id}`} key={item.id}>
+          <a
+            aria-current={item.id === "overview" ? "page" : undefined}
+            href={`#${item.id}`}
+            key={item.id}
+          >
             {item.label}
           </a>
         ))}

@@ -1,4 +1,4 @@
-import type { DashboardViewModel } from "./dashboard-view-model";
+import type { DashboardViewModel } from "./dashboard";
 
 type DashboardAppProps = {
   viewModel: DashboardViewModel;

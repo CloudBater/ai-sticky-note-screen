@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { buildDashboardViewModel } from "../src/client/dashboard-view-model";
+import { buildDashboardViewModel } from "../src/client/dashboard";
 
 describe("buildDashboardViewModel", () => {
   it("builds the safe MarketMage dashboard copy and rate cards", () => {

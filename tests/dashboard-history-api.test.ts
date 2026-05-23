@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { fetchHistoricalReferenceRates } from "../src/client/dashboard-history-api";
+import { fetchHistoricalReferenceRates } from "../src/client/dashboard";
 
 describe("fetchHistoricalReferenceRates", () => {
   it("loads daily historical reference rates from the backend API", async () => {

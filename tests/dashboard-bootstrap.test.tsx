@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { describe, expect, it } from "vitest";
 
 import { mountDashboard } from "../src/client/dashboard-bootstrap";
-import type { DashboardViewModel } from "../src/client/dashboard-view-model";
+import type { DashboardViewModel } from "../src/client/dashboard";
 
 const fallbackViewModel: DashboardViewModel = {
   title: "MarketMage",

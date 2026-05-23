@@ -1,11 +1,11 @@
 import type { ReactNode } from "react";
 
 import { DashboardApp } from "./DashboardApp";
-import { loadDashboardViewModel } from "./dashboard-loader";
 import {
   buildDashboardViewModel,
+  loadDashboardViewModel,
   type DashboardViewModel,
-} from "./dashboard-view-model";
+} from "./dashboard";
 
 type MountDashboardOptions = {
   render: (node: ReactNode) => void;

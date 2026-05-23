@@ -1,4 +1,4 @@
-import type { HistoricalReferenceRatePoint } from "./dashboard-history-api";
+import type { HistoricalReferenceRatePoint } from "./dashboard";
 
 export type HistoricalTrendSummaryInput = {
   baseCurrency: string;

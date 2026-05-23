@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { fetchDashboardReferenceData } from "../src/client/dashboard-api";
+import { fetchDashboardReferenceData } from "../src/client/dashboard";
 
 describe("fetchDashboardReferenceData", () => {
   it("loads currencies and latest rates from the backend API", async () => {

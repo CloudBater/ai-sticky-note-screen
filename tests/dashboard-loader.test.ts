@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { loadDashboardViewModel } from "../src/client/dashboard-loader";
+import { loadDashboardViewModel } from "../src/client/dashboard";
 
 describe("loadDashboardViewModel", () => {
   it("builds a dashboard view model from backend reference data", async () => {

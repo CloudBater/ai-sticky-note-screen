@@ -16,17 +16,17 @@ describe("MarketMage API", () => {
         GBP: "British Pound",
         JPY: "Japanese Yen",
         SGD: "Singapore Dollar",
-        TWD: "New Taiwan Dollar",
+        CNY: "Chinese Renminbi Yuan",
         USD: "United States Dollar"
       })
     })));
 
-    const response = await request(createApp()).get("/api/latest?base=USD&symbols=CNY");
+    const response = await request(createApp()).get("/api/latest?base=USD&symbols=TWD");
 
     expect(response.status).toBe(400);
     expect(response.body).toEqual({
-      error: "Unsupported currency: CNY",
-      unsupported: ["CNY"]
+      error: "Unsupported currency: TWD",
+      unsupported: ["TWD"]
     });
   });
 });

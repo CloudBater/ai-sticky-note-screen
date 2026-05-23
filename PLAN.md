@@ -24,7 +24,7 @@ Topic 1 - MarketMage
 - No AI prediction engine or "99% accuracy" claim. The upstream API does not support this, and I should not invent confidence.
 - No sub-second live feed or candlestick chart. Frankfurter provides daily rates, not intraday open/high/low/close data.
 - No social leaderboard. It is not needed to prove the useful core of the product.
-- No CNY display by default. Frankfurter's ECB-backed currency set does not include every code in Riley's list, so the app should surface supported currencies instead of silently pretending.
+- No TWD display by default. Frankfurter's current ECB-backed currency set does not include every code in Riley's list, so the app should surface supported currencies instead of silently pretending.
 
 ## What I'm pushing back on (and proposing instead)
 

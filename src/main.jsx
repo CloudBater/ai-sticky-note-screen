@@ -3,7 +3,7 @@ import { createRoot } from "react-dom/client";
 
 import "./styles.css";
 
-const DEFAULT_SYMBOLS = ["EUR", "JPY", "TWD", "GBP", "SGD"];
+const DEFAULT_SYMBOLS = ["EUR", "JPY", "GBP", "CNY", "SGD"];
 
 function formatRate(value) {
   return new Intl.NumberFormat("en-US", {

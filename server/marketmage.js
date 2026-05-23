@@ -74,7 +74,7 @@ export function createRateLimiter(limit = RATE_LIMIT, windowMs = RATE_WINDOW_MS)
 
 export function normalizeCodes(rawCodes) {
   if (!rawCodes) {
-    return ["EUR", "JPY", "TWD", "GBP", "SGD"];
+    return ["EUR", "JPY", "GBP", "CNY", "SGD"];
   }
 
   return rawCodes

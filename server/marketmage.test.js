@@ -9,7 +9,7 @@ describe("buildCurrencyUniverse", () => {
       GBP: "British Pound",
       JPY: "Japanese Yen",
       SGD: "Singapore Dollar",
-      TWD: "New Taiwan Dollar",
+      CNY: "Chinese Renminbi Yuan",
       USD: "United States Dollar"
     };
 
@@ -19,11 +19,11 @@ describe("buildCurrencyUniverse", () => {
       "USD",
       "EUR",
       "JPY",
-      "TWD",
       "GBP",
+      "CNY",
       "SGD"
     ]);
-    expect(result.unsupported).toEqual(["CNY"]);
+    expect(result.unsupported).toEqual(["TWD"]);
   });
 });
 

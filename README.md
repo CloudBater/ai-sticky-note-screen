@@ -36,7 +36,7 @@ npm test
 ## Scope Notes
 
 - Frankfurter publishes daily ECB reference rates, so the UI says "daily" instead of "real-time".
-- CNY is called out as unsupported instead of being silently dropped.
+- TWD is called out as unsupported instead of being silently dropped.
 - Historical movement is shown as a simple line chart, not a candlestick chart, because the upstream API has no intraday OHLC data.
 - No leverage, auto-rebalance, social leaderboard, or AI prediction claim is implemented.
 

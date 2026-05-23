@@ -1,4 +1,5 @@
 import { splitRequestedCurrenciesBySupport } from "../shared/currency-support";
+import { summarizeHistoricalTrend } from "./historical-trend-summary";
 import type { SimulationHistoryEntry } from "./simulation-history";
 
 type FetchJson = (url: string) => Promise<unknown>;
@@ -166,12 +167,17 @@ export type LoadDashboardViewModelInput = {
   simulationBalance: number;
   requestedCurrencies: string[];
   fetchReferenceData?: FetchReferenceData;
+  fetchHistoricalRates?: FetchHistoricalRates;
 };
 
 type FetchReferenceData = (input: {
   baseCurrency: string;
   symbols: string[];
 }) => Promise<DashboardReferenceData>;
+
+type FetchHistoricalRates = (input: HistoricalReferenceRatesInput) => Promise<
+  HistoricalReferenceRatesResponse
+>;
 
 export async function loadDashboardViewModel(
   input: LoadDashboardViewModelInput,
@@ -182,12 +188,13 @@ export async function loadDashboardViewModel(
     .filter((currency) => currency !== baseCurrency);
   const fetchReferenceData =
     input.fetchReferenceData ?? fetchDashboardReferenceData;
+  const fetchHistoricalRates =
+    input.fetchHistoricalRates ?? fetchHistoricalReferenceRates;
   const referenceData = await fetchReferenceData({
     baseCurrency,
     symbols,
   });
-
-  return buildDashboardViewModel({
+  const viewModel = buildDashboardViewModel({
     simulationBalance: input.simulationBalance,
     baseCurrency: referenceData.latestRates.base,
     dataDate: referenceData.latestRates.date,
@@ -195,6 +202,35 @@ export async function loadDashboardViewModel(
     supportedCurrencies: referenceData.currencies,
     latestRates: referenceData.latestRates.rates,
   });
+  const historicalSymbol = Object.keys(referenceData.latestRates.rates).sort()[0];
+  const historicalWindow = getHistoricalWindow(referenceData.latestRates.date);
+
+  if (historicalSymbol !== undefined && historicalWindow !== undefined) {
+    try {
+      const historicalRates = await fetchHistoricalRates({
+        baseCurrency: referenceData.latestRates.base,
+        symbol: historicalSymbol,
+        startDate: historicalWindow.startDate,
+        endDate: historicalWindow.endDate,
+      });
+      const summary = summarizeHistoricalTrend({
+        baseCurrency: historicalRates.base,
+        symbol: historicalRates.symbol,
+        points: historicalRates.points,
+      });
+
+      viewModel.historicalTrend = {
+        summary: summary.summary,
+      };
+    } catch {
+      viewModel.historicalTrend = {
+        summary:
+          "Historical movement summary will appear after daily reference rates load.",
+      };
+    }
+  }
+
+  return viewModel;
 }
 
 export type HistoricalReferenceRatesInput = {
@@ -307,4 +343,27 @@ function readHistoricalRatesBody(
     endDate: candidate.endDate,
     points: candidate.points,
   };
+}
+
+function getHistoricalWindow(
+  endDate: string,
+): { startDate: string; endDate: string } | undefined {
+  const parsedEndDate = new Date(`${endDate}T00:00:00.000Z`);
+
+  if (Number.isNaN(parsedEndDate.getTime())) {
+    return undefined;
+  }
+
+  const parsedStartDate = new Date(parsedEndDate);
+
+  parsedStartDate.setUTCDate(parsedStartDate.getUTCDate() - 30);
+
+  return {
+    startDate: formatIsoDate(parsedStartDate),
+    endDate,
+  };
+}
+
+function formatIsoDate(date: Date): string {
+  return date.toISOString().slice(0, 10);
 }

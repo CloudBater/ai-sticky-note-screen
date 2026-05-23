@@ -4,6 +4,7 @@ export type SimulatedConversionInput = {
   amount: number;
   date: string;
   dailyReferenceRate: number;
+  supportedCurrencies?: readonly string[];
 };
 
 export type SimulatedConversionPreview = {
@@ -40,9 +41,22 @@ export function previewSimulatedConversion(
     throw new Error("Simulated conversion date cannot be in the future");
   }
 
+  const sourceCurrency = input.sourceCurrency.toUpperCase();
+  const targetCurrency = input.targetCurrency.toUpperCase();
+  const supportedCurrencies =
+    input.supportedCurrencies?.map((currency) => currency.toUpperCase()) ?? [];
+
+  if (
+    supportedCurrencies.length > 0 &&
+    (!supportedCurrencies.includes(sourceCurrency) ||
+      !supportedCurrencies.includes(targetCurrency))
+  ) {
+    throw new Error("Simulated conversion currency is not supported");
+  }
+
   return {
-    sourceCurrency: input.sourceCurrency.toUpperCase(),
-    targetCurrency: input.targetCurrency.toUpperCase(),
+    sourceCurrency,
+    targetCurrency,
     sourceAmount: input.amount,
     convertedAmount: input.amount * input.dailyReferenceRate,
     rate: input.dailyReferenceRate,

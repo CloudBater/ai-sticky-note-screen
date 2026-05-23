@@ -298,6 +298,64 @@ describe("loadDashboardViewModel", () => {
       },
     });
   });
+
+  it("loads a historical trend summary for the first supported target currency", async () => {
+    const historicalRequests: Array<{
+      baseCurrency: string;
+      symbol: string;
+      startDate: string;
+      endDate: string;
+    }> = [];
+
+    await expect(
+      loadDashboardViewModel({
+        simulationBalance: 10_000,
+        requestedCurrencies: ["usd", "eur", "jpy"],
+        fetchReferenceData: async () => ({
+          currencies: {
+            USD: "US Dollar",
+            EUR: "Euro",
+            JPY: "Japanese Yen",
+          },
+          latestRates: {
+            base: "USD",
+            date: "2024-08-23",
+            rates: {
+              EUR: 0.945,
+              JPY: 144.9,
+            },
+          },
+        }),
+        fetchHistoricalRates: async (request) => {
+          historicalRequests.push(request);
+
+          return {
+            base: request.baseCurrency,
+            symbol: request.symbol,
+            startDate: request.startDate,
+            endDate: request.endDate,
+            points: [
+              { date: "2024-08-21", rate: 0.9 },
+              { date: "2024-08-23", rate: 0.945 },
+            ],
+          };
+        },
+      }),
+    ).resolves.toMatchObject({
+      historicalTrend: {
+        summary:
+          "EUR moved up 5% against USD from 2024-08-21 to 2024-08-23. Historical reference only, not a forecast.",
+      },
+    });
+    expect(historicalRequests).toEqual([
+      {
+        baseCurrency: "USD",
+        symbol: "EUR",
+        startDate: "2024-07-24",
+        endDate: "2024-08-23",
+      },
+    ]);
+  });
 });
 
 const fallbackViewModel: DashboardViewModel = {

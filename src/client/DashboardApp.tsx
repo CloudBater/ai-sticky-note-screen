@@ -34,11 +34,15 @@ export function DashboardApp({ viewModel }: DashboardAppProps) {
       <section aria-labelledby="latest-rates-heading">
         <h2 id="latest-rates-heading">Latest daily reference rates</h2>
         <p>Data date: {viewModel.latestRates.dataDate}</p>
-        <ul>
-          {viewModel.latestRates.cards.map((card) => (
-            <li key={card.currency}>{card.label}</li>
-          ))}
-        </ul>
+        {viewModel.latestRates.cards.length > 0 ? (
+          <ul>
+            {viewModel.latestRates.cards.map((card) => (
+              <li key={card.currency}>{card.label}</li>
+            ))}
+          </ul>
+        ) : (
+          <p>No latest reference rates are available.</p>
+        )}
       </section>
 
       <nav aria-label="Dashboard sections">

@@ -1,0 +1,346 @@
+:root {
+  color-scheme: light dark;
+  font-family:
+    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+  --bg: #edf4f2;
+  --bg-soft: #f8fbfa;
+  --panel: rgb(255 255 255 / 0.78);
+  --panel-strong: #ffffff;
+  --text: #13201d;
+  --muted: #66736f;
+  --line: rgb(47 73 66 / 0.16);
+  --accent: #0f8f78;
+  --accent-strong: #096a5a;
+  --warning: #946211;
+  --shadow: 0 16px 44px rgb(32 58 52 / 0.12);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  min-width: 320px;
+  margin: 0;
+  color: var(--text);
+  background:
+    radial-gradient(circle at top left, rgb(85 176 152 / 0.24), transparent 34rem),
+    linear-gradient(135deg, var(--bg), #f7faf8 58%, #e8f1ee);
+}
+
+button,
+a {
+  font: inherit;
+}
+
+.app-shell {
+  width: min(1180px, calc(100% - 32px));
+  min-height: 100vh;
+  margin: 0 auto;
+  padding: 36px 0 104px;
+}
+
+.hero-panel,
+.panel,
+.trust-banner,
+.action-strip,
+.bottom-nav {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(18px);
+}
+
+.hero-panel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(240px, 320px);
+  gap: 24px;
+  align-items: end;
+  padding: 32px;
+}
+
+.eyebrow {
+  margin: 0 0 8px;
+  color: var(--accent-strong);
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+h1,
+h2,
+h3,
+p {
+  margin-top: 0;
+}
+
+h1 {
+  margin-bottom: 12px;
+  font-size: clamp(2.4rem, 7vw, 5rem);
+  line-height: 0.95;
+}
+
+h2 {
+  margin-bottom: 6px;
+  font-size: 1.08rem;
+}
+
+h3 {
+  margin: 18px 0 6px;
+  color: var(--muted);
+  font-size: 0.86rem;
+}
+
+.hero-copy,
+.panel p,
+.data-date,
+.empty-state {
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.metric-card {
+  display: grid;
+  gap: 8px;
+  padding: 22px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel-strong);
+}
+
+.metric-card span,
+.rate-card span,
+.metric-card small,
+.rate-card small {
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.metric-card strong {
+  font-size: 2rem;
+}
+
+.trust-banner {
+  margin-top: 16px;
+  padding: 16px 20px;
+}
+
+.trust-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.trust-list li {
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgb(255 255 255 / 0.52);
+  color: var(--text);
+  font-size: 0.88rem;
+}
+
+.action-strip {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 16px;
+  padding: 12px;
+}
+
+.action-strip button {
+  min-height: 44px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel-strong);
+  color: var(--text);
+  cursor: default;
+}
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.panel {
+  padding: 22px;
+}
+
+.watchlist-panel,
+.support-panel {
+  grid-column: span 3;
+}
+
+.rates-panel,
+.trend-panel {
+  grid-column: span 6;
+}
+
+.simulation-panel,
+.history-panel {
+  grid-column: span 3;
+}
+
+.section-heading {
+  margin-bottom: 18px;
+}
+
+.currency-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.currency-pills span {
+  padding: 8px 11px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--bg-soft);
+  font-weight: 700;
+}
+
+.support-list,
+.warning-text {
+  padding: 12px;
+  border-radius: 8px;
+  background: var(--bg-soft);
+}
+
+.warning-text {
+  color: var(--warning);
+}
+
+.rate-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+}
+
+.rate-card {
+  display: grid;
+  gap: 8px;
+  min-height: 128px;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel-strong);
+}
+
+.rate-card strong {
+  color: var(--accent-strong);
+  font-size: 1.8rem;
+}
+
+.line-chart-preview {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  align-items: end;
+  gap: 8px;
+  height: 150px;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: linear-gradient(180deg, rgb(15 143 120 / 0.12), transparent);
+}
+
+.line-chart-preview span {
+  display: block;
+  border-radius: 8px 8px 0 0;
+  background: linear-gradient(180deg, var(--accent), rgb(15 143 120 / 0.28));
+}
+
+.line-chart-preview span:nth-child(1) {
+  height: 42%;
+}
+
+.line-chart-preview span:nth-child(2) {
+  height: 68%;
+}
+
+.line-chart-preview span:nth-child(3) {
+  height: 52%;
+}
+
+.line-chart-preview span:nth-child(4) {
+  height: 80%;
+}
+
+.bottom-nav {
+  position: sticky;
+  bottom: 14px;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 18px;
+  padding: 10px;
+}
+
+.bottom-nav a {
+  min-height: 42px;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  color: var(--text);
+  text-decoration: none;
+}
+
+.bottom-nav a:hover {
+  background: var(--bg-soft);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #101614;
+    --bg-soft: #16211e;
+    --panel: rgb(23 33 30 / 0.82);
+    --panel-strong: #1b2724;
+    --text: #eef8f5;
+    --muted: #9fb0ab;
+    --line: rgb(222 245 238 / 0.13);
+    --accent: #54d6bd;
+    --accent-strong: #87ead8;
+    --warning: #f0c774;
+    --shadow: 0 16px 44px rgb(0 0 0 / 0.28);
+  }
+
+  body {
+    background:
+      radial-gradient(circle at top left, rgb(55 181 153 / 0.18), transparent 32rem),
+      linear-gradient(135deg, #0f1614, #121c19 58%, #0c1211);
+  }
+
+  .trust-list li {
+    background: rgb(255 255 255 / 0.04);
+  }
+}
+
+@media (max-width: 820px) {
+  .app-shell {
+    width: min(100% - 20px, 640px);
+    padding-top: 18px;
+  }
+
+  .hero-panel,
+  .dashboard-grid,
+  .action-strip,
+  .bottom-nav {
+    grid-template-columns: 1fr;
+  }
+
+  .watchlist-panel,
+  .support-panel,
+  .rates-panel,
+  .trend-panel,
+  .simulation-panel,
+  .history-panel {
+    grid-column: span 1;
+  }
+}

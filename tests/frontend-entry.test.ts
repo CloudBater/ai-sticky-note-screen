@@ -11,4 +11,13 @@ describe("frontend entry", () => {
       "/src/client/main.tsx",
     );
   });
+
+  it("mounts the safe dashboard app instead of the placeholder screen", () => {
+    const mainSource = readFileSync("src/client/main.tsx", "utf8");
+
+    expect(mainSource).toContain("DashboardApp");
+    expect(mainSource).toContain("buildDashboardViewModel");
+    expect(mainSource).toContain("requestedCurrencies");
+    expect(mainSource).not.toContain("<main>");
+  });
 });

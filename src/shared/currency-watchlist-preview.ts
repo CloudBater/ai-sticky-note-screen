@@ -29,23 +29,30 @@ export function previewCurrencyWatchlist(
   );
   const sortedDates = Object.keys(input.referenceRatesByDate).sort();
 
+  const series = watchedCurrencies.map((currency) => {
+    const points = sortedDates.map((date) => {
+      const dailyRates = input.referenceRatesByDate[date];
+      const rate = dailyRates?.[currency];
+
+      if (typeof rate !== "number" || !Number.isFinite(rate)) {
+        throw new Error(
+          "Historical reference rate is missing for watchlist currency",
+        );
+      }
+
+      return { date, rate };
+    });
+
+    return {
+      currency,
+      points,
+    };
+  });
+
   return {
     baseCurrency: input.baseCurrency.toUpperCase(),
     watchedCurrencies,
     kind: "currency-watchlist-preview",
-    series: watchedCurrencies.map((currency) => ({
-      currency,
-      points: sortedDates.map((date) => {
-        const rate = input.referenceRatesByDate[date]?.[currency];
-
-        if (typeof rate !== "number" || !Number.isFinite(rate)) {
-          throw new Error(
-            "Historical reference rate is missing for watchlist currency",
-          );
-        }
-
-        return { date, rate };
-      }),
-    })),
+    series,
   };
 }

@@ -63,4 +63,27 @@ describe("mountDashboard", () => {
 
     expect(renderedViewModels).toEqual([fallbackViewModel, loadedViewModel]);
   });
+
+  it("renders a clear backend loading error when reference data fails", async () => {
+    const renderedNodes: ReactNode[] = [];
+
+    await mountDashboard({
+      render: (node: ReactNode) => {
+        renderedNodes.push(node);
+      },
+      loadViewModel: async () => {
+        throw new Error("upstream unavailable");
+      },
+    });
+
+    const errorNode = renderedNodes[1] as {
+      props: {
+        children: string;
+      };
+    };
+
+    expect(errorNode.props.children).toBe(
+      "Unable to load backend reference data.",
+    );
+  });
 });

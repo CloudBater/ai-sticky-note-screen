@@ -9,6 +9,8 @@
   },
   "scripts": {
     "dev": "tsx src/dev.ts",
+    "lint": "tsc --noEmit",
+    "build": "vite build",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "check": "npm run typecheck && npm test"

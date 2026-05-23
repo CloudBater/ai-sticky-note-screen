@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import type { ReactNode } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
@@ -11,6 +13,13 @@ import {
   loadDashboardViewModel,
   type DashboardViewModel,
 } from "../src/client/dashboard";
+import {
+  cardHoverMotion,
+  chartSwitchTransition,
+  currencyContentTransition,
+  currencyTabTransition,
+  numberTransition,
+} from "../src/client/motion";
 
 describe("buildDashboardViewModel", () => {
   it("builds the safe MarketMage dashboard copy and rate cards", () => {
@@ -46,8 +55,8 @@ describe("buildDashboardViewModel", () => {
       ],
       navigationItems: [
         { id: "overview", label: "Overview" },
-        { id: "trend", label: "Historical Trend" },
-        { id: "simulation", label: "Simulation" },
+        { id: "simulation", label: "Simulate" },
+        { id: "trend", label: "Trend" },
         { id: "history", label: "History" },
       ],
       currencySupport: {
@@ -78,6 +87,20 @@ describe("buildDashboardViewModel", () => {
         entries: [],
       },
     });
+  });
+});
+
+describe("currency motion constants", () => {
+  it("keeps premium dashboard motion restrained and reusable", () => {
+    expect(currencyTabTransition.durationMs).toBeGreaterThanOrEqual(350);
+    expect(currencyTabTransition.durationMs).toBeLessThanOrEqual(500);
+    expect(currencyTabTransition.easing).toBe("cubic-bezier(0.22, 1, 0.36, 1)");
+    expect(currencyContentTransition.exitMs).toBeGreaterThanOrEqual(180);
+    expect(currencyContentTransition.enterMs).toBeGreaterThanOrEqual(400);
+    expect(numberTransition.durationMs).toBeGreaterThanOrEqual(500);
+    expect(numberTransition.durationMs).toBeLessThanOrEqual(900);
+    expect(chartSwitchTransition.durationMs).toBeGreaterThanOrEqual(400);
+    expect(cardHoverMotion.translateY).toBe(-4);
   });
 });
 
@@ -293,8 +316,8 @@ const fallbackViewModel: DashboardViewModel = {
   ],
   navigationItems: [
     { id: "overview", label: "Overview" },
-    { id: "trend", label: "Historical Trend" },
-    { id: "simulation", label: "Simulation" },
+    { id: "simulation", label: "Simulate" },
+    { id: "trend", label: "Trend" },
     { id: "history", label: "History" },
   ],
   currencySupport: {
@@ -395,8 +418,8 @@ describe("DashboardApp", () => {
           ],
           navigationItems: [
             { id: "overview", label: "Overview" },
-            { id: "trend", label: "Historical Trend" },
-            { id: "simulation", label: "Simulation" },
+            { id: "simulation", label: "Simulate" },
+            { id: "trend", label: "Trend" },
             { id: "history", label: "History" },
           ],
           currencySupport: {
@@ -433,6 +456,8 @@ describe("DashboardApp", () => {
     );
 
     expect(html).toContain("MarketMage");
+    expect(html).toContain('aria-label="MarketMage brand"');
+    expect(html).toContain('class="brand-icon"');
     expect(html).toContain("Hypothetical starting balance");
     expect(html).toContain("10,000 USD");
     expect(html).toContain("Daily reference rates, not real-time quotes.");
@@ -442,9 +467,14 @@ describe("DashboardApp", () => {
     expect(html).toContain("Unsupported requested currencies");
     expect(html).toContain("TWD");
     expect(html).toContain("Latest daily reference rates");
+    expect(html).toContain('data-currency-selector="true"');
+    expect(html).toContain('data-motion-role="active-currency-indicator"');
+    expect(html).toContain('data-selected-currency="EUR"');
+    expect(html).toContain('data-currency-detail="EUR"');
+    expect(html).toContain('data-rate-value="0.901"');
     expect(html).toContain("2024-08-23");
     expect(html).toContain("1 USD = 0.901 EUR");
-    expect(html).toContain("Historical Trend");
+    expect(html).toContain("Historical line chart");
     expect(html).toContain("Historical reference only, not a forecast.");
     expect(html).toContain("2,500 USD");
     expect(html).toContain("2,252.5 EUR");
@@ -491,5 +521,66 @@ describe("DashboardApp", () => {
     expect(html).toContain("No latest reference rates are available.");
     expect(html).toContain("Unsupported requested currencies");
     expect(html).toContain("TWD");
+  });
+
+  it("renders bottom navigation as the only section navigation", () => {
+    const html = renderToStaticMarkup(
+      <DashboardApp
+        viewModel={{
+          title: "MarketMage",
+          simulationBalanceLabel: "Hypothetical starting balance",
+          simulationBalance: {
+            amount: 10_000,
+            currency: "USD",
+          },
+          trustMessages: ["Daily reference rates, not real-time quotes."],
+          navigationItems: [
+            { id: "overview", label: "Overview" },
+            { id: "simulation", label: "Simulate" },
+            { id: "trend", label: "Trend" },
+            { id: "history", label: "History" },
+          ],
+          currencySupport: {
+            supported: ["USD"],
+            unsupported: [],
+          },
+          latestRates: {
+            baseCurrency: "USD",
+            dataDate: "Unavailable",
+            cards: [],
+          },
+          historicalTrend: {
+            summary:
+              "Historical movement summary will appear after daily reference rates load.",
+          },
+          simulationHistory: {
+            entries: [],
+          },
+        }}
+      />,
+    );
+
+    expect(html).not.toContain('aria-label="Main actions"');
+    expect(html).not.toContain('class="action-strip"');
+    expect(html).toContain('data-section-target="trend"');
+    expect(html).toContain('data-section-target="simulation"');
+    expect(html).toContain('data-section-target="history"');
+    expect(html).toContain('data-bottom-nav-shell="true"');
+    expect(html).toContain(">Simulate</button>");
+    expect(html).toContain(">Trend</button>");
+    expect(html).toContain('aria-current="page"');
+    expect(html).not.toContain("繚");
+  });
+
+  it("keeps bottom navigation fixed to the viewport bottom", () => {
+    const styles = readFileSync(
+      resolve(process.cwd(), "src/client/styles.css"),
+      "utf8",
+    );
+
+    expect(styles).toContain(".bottom-nav {\n  position: fixed;");
+    expect(styles).toContain("left: 50%;");
+    expect(styles).toContain("transform: translateX(-50%);");
+    expect(styles).not.toContain(".bottom-nav {\n  position: sticky;");
   });
 });

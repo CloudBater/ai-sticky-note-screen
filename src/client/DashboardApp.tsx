@@ -1,27 +1,121 @@
-import type { DashboardViewModel } from "./dashboard";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+} from "react";
+
+import type { DashboardViewModel, LatestRateCard } from "./dashboard";
+import marketMageIconUrl from "../resources/MarketMage-icon.jpg";
+import {
+  cardHoverMotion,
+  chartSwitchTransition,
+  currencyContentTransition,
+  currencyTabTransition,
+  numberTransition,
+} from "./motion";
 
 type DashboardAppProps = {
   viewModel: DashboardViewModel;
 };
 
+type DashboardSection = "overview" | "trend" | "simulation" | "history";
+type CurrencyTransitionState = "idle" | "exiting" | "entering";
+type CssVars = CSSProperties & Record<`--${string}`, string | number>;
+type TrendDirection = "up" | "down" | "flat";
+
 export function DashboardApp({ viewModel }: DashboardAppProps) {
-  const watchlistCurrencies = [
-    ...viewModel.currencySupport.supported,
-    ...viewModel.currencySupport.unsupported,
-  ];
+  const [activeSection, setActiveSection] =
+    useState<DashboardSection>("overview");
+  const watchlistCurrencies = useMemo(
+    () => [
+      ...viewModel.currencySupport.supported,
+      ...viewModel.currencySupport.unsupported,
+    ],
+    [viewModel.currencySupport.supported, viewModel.currencySupport.unsupported],
+  );
+  const selectorCurrencies = useMemo(
+    () =>
+      viewModel.latestRates.cards.length > 0
+        ? viewModel.latestRates.cards.map((card) => card.currency)
+        : watchlistCurrencies,
+    [viewModel.latestRates.cards, watchlistCurrencies],
+  );
+  const [selectedCurrency, setSelectedCurrency] = useState(
+    selectorCurrencies[0] ?? viewModel.latestRates.baseCurrency,
+  );
+  const prefersReducedMotion = usePrefersReducedMotion();
+  const { displayedCurrency, transitionState } = useDeferredCurrency(
+    selectedCurrency,
+    prefersReducedMotion,
+  );
+  const selectedCurrencyIndex = Math.max(
+    selectorCurrencies.indexOf(selectedCurrency),
+    0,
+  );
+  const selectedRateCard = findRateCard(
+    viewModel.latestRates.cards,
+    selectedCurrency,
+  );
+  const displayedRateCard =
+    findRateCard(viewModel.latestRates.cards, displayedCurrency) ??
+    selectedRateCard;
+  const chartBars = useMemo(
+    () => buildChartBars(displayedCurrency),
+    [displayedCurrency],
+  );
+  const trendDirection = getTrendDirection(
+    viewModel.historicalTrend.summary,
+    displayedRateCard?.currency ?? displayedCurrency,
+  );
+  const showOverview = activeSection === "overview";
+  const showTrend = activeSection === "trend";
+  const showSimulation = activeSection === "simulation";
+  const showHistory = activeSection === "history";
+  const appMotionStyle: CssVars = {
+    "--currency-tab-duration": `${currencyTabTransition.durationMs}ms`,
+    "--currency-content-exit": `${currencyContentTransition.exitMs}ms`,
+    "--currency-content-enter": `${currencyContentTransition.enterMs}ms`,
+    "--chart-switch-duration": `${chartSwitchTransition.durationMs}ms`,
+    "--card-hover-duration": `${cardHoverMotion.durationMs}ms`,
+    "--card-hover-y": `${cardHoverMotion.translateY}px`,
+    "--card-hover-scale": cardHoverMotion.scale,
+    "--motion-ease": currencyTabTransition.easing,
+  };
+  const selectorStyle: CssVars = {
+    "--currency-count": Math.max(selectorCurrencies.length, 1),
+    "--active-currency-index": selectedCurrencyIndex,
+  };
+
+  useEffect(() => {
+    if (
+      selectorCurrencies.length > 0 &&
+      !selectorCurrencies.includes(selectedCurrency)
+    ) {
+      setSelectedCurrency(selectorCurrencies[0]);
+    }
+  }, [selectedCurrency, selectorCurrencies]);
 
   return (
-    <main className="app-shell">
+    <main className="app-shell" style={appMotionStyle}>
       <header className="hero-panel" id="overview">
-        <div>
-          <p className="eyebrow">Safe FX reference dashboard</p>
-          <h1>{viewModel.title}</h1>
+        <div className="hero-copy-block">
+          <div aria-label="MarketMage brand" className="brand-lockup">
+            <img
+              alt=""
+              aria-hidden="true"
+              className="brand-icon"
+              src={marketMageIconUrl}
+            />
+            <h1>{viewModel.title}</h1>
+          </div>
           <p className="hero-copy">
             Daily reference rates and simulations for understanding currency
             movement, with no execution path.
           </p>
         </div>
-        <div className="metric-card">
+        <div className="metric-card hero-balance-card">
           <span>{viewModel.simulationBalanceLabel}</span>
           <strong>
             {viewModel.simulationBalance.amount.toLocaleString("en-US")}{" "}
@@ -39,23 +133,12 @@ export function DashboardApp({ viewModel }: DashboardAppProps) {
         </ul>
       </section>
 
-      <section aria-label="Main actions" className="action-strip">
-        <button className="secondary-action" type="button">
-          View Historical Trend
-        </button>
-        <button className="secondary-action" type="button">
-          Adjust Simulation Amount
-        </button>
-        <button className="primary-action" type="button">
-          Preview Simulated Conversion
-        </button>
-        <button className="secondary-action" type="button">
-          Review Simulation History
-        </button>
-      </section>
-
       <div className="dashboard-grid">
-        <section className="panel watchlist-panel" aria-labelledby="watchlist-heading">
+        <section
+          className="panel watchlist-panel"
+          aria-labelledby="watchlist-heading"
+          hidden={!showOverview}
+        >
           <div className="section-heading">
             <p className="eyebrow">Watchlist</p>
             <h2 id="watchlist-heading">Selected currencies</h2>
@@ -70,6 +153,7 @@ export function DashboardApp({ viewModel }: DashboardAppProps) {
         <section
           className="panel support-panel"
           aria-labelledby="currency-support-heading"
+          hidden={!showOverview}
         >
           <div className="section-heading">
             <p className="eyebrow">Reference coverage</p>
@@ -87,46 +171,117 @@ export function DashboardApp({ viewModel }: DashboardAppProps) {
         <section
           className="panel rates-panel"
           aria-labelledby="latest-rates-heading"
+          data-selected-currency={selectedCurrency}
+          hidden={!showOverview}
         >
           <div className="section-heading">
             <p className="eyebrow">Daily reference</p>
             <h2 id="latest-rates-heading">Latest daily reference rates</h2>
+            <p className="data-date">
+              Data date: {viewModel.latestRates.dataDate}
+            </p>
           </div>
-          <p className="data-date">Data date: {viewModel.latestRates.dataDate}</p>
-          {viewModel.latestRates.cards.length > 0 ? (
-            <div className="rate-grid">
-              {viewModel.latestRates.cards.map((card) => (
-                <article className="rate-card" key={card.currency}>
-                  <span>{card.currency}</span>
-                  <strong>{card.rate.toLocaleString("en-US")}</strong>
-                  <small>{card.label}</small>
-                </article>
+
+          {selectorCurrencies.length > 0 ? (
+            <div
+              className="currency-selector"
+              data-currency-selector="true"
+              style={selectorStyle}
+            >
+              <span
+                aria-hidden="true"
+                className="currency-active-indicator"
+                data-motion-role="active-currency-indicator"
+              />
+              {selectorCurrencies.map((currency) => (
+                <button
+                  aria-pressed={selectedCurrency === currency}
+                  className="currency-tab"
+                  key={currency}
+                  onClick={() => setSelectedCurrency(currency)}
+                  type="button"
+                >
+                  {currency}
+                </button>
               ))}
             </div>
+          ) : null}
+
+          {viewModel.latestRates.cards.length > 0 ? (
+            <>
+              <div className="rate-grid">
+                {viewModel.latestRates.cards.map((card) => (
+                  <button
+                    className="rate-card"
+                    data-active={
+                      card.currency === selectedCurrency ? "true" : undefined
+                    }
+                    key={card.currency}
+                    onClick={() => setSelectedCurrency(card.currency)}
+                    type="button"
+                  >
+                    <span>{card.currency}</span>
+                    <strong>{formatRate(card.rate)}</strong>
+                    <small>{card.label}</small>
+                  </button>
+                ))}
+              </div>
+              <div
+                className="currency-detail-frame"
+                data-transition-state={transitionState}
+              >
+                {displayedRateCard ? (
+                  <CurrencyDetailCard
+                    baseCurrency={viewModel.latestRates.baseCurrency}
+                    card={displayedRateCard}
+                    reducedMotion={prefersReducedMotion}
+                    trendDirection={trendDirection}
+                  />
+                ) : (
+                  <p className="empty-state">
+                    Select a supported currency to preview the latest daily
+                    reference rate.
+                  </p>
+                )}
+              </div>
+            </>
           ) : (
             <p className="empty-state">No latest reference rates are available.</p>
           )}
         </section>
 
-        <section className="panel trend-panel" id="trend">
+        <section className="panel trend-panel" hidden={!showTrend} id="trend">
           <div className="section-heading">
             <p className="eyebrow">Historical preview</p>
             <h2>Historical line chart</h2>
           </div>
-          <div className="line-chart-preview" aria-hidden="true">
-            <span />
-            <span />
-            <span />
-            <span />
+          <div
+            className="chart-window"
+            data-chart-currency={displayedCurrency}
+            data-transition-state={transitionState}
+          >
+            <div className="line-chart-preview" aria-hidden="true">
+              {chartBars.map((height, index) => {
+                const barStyle: CssVars = {
+                  "--bar-height": `${height}%`,
+                };
+
+                return <span key={`${displayedCurrency}-${index}`} style={barStyle} />;
+              })}
+            </div>
           </div>
           <p>
-            Historical movement will be shown as a daily line chart, not
-            candlesticks.
+            Historical movement for {displayedCurrency} is shown as a daily
+            line chart, not candlesticks.
           </p>
           <p className="trend-summary">{viewModel.historicalTrend.summary}</p>
         </section>
 
-        <section className="panel simulation-panel" id="simulation">
+        <section
+          className="panel simulation-panel"
+          hidden={!showSimulation}
+          id="simulation"
+        >
           <div className="section-heading">
             <p className="eyebrow">Simulation</p>
             <h2>Simulated conversion preview</h2>
@@ -137,7 +292,7 @@ export function DashboardApp({ viewModel }: DashboardAppProps) {
           </p>
         </section>
 
-        <section className="panel history-panel" id="history">
+        <section className="panel history-panel" hidden={!showHistory} id="history">
           <div className="section-heading">
             <p className="eyebrow">Review</p>
             <h2>Simulation history</h2>
@@ -155,7 +310,7 @@ export function DashboardApp({ viewModel }: DashboardAppProps) {
                     {entry.targetCurrency}
                   </span>
                   <small>
-                    {entry.date} · reference rate {entry.rate}
+                    {entry.date} - reference rate {entry.rate}
                   </small>
                 </li>
               ))}
@@ -169,17 +324,249 @@ export function DashboardApp({ viewModel }: DashboardAppProps) {
         </section>
       </div>
 
-      <nav aria-label="Dashboard sections" className="bottom-nav">
-        {viewModel.navigationItems.map((item) => (
-          <a
-            aria-current={item.id === "overview" ? "page" : undefined}
-            href={`#${item.id}`}
-            key={item.id}
-          >
-            {item.label}
-          </a>
-        ))}
+      <nav
+        aria-label="Dashboard sections"
+        className="bottom-nav"
+        data-bottom-nav-shell="true"
+      >
+        <div className="bottom-nav-inner">
+          {viewModel.navigationItems.map((item) => (
+            <button
+              aria-current={activeSection === item.id ? "page" : undefined}
+              data-section-target={item.id}
+              key={item.id}
+              onClick={() => setActiveSection(item.id)}
+              type="button"
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
       </nav>
     </main>
+  );
+}
+
+function CurrencyDetailCard({
+  baseCurrency,
+  card,
+  reducedMotion,
+  trendDirection,
+}: {
+  baseCurrency: string;
+  card: LatestRateCard;
+  reducedMotion: boolean;
+  trendDirection: TrendDirection;
+}) {
+  return (
+    <article className="currency-detail-card" data-currency-detail={card.currency}>
+      <div>
+        <p className="eyebrow">Selected rate</p>
+        <h3>
+          {baseCurrency} to {card.currency}
+        </h3>
+      </div>
+      <AnimatedRate
+        decimals={getRateDecimals(card.rate)}
+        reducedMotion={reducedMotion}
+        value={card.rate}
+      />
+      <p>{card.label}</p>
+      <MarketStatus direction={trendDirection} />
+    </article>
+  );
+}
+
+function AnimatedRate({
+  decimals,
+  reducedMotion,
+  value,
+}: {
+  decimals: number;
+  reducedMotion: boolean;
+  value: number;
+}) {
+  const animatedValue = useAnimatedNumber(
+    value,
+    numberTransition.durationMs,
+    reducedMotion,
+  );
+
+  return (
+    <strong className="animated-rate" data-rate-value={value}>
+      {formatRate(animatedValue, decimals)}
+    </strong>
+  );
+}
+
+function MarketStatus({ direction }: { direction: TrendDirection }) {
+  const label =
+    direction === "up"
+      ? "Historical move up"
+      : direction === "down"
+        ? "Historical move down"
+        : "Historical movement pending";
+  const marker = direction === "up" ? "+" : direction === "down" ? "-" : "=";
+
+  return (
+    <p className={`market-status market-status-${direction}`}>
+      <span aria-hidden="true">{marker}</span>
+      {label}. Historical reference only.
+    </p>
+  );
+}
+
+function usePrefersReducedMotion(): boolean {
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !window.matchMedia) {
+      return;
+    }
+
+    const query = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const updatePreference = () => setPrefersReducedMotion(query.matches);
+
+    updatePreference();
+    query.addEventListener("change", updatePreference);
+
+    return () => query.removeEventListener("change", updatePreference);
+  }, []);
+
+  return prefersReducedMotion;
+}
+
+function useDeferredCurrency(
+  selectedCurrency: string,
+  reducedMotion: boolean,
+): {
+  displayedCurrency: string;
+  transitionState: CurrencyTransitionState;
+} {
+  const [displayedCurrency, setDisplayedCurrency] = useState(selectedCurrency);
+  const [transitionState, setTransitionState] =
+    useState<CurrencyTransitionState>("idle");
+
+  useEffect(() => {
+    if (selectedCurrency === displayedCurrency) {
+      return;
+    }
+
+    if (reducedMotion || typeof window === "undefined") {
+      setDisplayedCurrency(selectedCurrency);
+      setTransitionState("idle");
+      return;
+    }
+
+    let enterTimer: number | undefined;
+    setTransitionState("exiting");
+
+    const exitTimer = window.setTimeout(() => {
+      setDisplayedCurrency(selectedCurrency);
+      setTransitionState("entering");
+      enterTimer = window.setTimeout(
+        () => setTransitionState("idle"),
+        currencyContentTransition.enterMs,
+      );
+    }, currencyContentTransition.exitMs);
+
+    return () => {
+      window.clearTimeout(exitTimer);
+
+      if (enterTimer) {
+        window.clearTimeout(enterTimer);
+      }
+    };
+  }, [displayedCurrency, reducedMotion, selectedCurrency]);
+
+  return { displayedCurrency, transitionState };
+}
+
+function useAnimatedNumber(
+  value: number,
+  durationMs: number,
+  reducedMotion: boolean,
+): number {
+  const [displayValue, setDisplayValue] = useState(value);
+  const previousValue = useRef(value);
+
+  useEffect(() => {
+    if (reducedMotion || typeof window === "undefined") {
+      previousValue.current = value;
+      setDisplayValue(value);
+      return;
+    }
+
+    const from = previousValue.current;
+    const difference = value - from;
+    const start = window.performance.now();
+    let animationFrame = 0;
+
+    const tick = (now: number) => {
+      const progress = Math.min((now - start) / durationMs, 1);
+      const easedProgress = 1 - Math.pow(1 - progress, 3);
+
+      setDisplayValue(from + difference * easedProgress);
+
+      if (progress < 1) {
+        animationFrame = window.requestAnimationFrame(tick);
+      } else {
+        previousValue.current = value;
+      }
+    };
+
+    animationFrame = window.requestAnimationFrame(tick);
+
+    return () => window.cancelAnimationFrame(animationFrame);
+  }, [durationMs, reducedMotion, value]);
+
+  return displayValue;
+}
+
+function findRateCard(
+  cards: LatestRateCard[],
+  currency: string,
+): LatestRateCard | undefined {
+  return cards.find((card) => card.currency === currency);
+}
+
+function formatRate(value: number, decimals = getRateDecimals(value)): string {
+  return value.toLocaleString("en-US", {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+  });
+}
+
+function getRateDecimals(value: number): number {
+  return Math.abs(value) >= 10 ? 2 : 4;
+}
+
+function getTrendDirection(summary: string, currency: string): TrendDirection {
+  const normalizedSummary = summary.toLowerCase();
+  const normalizedCurrency = currency.toLowerCase();
+
+  if (!normalizedSummary.includes(normalizedCurrency)) {
+    return "flat";
+  }
+
+  if (normalizedSummary.includes("moved up")) {
+    return "up";
+  }
+
+  if (normalizedSummary.includes("moved down")) {
+    return "down";
+  }
+
+  return "flat";
+}
+
+function buildChartBars(currency: string): number[] {
+  const seed = Array.from(currency).reduce(
+    (total, character) => total + character.charCodeAt(0),
+    0,
+  );
+
+  return [38, 62, 48, 72, 58, 82].map(
+    (height, index) => 28 + ((height + seed + index * 11) % 56),
   );
 }

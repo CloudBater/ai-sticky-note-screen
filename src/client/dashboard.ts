@@ -87,8 +87,8 @@ export function buildDashboardViewModel(
     ],
     navigationItems: [
       { id: "overview", label: "Overview" },
-      { id: "trend", label: "Historical Trend" },
-      { id: "simulation", label: "Simulation" },
+      { id: "simulation", label: "Simulate" },
+      { id: "trend", label: "Trend" },
       { id: "history", label: "History" },
     ],
     currencySupport,

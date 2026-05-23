@@ -70,6 +70,10 @@ describe("buildDashboardViewModel", () => {
           },
         ],
       },
+      historicalTrend: {
+        summary:
+          "Historical movement summary will appear after daily reference rates load.",
+      },
     });
   });
 });
@@ -299,6 +303,10 @@ const fallbackViewModel: DashboardViewModel = {
     dataDate: "Loading...",
     cards: [],
   },
+  historicalTrend: {
+    summary:
+      "Historical movement summary will appear after daily reference rates load.",
+  },
 };
 
 const loadedViewModel: DashboardViewModel = {
@@ -311,6 +319,10 @@ const loadedViewModel: DashboardViewModel = {
     baseCurrency: "USD",
     dataDate: "2024-08-23",
     cards: [{ currency: "EUR", label: "1 USD = 0.901 EUR", rate: 0.901 }],
+  },
+  historicalTrend: {
+    summary:
+      "EUR moved up 5% against USD from 2024-08-21 to 2024-08-23. Historical reference only, not a forecast.",
   },
 };
 
@@ -389,6 +401,10 @@ describe("DashboardApp", () => {
               { currency: "EUR", label: "1 USD = 0.901 EUR", rate: 0.901 },
             ],
           },
+          historicalTrend: {
+            summary:
+              "EUR moved up 5% against USD from 2024-08-21 to 2024-08-23. Historical reference only, not a forecast.",
+          },
         }}
       />,
     );
@@ -406,6 +422,7 @@ describe("DashboardApp", () => {
     expect(html).toContain("2024-08-23");
     expect(html).toContain("1 USD = 0.901 EUR");
     expect(html).toContain("Historical Trend");
+    expect(html).toContain("Historical reference only, not a forecast.");
     expect(html).not.toContain("Trade");
     expect(html).not.toContain("Buy");
     expect(html).not.toContain("Sell");
@@ -434,6 +451,10 @@ describe("DashboardApp", () => {
             baseCurrency: "USD",
             dataDate: "Unavailable",
             cards: [],
+          },
+          historicalTrend: {
+            summary:
+              "Historical movement summary will appear after daily reference rates load.",
           },
         }}
       />,

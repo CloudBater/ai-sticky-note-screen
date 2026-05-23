@@ -178,6 +178,17 @@ export function createApp(options: CreateAppOptions = {}) {
           .map((symbol) => symbol.trim().toUpperCase())
           .filter(Boolean) ?? [];
 
+      if (
+        !isCurrencyCode(base) ||
+        symbols.length === 0 ||
+        symbols.some((symbol) => !isCurrencyCode(symbol))
+      ) {
+        sendJson(response, 400, {
+          error: "Invalid latest rates request",
+        });
+        return;
+      }
+
       const upstreamUrl = new URL("/latest", frankfurterBaseUrl);
       upstreamUrl.searchParams.set("from", base);
       upstreamUrl.searchParams.set("to", symbols.join(","));

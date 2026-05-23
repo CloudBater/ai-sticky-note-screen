@@ -62,4 +62,34 @@ describe("DashboardApp", () => {
     expect(html).not.toContain("Withdraw");
     expect(html).not.toContain("Rebalance Now");
   });
+
+  it("renders an empty state when latest reference rates are unavailable", () => {
+    const html = renderToStaticMarkup(
+      <DashboardApp
+        viewModel={{
+          title: "MarketMage",
+          simulationBalanceLabel: "Hypothetical starting balance",
+          simulationBalance: {
+            amount: 10_000,
+            currency: "USD",
+          },
+          trustMessages: ["Daily reference rates, not real-time quotes."],
+          navigationItems: [{ id: "overview", label: "Overview" }],
+          currencySupport: {
+            supported: ["USD"],
+            unsupported: ["TWD"],
+          },
+          latestRates: {
+            baseCurrency: "USD",
+            dataDate: "Unavailable",
+            cards: [],
+          },
+        }}
+      />,
+    );
+
+    expect(html).toContain("No latest reference rates are available.");
+    expect(html).toContain("Unsupported requested currencies");
+    expect(html).toContain("TWD");
+  });
 });

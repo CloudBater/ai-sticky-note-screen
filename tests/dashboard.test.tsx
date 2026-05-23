@@ -74,6 +74,9 @@ describe("buildDashboardViewModel", () => {
         summary:
           "Historical movement summary will appear after daily reference rates load.",
       },
+      simulationHistory: {
+        entries: [],
+      },
     });
   });
 });
@@ -307,6 +310,9 @@ const fallbackViewModel: DashboardViewModel = {
     summary:
       "Historical movement summary will appear after daily reference rates load.",
   },
+  simulationHistory: {
+    entries: [],
+  },
 };
 
 const loadedViewModel: DashboardViewModel = {
@@ -323,6 +329,9 @@ const loadedViewModel: DashboardViewModel = {
   historicalTrend: {
     summary:
       "EUR moved up 5% against USD from 2024-08-21 to 2024-08-23. Historical reference only, not a forecast.",
+  },
+  simulationHistory: {
+    entries: [],
   },
 };
 
@@ -405,6 +414,20 @@ describe("DashboardApp", () => {
             summary:
               "EUR moved up 5% against USD from 2024-08-21 to 2024-08-23. Historical reference only, not a forecast.",
           },
+          simulationHistory: {
+            entries: [
+              {
+                id: "sim-1",
+                sourceCurrency: "USD",
+                targetCurrency: "EUR",
+                sourceAmount: 2500,
+                convertedAmount: 2252.5,
+                rate: 0.901,
+                date: "2024-08-23",
+                kind: "simulation-history-entry",
+              },
+            ],
+          },
         }}
       />,
     );
@@ -423,6 +446,8 @@ describe("DashboardApp", () => {
     expect(html).toContain("1 USD = 0.901 EUR");
     expect(html).toContain("Historical Trend");
     expect(html).toContain("Historical reference only, not a forecast.");
+    expect(html).toContain("2,500 USD");
+    expect(html).toContain("2,252.5 EUR");
     expect(html).not.toContain("Trade");
     expect(html).not.toContain("Buy");
     expect(html).not.toContain("Sell");
@@ -455,6 +480,9 @@ describe("DashboardApp", () => {
           historicalTrend: {
             summary:
               "Historical movement summary will appear after daily reference rates load.",
+          },
+          simulationHistory: {
+            entries: [],
           },
         }}
       />,

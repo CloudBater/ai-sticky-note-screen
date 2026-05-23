@@ -17,6 +17,7 @@ export type DashboardViewModel = {
     currency: string;
   };
   trustMessages: string[];
+  navigationItems: NavigationItem[];
   currencySupport: {
     supported: string[];
     unsupported: string[];
@@ -32,6 +33,11 @@ export type LatestRateCard = {
   currency: string;
   label: string;
   rate: number;
+};
+
+export type NavigationItem = {
+  id: "overview" | "trend" | "simulation" | "history";
+  label: string;
 };
 
 export function buildDashboardViewModel(
@@ -69,6 +75,12 @@ export function buildDashboardViewModel(
       "Not investment advice.",
       "No deposits, withdrawals, or trades.",
       "No trades are executed.",
+    ],
+    navigationItems: [
+      { id: "overview", label: "Overview" },
+      { id: "trend", label: "Historical Trend" },
+      { id: "simulation", label: "Simulation" },
+      { id: "history", label: "History" },
     ],
     currencySupport,
     latestRates: {

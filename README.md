@@ -1,3 +1,49 @@
+# MarketMage Submission
+
+Topic 1 implementation for the fullstack take-home.
+
+MarketMage is shipped here as a read-only FX reference dashboard. The app does not claim sub-second data, does not predict exchange rates, and does not offer trading or portfolio recommendations.
+
+## Run Locally
+
+```bash
+npm install
+npm run dev
+```
+
+Then open:
+
+```text
+http://localhost:5173
+```
+
+The frontend calls the local backend at `/api/*`; the backend proxies Frankfurter.
+
+## Test
+
+```bash
+npm test
+```
+
+## What Is Included
+
+- React/Vite frontend dashboard.
+- Express backend proxy for Frankfurter.
+- In-memory cache for repeated currency/rate/history requests.
+- Basic local request rate limiting.
+- Tests for rate helper behavior and unsupported currency handling.
+
+## Scope Notes
+
+- Frankfurter publishes daily ECB reference rates, so the UI says "daily" instead of "real-time".
+- CNY is called out as unsupported instead of being silently dropped.
+- Historical movement is shown as a simple line chart, not a candlestick chart, because the upstream API has no intraday OHLC data.
+- No leverage, auto-rebalance, social leaderboard, or AI prediction claim is implemented.
+
+---
+
+# Original Prompt
+
 # Fullstack Intern Vibe-Coding Screen (Take-Home)
 
 > Welcome to the screen. Read this entire document **before** you start coding.

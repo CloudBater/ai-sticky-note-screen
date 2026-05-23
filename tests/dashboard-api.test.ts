@@ -35,7 +35,7 @@ describe("fetchDashboardReferenceData", () => {
     await expect(
       fetchDashboardReferenceData({
         baseCurrency: "usd",
-        symbols: ["eur", "jpy"],
+        symbols: ["eur", "jpy", "twd"],
         fetchJson,
       }),
     ).resolves.toEqual({

@@ -34,6 +34,12 @@ describe("buildDashboardViewModel", () => {
         "No deposits, withdrawals, or trades.",
         "No trades are executed.",
       ],
+      navigationItems: [
+        { id: "overview", label: "Overview" },
+        { id: "trend", label: "Historical Trend" },
+        { id: "simulation", label: "Simulation" },
+        { id: "history", label: "History" },
+      ],
       currencySupport: {
         supported: ["USD", "EUR", "JPY"],
         unsupported: ["TWD"],

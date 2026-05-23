@@ -93,6 +93,18 @@ describe("previewSimulatedConversion", () => {
       }),
     ).toThrow("Simulated conversion amount must be greater than 0");
   });
+
+  it("rejects future simulated conversion dates", () => {
+    expect(() =>
+      previewSimulatedConversion({
+        sourceCurrency: "usd",
+        targetCurrency: "eur",
+        amount: 100,
+        date: "2999-01-01",
+        dailyReferenceRate: 0.901,
+      }),
+    ).toThrow("Simulated conversion date cannot be in the future");
+  });
 });
 
 describe("POST /api/simulations/conversion-preview", () => {

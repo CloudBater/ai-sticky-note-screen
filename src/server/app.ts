@@ -37,6 +37,7 @@ export function createApp(options: CreateAppOptions = {}) {
   const fetchFrankfurter = options.fetchFrankfurter ?? fetch;
   const frankfurterBaseUrl =
     options.frankfurterBaseUrl ?? DEFAULT_FRANKFURTER_BASE_URL;
+  const responseCache = new Map<string, Record<string, unknown>>();
 
   return async (request: IncomingMessage, response: ServerResponse) => {
     if (request.method === "GET" && request.url === "/api/health") {
@@ -201,6 +202,14 @@ export function createApp(options: CreateAppOptions = {}) {
       upstreamUrl.searchParams.set("from", base);
       upstreamUrl.searchParams.set("to", symbols.join(","));
 
+      const cacheKey = `latest:${base}:${symbols.join(",")}`;
+      const cachedBody = responseCache.get(cacheKey);
+
+      if (cachedBody !== undefined) {
+        sendJson(response, 200, cachedBody);
+        return;
+      }
+
       const upstreamResponse = await fetchFrankfurter(upstreamUrl);
 
       if (!upstreamResponse.ok) {
@@ -213,11 +222,14 @@ export function createApp(options: CreateAppOptions = {}) {
       const upstreamBody =
         (await upstreamResponse.json()) as FrankfurterLatestResponse;
 
-      sendJson(response, 200, {
+      const responseBody = {
         base: upstreamBody.base,
         date: upstreamBody.date,
         rates: upstreamBody.rates,
-      });
+      };
+
+      responseCache.set(cacheKey, responseBody);
+      sendJson(response, 200, responseBody);
       return;
     }
 

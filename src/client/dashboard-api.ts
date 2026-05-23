@@ -22,19 +22,23 @@ export async function fetchDashboardReferenceData(
 ): Promise<DashboardReferenceData> {
   const fetchJson = input.fetchJson ?? defaultFetchJson;
   const baseCurrency = input.baseCurrency.toUpperCase();
-  const symbols = input.symbols.map((symbol) => symbol.toUpperCase());
+  const currenciesBody = await fetchJson("/api/currencies");
+  const currencies = readCurrenciesBody(currenciesBody);
+  const supportedCurrencyCodes = new Set(Object.keys(currencies));
+  const symbols = input.symbols
+    .map((symbol) => symbol.toUpperCase())
+    .filter((symbol) => supportedCurrencyCodes.has(symbol));
   const latestRatesUrl = new URL("/api/rates/latest", "http://localhost");
 
   latestRatesUrl.searchParams.set("base", baseCurrency);
   latestRatesUrl.searchParams.set("symbols", symbols.join(","));
 
-  const [currenciesBody, latestRatesBody] = await Promise.all([
-    fetchJson("/api/currencies"),
-    fetchJson(`${latestRatesUrl.pathname}${latestRatesUrl.search}`),
-  ]);
+  const latestRatesBody = await fetchJson(
+    `${latestRatesUrl.pathname}${latestRatesUrl.search}`,
+  );
 
   return {
-    currencies: readCurrenciesBody(currenciesBody),
+    currencies,
     latestRates: readLatestRatesBody(latestRatesBody),
   };
 }

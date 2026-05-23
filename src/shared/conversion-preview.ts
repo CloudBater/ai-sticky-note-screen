@@ -27,6 +27,19 @@ export function previewSimulatedConversion(
     throw new Error("Simulated conversion amount must be greater than 0");
   }
 
+  const conversionDate = new Date(`${input.date}T00:00:00.000Z`);
+  const today = new Date();
+  const todayDateOnly = new Date(
+    Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()),
+  );
+
+  if (
+    Number.isNaN(conversionDate.getTime()) ||
+    conversionDate > todayDateOnly
+  ) {
+    throw new Error("Simulated conversion date cannot be in the future");
+  }
+
   return {
     sourceCurrency: input.sourceCurrency.toUpperCase(),
     targetCurrency: input.targetCurrency.toUpperCase(),

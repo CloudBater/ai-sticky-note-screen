@@ -1,8 +1,31 @@
 import { describe, expect, it } from "vitest";
 
+import { splitRequestedCurrenciesBySupport } from "../src/shared/currency-support";
 import { previewCurrencyWatchlist } from "../src/shared/currency-watchlist-preview";
 
-describe("previewCurrencyWatchlist", () => {
+describe("currency reference utilities", () => {
+  it("normalizes requested currency codes and preserves unsupported currencies", () => {
+    const requestedCurrencies = ["usd", "eur", "jpy", "twd", "gbp", "cny", "sgd"];
+    const frankfurterSupportedCurrencies = {
+      USD: "US Dollar",
+      EUR: "Euro",
+      JPY: "Japanese Yen",
+      GBP: "Pound Sterling",
+      CNY: "Chinese Yuan Renminbi",
+      SGD: "Singapore Dollar",
+    };
+
+    expect(
+      splitRequestedCurrenciesBySupport(
+        requestedCurrencies,
+        frankfurterSupportedCurrencies,
+      ),
+    ).toEqual({
+      supported: ["USD", "EUR", "JPY", "GBP", "CNY", "SGD"],
+      unsupported: ["TWD"],
+    });
+  });
+
   it("creates historical reference points for user-selected watchlist currencies", () => {
     expect(
       previewCurrencyWatchlist({

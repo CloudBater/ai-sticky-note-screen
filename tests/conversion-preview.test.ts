@@ -105,6 +105,19 @@ describe("previewSimulatedConversion", () => {
       }),
     ).toThrow("Simulated conversion date cannot be in the future");
   });
+
+  it("rejects simulated conversions with currencies outside the supported set", () => {
+    expect(() =>
+      previewSimulatedConversion({
+        sourceCurrency: "usd",
+        targetCurrency: "twd",
+        amount: 100,
+        date: "2024-08-23",
+        dailyReferenceRate: 32,
+        supportedCurrencies: ["USD", "EUR", "JPY"],
+      }),
+    ).toThrow("Simulated conversion currency is not supported");
+  });
 });
 
 describe("POST /api/simulations/conversion-preview", () => {

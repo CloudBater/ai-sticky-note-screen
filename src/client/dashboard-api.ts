@@ -28,6 +28,18 @@ export async function fetchDashboardReferenceData(
   const symbols = input.symbols
     .map((symbol) => symbol.toUpperCase())
     .filter((symbol) => supportedCurrencyCodes.has(symbol));
+
+  if (symbols.length === 0) {
+    return {
+      currencies,
+      latestRates: {
+        base: baseCurrency,
+        date: "Unavailable",
+        rates: {},
+      },
+    };
+  }
+
   const latestRatesUrl = new URL("/api/rates/latest", "http://localhost");
 
   latestRatesUrl.searchParams.set("base", baseCurrency);

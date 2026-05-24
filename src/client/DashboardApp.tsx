@@ -371,19 +371,37 @@ export function DashboardApp({ viewModel }: DashboardAppProps) {
             <h2 id="latest-rates-heading">Latest daily reference rates</h2>
           </div>
 
-          {viewModel.latestRates.cards.length > 0 ? (
+          {viewModel.latestRates.cards.length > 0 && watchlistCurrencies.length > 0 ? (
             <>
-              <div className="rate-grid">
-                {viewModel.latestRates.cards.map((card) => (
-                  <RateCard
-                    code={card.currency}
-                    key={card.currency}
-                    label={card.label}
-                    onClick={() => setSelectedCurrency(card.currency)}
-                    selected={card.currency === selectedCurrency}
-                    value={formatRate(card.rate)}
-                  />
-                ))}
+              <div className="rate-grid marquee-container">
+                <div className="marquee-content">
+                  {watchlistCurrencies.map((code) => {
+                    const card = viewModel.latestRates.cards.find(c => c.currency === code);
+                    return (
+                      <RateCard
+                        code={code}
+                        key={code}
+                        label={card?.label ?? `1 ${viewModel.latestRates.baseCurrency} = ??? ${code}`}
+                        onClick={() => setSelectedCurrency(code)}
+                        selected={code === selectedCurrency}
+                        value={card ? formatRate(card.rate) : "---"}
+                      />
+                    );
+                  })}
+                  {watchlistCurrencies.map((code) => {
+                    const card = viewModel.latestRates.cards.find(c => c.currency === code);
+                    return (
+                      <RateCard
+                        code={code}
+                        key={`${code}-dup`}
+                        label={card?.label ?? `1 ${viewModel.latestRates.baseCurrency} = ??? ${code}`}
+                        onClick={() => setSelectedCurrency(code)}
+                        selected={code === selectedCurrency}
+                        value={card ? formatRate(card.rate) : "---"}
+                      />
+                    );
+                  })}
+                </div>
               </div>
               <div
                 className="currency-detail-frame"

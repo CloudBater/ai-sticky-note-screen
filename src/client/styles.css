@@ -971,3 +971,31 @@ select:focus {
   color: var(--text-secondary);
   font-size: 14px;
 }
+
+/* Marquee */
+.rate-grid.marquee-container {
+  display: flex;
+  overflow: hidden;
+  width: 100%;
+  padding-bottom: var(--space-2);
+}
+
+.marquee-content {
+  display: flex;
+  gap: var(--space-4);
+  animation: marquee 30s linear infinite;
+  flex-wrap: nowrap;
+}
+
+.marquee-content:hover {
+  animation-play-state: paused;
+}
+
+.marquee-content .rate-card {
+  flex-shrink: 0;
+}
+
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(calc(-50% - (var(--space-4) / 2))); }
+}

@@ -515,6 +515,7 @@ function SimulatedConversionPreviewCard({
   const [preview, setPreview] = useState<SimulatedConversionPreview | null>(null);
   const [previewError, setPreviewError] = useState<string | null>(null);
   const [isPreviewing, setIsPreviewing] = useState(false);
+  const [hasAddedToHistory, setHasAddedToHistory] = useState(false);
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setPreviewError(null);
@@ -605,6 +606,7 @@ function SimulatedConversionPreviewCard({
             onClick={() => {
               if (preview) {
                 onAddPreview(preview);
+                setHasAddedToHistory(true);
               }
             }}
             type="button"
@@ -622,6 +624,14 @@ function SimulatedConversionPreviewCard({
         </p>
       ) : null}
       {previewError ? <p className="warning-text">{previewError}</p> : null}
+      <p
+        aria-live="polite"
+        className="conversion-added-confirm"
+        hidden={!hasAddedToHistory}
+      >
+        Added to simulation history.{" "}
+        <span>View simulation history in the History tab.</span>
+      </p>
       <p className="empty-state">
         Preview only. No trades are executed.
       </p>

@@ -162,16 +162,15 @@ describe("buildDashboardViewModel", () => {
 });
 
 describe("currency motion constants", () => {
-  it("keeps premium dashboard motion restrained and reusable", () => {
-    expect(currencyTabTransition.durationMs).toBeGreaterThanOrEqual(350);
-    expect(currencyTabTransition.durationMs).toBeLessThanOrEqual(500);
-    expect(currencyTabTransition.easing).toBe("cubic-bezier(0.22, 1, 0.36, 1)");
-    expect(currencyContentTransition.exitMs).toBeGreaterThanOrEqual(180);
-    expect(currencyContentTransition.enterMs).toBeGreaterThanOrEqual(400);
-    expect(numberTransition.durationMs).toBeGreaterThanOrEqual(500);
-    expect(numberTransition.durationMs).toBeLessThanOrEqual(900);
-    expect(chartSwitchTransition.durationMs).toBeGreaterThanOrEqual(400);
-    expect(cardHoverMotion.translateY).toBe(-4);
+  it("keeps dashboard motion aligned with the frontend spec", () => {
+    expect(currencyTabTransition.durationMs).toBe(200);
+    expect(currencyTabTransition.easing).toBe("cubic-bezier(.2,.8,.2,1)");
+    expect(currencyContentTransition.exitMs).toBe(200);
+    expect(currencyContentTransition.enterMs).toBe(200);
+    expect(numberTransition.durationMs).toBe(200);
+    expect(chartSwitchTransition.durationMs).toBe(600);
+    expect(cardHoverMotion.durationMs).toBe(120);
+    expect(cardHoverMotion.translateY).toBe(0);
   });
 });
 
@@ -719,34 +718,33 @@ describe("DashboardApp", () => {
 
     expect(html).toContain("MarketMage");
     expect(html).toContain('aria-label="MarketMage brand"');
-    expect(html).toContain('class="brand-icon"');
-    expect(html).toContain('data-theme="light"');
-    expect(html).toContain('aria-label="Toggle dashboard theme"');
-    expect(html).toContain('aria-pressed="false"');
-    expect(html).toContain("Dark mode");
+    expect(html).toContain('class="brand-mark"');
+    expect(html).not.toContain('class="brand-icon"');
+    expect(html).not.toContain('aria-label="Toggle dashboard theme"');
     expect(html).toContain('class="app-header"');
     expect(html).toContain("Simulation balance");
-    expect(html).toContain("10,000 USD");
+    expect(html).toContain('class="num num-m"');
+    expect(html).toContain('class="code"');
     expect(html).toContain('class="simulation-balance-editor"');
     expect(html).toContain("Adjust simulation amount");
     expect(html).toContain('aria-label="Adjust simulation amount"');
     expect(html).toContain('name="simulation-balance-amount"');
     expect(html).toContain("Hypothetical amount only");
-    expect(html).toContain('class="trust-strip"');
+    expect(html).toContain('class="disclaimer-panel"');
     expect(html).toContain("Daily reference rates, not real-time quotes.");
     expect(html).toContain("No deposits, withdrawals, or trades.");
+    expect(html).not.toContain("Reference coverage");
     expect(html).not.toContain('aria-label="Quick actions"');
     expect(html).not.toContain('class="quick-action-strip"');
     expect(html).not.toContain("View trend");
     expect(html).not.toContain("Preview conversion</button>");
     expect(html).not.toContain("Review history");
-    expect(html).toContain("Supported currencies");
-    expect(html).toContain("USD");
-    expect(html).toContain("Unsupported requested currencies");
-    expect(html).toContain("TWD");
+    expect(html).toContain('class="currency-pill currency-pill-supported"');
+    expect(html).toContain('class="currency-pill currency-pill-unsupported"');
+    expect(html).toContain('aria-label="TWD unsupported"');
+    expect(html).not.toContain('class="panel support-panel"');
+    expect(html).not.toContain("Unsupported requested currencies");
     expect(html).toContain("Latest daily reference rates");
-    expect(html).toContain('data-currency-selector="true"');
-    expect(html).toContain('data-motion-role="active-currency-indicator"');
     expect(html).toContain('data-selected-currency="EUR"');
     expect(html).toContain('data-overview-trend="EUR"');
     expect(html).toContain('aria-label="Overview daily rate trend chart"');
@@ -757,7 +755,7 @@ describe("DashboardApp", () => {
     expect(html).toContain("2024-08-23");
     expect(html).toContain("1 USD = 0.901 EUR");
     expect(html).toContain("Historical line chart");
-    expect(html).toContain("Historical reference only, not a forecast.");
+    expect(html).toContain("Historical reference only");
     expect(html).toContain("Allocation history preview");
     expect(html).toContain('class="simulation-control-row"');
     expect(html).toContain('data-layout-slot="amount-left"');
@@ -848,8 +846,8 @@ describe("DashboardApp", () => {
     );
 
     expect(html).toContain("No latest reference rates are available.");
-    expect(html).toContain("Unsupported requested currencies");
-    expect(html).toContain("TWD");
+    expect(html).toContain('aria-label="TWD unsupported"');
+    expect(html).not.toContain("Unsupported requested currencies");
   });
 
   it("renders tab navigation without duplicate quick actions", () => {
@@ -918,72 +916,53 @@ describe("DashboardApp", () => {
     expect(html).not.toContain(String.fromCharCode(0xfffd));
   });
 
-  it("keeps tab navigation sticky at the top of the content area", () => {
+  it("uses top underline tabs instead of sticky or bottom navigation", () => {
     const styles = readFileSync(
       resolve(process.cwd(), "src/client/styles.css"),
       "utf8",
     );
 
-    expect(styles).toContain(".top-nav {\n  position: sticky;");
-    expect(styles).toContain("top: 0;");
-    expect(styles).not.toContain(".top-nav {\n  position: fixed;");
+    expect(styles).toContain(".tabs {");
+    expect(styles).toContain("border-bottom: 1px solid var(--border-subtle);");
+    expect(styles).toContain(".tab[aria-current=\"page\"]::after");
+    expect(styles).not.toContain("position: sticky;");
     expect(styles).not.toContain(".bottom-nav {\n  position: fixed;");
   });
 
-  it("uses compact dashboard layout rules instead of landing-page scale", () => {
+  it("uses the frontend spec layout rules instead of landing-page scale", () => {
     const styles = readFileSync(
       resolve(process.cwd(), "src/client/styles.css"),
       "utf8",
     );
 
-    expect(styles).toContain(".app-header {\n  display: grid;");
-    expect(styles).toContain("grid-template-columns: minmax(0, 1fr) auto;");
-    expect(styles).toContain("padding: 18px 20px;");
+    expect(styles).toContain(".app-shell {");
+    expect(styles).toContain("max-width: 1180px;");
+    expect(styles).toContain("padding: var(--space-8) var(--space-6) var(--space-7);");
+    expect(styles).toContain(".app-header {\n  display: flex;");
     expect(styles).toContain(".brand-lockup h1 {");
-    expect(styles).toContain("grid-template-columns: 54px minmax(0, auto);");
-    expect(styles).toContain("font-size: clamp(2.25rem, 4vw, 3.2rem);");
-    expect(styles).toContain("line-height: 1.16;");
-    expect(styles).toContain("padding-bottom: 0.08em;");
-    expect(styles).toContain(".trust-strip {");
-    expect(styles).toContain("box-shadow: none;");
-    expect(styles).toContain(".watchlist-panel,\n.support-panel {");
-    expect(styles).toContain("padding: 18px;");
+    expect(styles).toContain("font-family: var(--font-serif);");
+    expect(styles).toContain(".disclaimer-panel {");
+    expect(styles).toContain("border-left: 2px solid var(--info-bar);");
+    expect(styles).toContain(".dashboard-grid {");
+    expect(styles).toContain("grid-template-columns: repeat(12, minmax(0, 1fr));");
+    expect(styles).toContain("border-radius: var(--radius-pill);");
+    expect(styles).toContain("background: var(--surface-2);");
+    expect(styles).toContain(".currency-pill-unsupported,");
     expect(styles).not.toContain(".quick-action-strip {");
     expect(styles).not.toContain("font-size: clamp(3rem, 7.5vw, 5.6rem);");
   });
 
-  it("defines readable light and dark theme tokens", () => {
-    const styles = readFileSync(
-      resolve(process.cwd(), "src/client/styles.css"),
+  it("keeps color and type tokens in the root token file", () => {
+    const tokens = readFileSync(
+      resolve(process.cwd(), "src/styles/tokens.css"),
       "utf8",
     );
-    const requiredThemeTokens = [
-      "--page-bg:",
-      "--card-bg:",
-      "--elevated-surface:",
-      "--text-primary:",
-      "--text-secondary:",
-      "--text-muted:",
-      "--text-accent:",
-      "--border:",
-      "--button-bg:",
-      "--button-hover-bg:",
-      "--active-nav-bg:",
-    ];
-    const lightThemeBlock =
-      styles.match(/\.app-shell\[data-theme="light"\]\s*\{[^}]+\}/s)?.[0] ??
-      "";
-    const darkThemeBlock =
-      styles.match(/\.app-shell\[data-theme="dark"\]\s*\{[^}]+\}/s)?.[0] ??
-      "";
 
-    expect(lightThemeBlock).toContain('.app-shell[data-theme="light"]');
-    expect(darkThemeBlock).toContain('.app-shell[data-theme="dark"]');
-
-    for (const token of requiredThemeTokens) {
-      expect(lightThemeBlock).toContain(token);
-      expect(darkThemeBlock).toContain(token);
-    }
+    expect(tokens).toContain(":root {");
+    expect(tokens).toContain("--surface-0: #0A0B0D;");
+    expect(tokens).toContain("--accent: #7DD3C0;");
+    expect(tokens).toContain("--font-serif:");
+    expect(tokens).toContain("--font-mono:");
   });
 
   it("places simulation controls above the allocation history chart", () => {
@@ -992,13 +971,14 @@ describe("DashboardApp", () => {
       "utf8",
     );
 
-    expect(styles).toContain(".simulation-control-row {\n  display: grid;");
+    expect(styles).toContain(".simulation-control-row,");
     expect(styles).toContain(
-      "grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);",
+      "grid-template-columns: repeat(2, minmax(0, 1fr));",
     );
-    expect(styles).toContain(".simulation-balance-editor {\n  grid-column: 1;");
-    expect(styles).toContain(".conversion-preview-card {\n  grid-column: 2;");
-    expect(styles).toContain(".allocation-preview-card {\n  grid-column: 1 / -1;");
+    expect(styles).toContain(".simulation-balance-editor,");
+    expect(styles).toContain(".conversion-preview-card,");
+    expect(styles).toContain(".allocation-preview-card,");
+    expect(styles).toContain("grid-column: 1 / -1;");
     expect(styles).toContain(".allocation-chart-tooltip");
   });
 
@@ -1008,7 +988,8 @@ describe("DashboardApp", () => {
       "utf8",
     );
 
-    expect(styles).toContain(".history-panel {\n  grid-column: span 6;");
+    expect(styles).toContain(".history-panel {");
+    expect(styles).toContain("grid-column: span 12;");
   });
 
   it("shows add-to-history button and reserves confirmation slot on initial render", () => {
@@ -1027,19 +1008,25 @@ describe("DashboardApp", () => {
     );
 
     expect(html).toContain('aria-label="Reference and safety notes"');
-    expect(html).toContain("Reference &amp; Safety");
+    expect(html).toContain('class="disclaimer-panel"');
+    expect(html).toContain("Reference &amp; safety");
     expect(html).toContain("What this product is");
     expect(html).toContain("Daily reference rates, not real-time quotes.");
+    expect(html).not.toContain('class="trust-strip"');
   });
 
-  it("defines monospace and serif font family tokens in the stylesheet", () => {
+  it("defines monospace and serif font family tokens in tokens.css", () => {
+    const tokens = readFileSync(
+      resolve(process.cwd(), "src/styles/tokens.css"),
+      "utf8",
+    );
     const styles = readFileSync(
       resolve(process.cwd(), "src/client/styles.css"),
       "utf8",
     );
 
-    expect(styles).toContain("--font-mono:");
-    expect(styles).toContain("--font-serif:");
+    expect(tokens).toContain("--font-mono:");
+    expect(tokens).toContain("--font-serif:");
     expect(styles).toContain("font-family: var(--font-mono);");
     expect(styles).toContain("font-family: var(--font-serif);");
   });

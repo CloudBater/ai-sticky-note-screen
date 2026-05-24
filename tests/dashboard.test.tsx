@@ -800,6 +800,29 @@ describe("DashboardApp", () => {
     expect(html).not.toContain("Rebalance Now");
   });
 
+  it("renders a user-addable selected currencies watchlist", () => {
+    const html = renderToStaticMarkup(
+      <DashboardApp
+        viewModel={{
+          ...loadedViewModel,
+          currencyCatalog: {
+            USD: "US Dollar",
+            EUR: "Euro",
+            JPY: "Japanese Yen",
+            TWD: "New Taiwan Dollar",
+          },
+        }}
+      />,
+    );
+
+    expect(html).toContain('class="currency-watchlist-form"');
+    expect(html).toContain('aria-label="Add currency to selected currencies"');
+    expect(html).toContain('placeholder="e.g. CAD"');
+    expect(html).toContain('class="currency-pill currency-pill-supported"');
+    expect(html).toContain('class="currency-pill currency-pill-unsupported"');
+    expect(html).toContain('aria-label="TWD unsupported"');
+  });
+
   it("renders an empty state when latest reference rates are unavailable", () => {
     const html = renderToStaticMarkup(
       <DashboardApp

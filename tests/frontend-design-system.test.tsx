@@ -80,5 +80,9 @@ describe("MarketMage frontend design system", () => {
     expect(styles).toContain("background-image: linear-gradient(var(--accent-dim), var(--accent-dim));");
     expect(styles).toContain(".chart-line");
     expect(styles).toContain("stroke: var(--accent-dim);");
+    expect(styles).toContain('.currency-watchlist-form {');
+    expect(styles).toContain('.currency-pill-unsupported,');
+    expect(styles).toContain('opacity: 0.6;');
+    expect(styles).toContain('text-decoration: line-through;');
   });
 });

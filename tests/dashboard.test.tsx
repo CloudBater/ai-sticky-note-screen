@@ -654,7 +654,7 @@ describe("DashboardApp", () => {
     expect(html).toContain("Simulation balance");
     expect(html).toContain('class="num num-m"');
     expect(html).toContain('class="code"');
-    expect(html).toContain('class="simulation-balance-editor"');
+    expect(html).toContain("simulation-balance-editor");
     expect(html).toContain("Adjust simulation amount");
     expect(html).toContain('aria-label="Adjust simulation amount"');
     expect(html).toContain('name="simulation-balance-amount"');
@@ -689,9 +689,18 @@ describe("DashboardApp", () => {
     expect(html).toContain("Historical line chart");
     expect(html).toContain("Historical reference only");
     expect(html).not.toContain("Allocation history preview");
-    expect(html).toContain('class="simulation-control-row"');
-    expect(html).toContain('data-layout-slot="amount-left"');
-    expect(html).toContain('data-layout-slot="conversion-right"');
+    expect(html).toContain('class="simulation-stack"');
+    expect(html).toContain('data-conversion-direction="forward"');
+    expect(html).toContain('data-conversion-direction="reverse"');
+    expect(html).toContain('data-layout-slot="forward-chart-left"');
+    expect(html).toContain('data-layout-slot="forward-preview-right"');
+    expect(html).toContain('data-layout-slot="reverse-chart-left"');
+    expect(html).toContain('data-layout-slot="reverse-preview-right"');
+    expect(html).toContain('data-layout-slot="amount-bottom"');
+    expect(html).not.toContain('data-layout-slot="amount-left"');
+    expect(html).toContain("Forward simulated conversion");
+    expect(html).toContain("Reverse simulated conversion");
+    expect(html).toContain("Source vs target curve");
     expect(html).toContain("Simulation balance");
     expect(html).toContain("Adjust simulation amount");
     expect(html).not.toContain("Choose currencies and allocation");
@@ -709,6 +718,10 @@ describe("DashboardApp", () => {
     expect(html).toContain('type="submit"');
     expect(html).toContain("Preview simulated conversion");
     expect(html).toContain("Add to simulation history");
+    expect(html).toContain('class="conversion-result-source"');
+    expect(html).toContain('class="conversion-result-target"');
+    expect(html).toContain('class="conversion-result-rate"');
+    expect(html).toContain('data-live-preview="true"');
     expect(html).toContain("No trades are executed.");
     expect(html).toContain("Available simulation balance only.");
     expect(html).not.toContain("Manual 50% USD / 50% EUR allocation moved");
@@ -838,8 +851,14 @@ describe("DashboardApp", () => {
       "utf8",
     );
 
-    expect(source).toContain("const [sourceCurrency, setSourceCurrency]");
-    expect(source).toContain("sourceCurrency,");
+    expect(source).toContain(
+      "const [forwardSourceCurrency, setForwardSourceCurrency]",
+    );
+    expect(source).toContain(
+      "const [reverseSourceCurrency, setReverseSourceCurrency]",
+    );
+    expect(source).toContain("sourceCurrency={forwardSourceCurrency}");
+    expect(source).toContain("sourceCurrency={reverseSourceCurrency}");
     expect(source).toContain("onChange={(event) => {");
     expect(source).not.toContain("sourceCurrency: baseCurrency");
     expect(source).not.toContain("defaultValue={baseCurrency}");
@@ -996,10 +1015,12 @@ describe("DashboardApp", () => {
       "utf8",
     );
 
-    expect(styles).toContain(".simulation-control-row,");
+    expect(styles).toContain(".simulation-stack {");
+    expect(styles).toContain(".simulation-conversion-row {");
     expect(styles).toContain(
-      "grid-template-columns: repeat(2, minmax(0, 1fr));",
+      "grid-template-columns: minmax(0, 1fr) minmax(320px, 0.9fr);",
     );
+    expect(styles).toContain(".simulation-rate-chart,");
     expect(styles).toContain(".simulation-balance-editor,");
     expect(styles).toContain(".conversion-preview-card {");
     expect(styles).not.toContain(".allocation-preview-card");

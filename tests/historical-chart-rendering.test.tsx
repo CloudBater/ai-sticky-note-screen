@@ -49,17 +49,6 @@ describe("historical chart rendering", () => {
         },
       ],
     },
-    allocationPreview: {
-      baseCurrency: "USD",
-      startingAmount: 10_000,
-      status: "pending",
-      summary:
-        "Manual allocation historical preview will appear after daily history loads.",
-      currencyOptions: [{ currency: "USD", label: "USD" }],
-      referenceRatesByDate: {},
-      allocations: [],
-      points: [],
-    },
     simulationHistory: {
       entries: [],
     },

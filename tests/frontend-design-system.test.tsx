@@ -41,7 +41,7 @@ describe("MarketMage frontend design system", () => {
           value="0.9010"
         />
         <Tab active>Overview</Tab>
-        <Slider ariaLabel="First allocation percent" value={50} />
+        <Slider ariaLabel="Simulation percent" value={50} />
       </>,
     );
 

@@ -87,75 +87,8 @@ describe("buildDashboardViewModel", () => {
         points: [],
         allSeries: [],
       },
-      allocationPreview: {
-        baseCurrency: "USD",
-        startingAmount: 10_000,
-        status: "pending",
-        summary:
-          "Manual allocation historical preview will appear after daily history loads.",
-        currencyOptions: [{ currency: "USD", label: "USD" }],
-        referenceRatesByDate: {},
-        allocations: [],
-        points: [],
-      },
       simulationHistory: {
         entries: [],
-      },
-    });
-  });
-
-  it("loads a manual allocation historical preview from historical rates", async () => {
-    await expect(
-      loadDashboardViewModel({
-        simulationBalance: 10_000,
-        requestedCurrencies: ["usd", "eur"],
-        fetchReferenceData: async () => ({
-          currencies: {
-            USD: "US Dollar",
-            EUR: "Euro",
-          },
-          latestRates: {
-            base: "USD",
-            date: "2024-08-23",
-            rates: {
-              EUR: 0.945,
-            },
-          },
-        }),
-        fetchHistoricalRates: async (request) => ({
-          base: request.baseCurrency,
-          symbol: request.symbols[0],
-          startDate: request.startDate,
-          endDate: request.endDate,
-          points: [
-            { date: "2024-08-21", rate: 0.9 },
-            { date: "2024-08-23", rate: 0.945 },
-          ],
-        }),
-      }),
-    ).resolves.toMatchObject({
-      allocationPreview: {
-        baseCurrency: "USD",
-        startingAmount: 10_000,
-        status: "ready",
-        summary:
-          "Manual 50% USD / 50% EUR allocation moved from 10,000 USD to 9,761.9 USD. Historical reference only.",
-        currencyOptions: [
-          { currency: "USD", label: "USD" },
-          { currency: "EUR", label: "EUR" },
-        ],
-        referenceRatesByDate: {
-          "2024-08-21": { EUR: 0.9 },
-          "2024-08-23": { EUR: 0.945 },
-        },
-        allocations: [
-          { currency: "USD", percent: 50, label: "50% USD" },
-          { currency: "EUR", percent: 50, label: "50% EUR" },
-        ],
-        points: [
-          { date: "2024-08-21", value: 10_000, label: "10,000 USD" },
-          { date: "2024-08-23", value: 9_761.9, label: "9,761.9 USD" },
-        ],
       },
     });
   });
@@ -519,63 +452,6 @@ describe("loadDashboardViewModel", () => {
     ]);
   });
 
-  it("loads allocation preview histories for every supported target currency", async () => {
-    await expect(
-      loadDashboardViewModel({
-        simulationBalance: 10_000,
-        requestedCurrencies: ["usd", "eur", "jpy"],
-        fetchReferenceData: async () => ({
-          currencies: {
-            USD: "US Dollar",
-            EUR: "Euro",
-            JPY: "Japanese Yen",
-          },
-          latestRates: {
-            base: "USD",
-            date: "2024-08-23",
-            rates: {
-              EUR: 0.945,
-              JPY: 144.9,
-            },
-          },
-        }),
-        fetchHistoricalRates: async (request) => ({
-          base: request.baseCurrency,
-          symbol: request.symbols[0],
-          startDate: request.startDate,
-          endDate: request.endDate,
-          points:
-            request.symbols[0] === "EUR"
-              ? [
-                  { date: "2024-08-21", rate: 0.9 },
-                  { date: "2024-08-23", rate: 0.945 },
-                ]
-              : [
-                  { date: "2024-08-21", rate: 140 },
-                  { date: "2024-08-23", rate: 144.9 },
-                ],
-        }),
-      }),
-    ).resolves.toMatchObject({
-      allocationPreview: {
-        currencyOptions: [
-          { currency: "USD", label: "USD" },
-          { currency: "EUR", label: "EUR" },
-          { currency: "JPY", label: "JPY" },
-        ],
-        referenceRatesByDate: {
-          "2024-08-21": {
-            EUR: 0.9,
-            JPY: 140,
-          },
-          "2024-08-23": {
-            EUR: 0.945,
-            JPY: 144.9,
-          },
-        },
-      },
-    });
-  });
 });
 
 const fallbackViewModel: DashboardViewModel = {
@@ -614,17 +490,6 @@ const fallbackViewModel: DashboardViewModel = {
     symbol: "",
     points: [],
     allSeries: [],
-  },
-  allocationPreview: {
-    baseCurrency: "USD",
-    startingAmount: 10_000,
-    status: "pending",
-    summary:
-      "Manual allocation historical preview will appear after daily history loads.",
-    currencyOptions: [{ currency: "USD", label: "USD" }],
-    referenceRatesByDate: {},
-    allocations: [],
-    points: [],
   },
   simulationHistory: {
     entries: [],
@@ -761,29 +626,6 @@ describe("DashboardApp", () => {
               },
             ],
           },
-          allocationPreview: {
-            baseCurrency: "USD",
-            startingAmount: 10_000,
-            status: "ready",
-            summary:
-              "Manual 50% USD / 50% EUR allocation moved from 10,000 USD to 9,761.9 USD. Historical reference only.",
-            currencyOptions: [
-              { currency: "USD", label: "USD" },
-              { currency: "EUR", label: "EUR" },
-            ],
-            referenceRatesByDate: {
-              "2024-08-21": { EUR: 0.9 },
-              "2024-08-23": { EUR: 0.945 },
-            },
-            allocations: [
-              { currency: "USD", percent: 50, label: "50% USD" },
-              { currency: "EUR", percent: 50, label: "50% EUR" },
-            ],
-            points: [
-              { date: "2024-08-21", value: 10_000, label: "10,000 USD" },
-              { date: "2024-08-23", value: 9_761.9, label: "9,761.9 USD" },
-            ],
-          },
           simulationHistory: {
             entries: [
               {
@@ -846,18 +688,17 @@ describe("DashboardApp", () => {
     expect(html).toContain("1 USD = 0.901 EUR");
     expect(html).toContain("Historical line chart");
     expect(html).toContain("Historical reference only");
-    expect(html).toContain("Allocation history preview");
+    expect(html).not.toContain("Allocation history preview");
     expect(html).toContain('class="simulation-control-row"');
     expect(html).toContain('data-layout-slot="amount-left"');
     expect(html).toContain('data-layout-slot="conversion-right"');
     expect(html).toContain("Simulation balance");
     expect(html).toContain("Adjust simulation amount");
-    expect(html).toContain("Choose currencies and allocation");
-    expect(html).toContain('aria-label="First allocation currency"');
-    expect(html).toContain('aria-label="Second allocation currency"');
-    expect(html).toContain('aria-label="First allocation percent"');
-    expect(html).toContain('name="first-allocation-percent"');
-    expect(html).toContain('type="range"');
+    expect(html).not.toContain("Choose currencies and allocation");
+    expect(html).not.toContain('aria-label="First allocation currency"');
+    expect(html).not.toContain('aria-label="Second allocation currency"');
+    expect(html).not.toContain('aria-label="First allocation percent"');
+    expect(html).not.toContain('name="first-allocation-percent"');
     expect(html).toContain('aria-label="Simulated conversion source currency"');
     expect(html).toContain('aria-label="Simulated conversion target currency"');
     expect(html).toContain('aria-label="Simulated conversion amount"');
@@ -870,14 +711,10 @@ describe("DashboardApp", () => {
     expect(html).toContain("Add to simulation history");
     expect(html).toContain("No trades are executed.");
     expect(html).toContain("Available simulation balance only.");
-    expect(html).toContain("Manual 50% USD / 50% EUR allocation moved");
-    expect(html).toContain("50% USD");
-    expect(html).toContain("50% EUR");
-    expect(html).toContain('data-chart-type="allocation-history-line"');
-    expect(html).toContain('aria-label="Historical allocation value line chart"');
-    expect(html).toContain("2024-08-23: 9,761.9 USD");
-    expect(html).toContain("Latest simulated value");
-    expect(html).toContain("9,761.9 USD");
+    expect(html).not.toContain("Manual 50% USD / 50% EUR allocation moved");
+    expect(html).not.toContain('data-chart-type="allocation-history-line"');
+    expect(html).not.toContain('aria-label="Historical allocation value line chart"');
+    expect(html).not.toContain("Latest simulated value");
     expect(html).toContain("2,500 USD");
     expect(html).toContain("2,252 EUR");
     expect(html).not.toContain('class="allocation-points"');
@@ -1037,17 +874,6 @@ describe("DashboardApp", () => {
             points: [],
             allSeries: [],
           },
-          allocationPreview: {
-            baseCurrency: "USD",
-            startingAmount: 10_000,
-            status: "pending",
-            summary:
-              "Manual allocation historical preview will appear after daily history loads.",
-            currencyOptions: [{ currency: "USD", label: "USD" }],
-            referenceRatesByDate: {},
-            allocations: [],
-            points: [],
-          },
           simulationHistory: {
             entries: [],
           },
@@ -1093,17 +919,6 @@ describe("DashboardApp", () => {
             symbol: "",
             points: [],
             allSeries: [],
-          },
-          allocationPreview: {
-            baseCurrency: "USD",
-            startingAmount: 10_000,
-            status: "pending",
-            summary:
-              "Manual allocation historical preview will appear after daily history loads.",
-            currencyOptions: [{ currency: "USD", label: "USD" }],
-            referenceRatesByDate: {},
-            allocations: [],
-            points: [],
           },
           simulationHistory: {
             entries: [],
@@ -1175,7 +990,7 @@ describe("DashboardApp", () => {
     expect(tokens).toContain("--font-mono:");
   });
 
-  it("places simulation controls above the allocation history chart", () => {
+  it("keeps simulation controls as the complete simulate page layout", () => {
     const styles = readFileSync(
       resolve(process.cwd(), "src/client/styles.css"),
       "utf8",
@@ -1186,10 +1001,9 @@ describe("DashboardApp", () => {
       "grid-template-columns: repeat(2, minmax(0, 1fr));",
     );
     expect(styles).toContain(".simulation-balance-editor,");
-    expect(styles).toContain(".conversion-preview-card,");
-    expect(styles).toContain(".allocation-preview-card,");
-    expect(styles).toContain("grid-column: 1 / -1;");
-    expect(styles).toContain(".allocation-chart-tooltip");
+    expect(styles).toContain(".conversion-preview-card {");
+    expect(styles).not.toContain(".allocation-preview-card");
+    expect(styles).not.toContain(".allocation-chart-tooltip");
   });
 
   it("uses full-width layout for the history panel", () => {

@@ -681,6 +681,10 @@ describe("DashboardApp", () => {
     expect(html).toContain("MarketMage");
     expect(html).toContain('aria-label="MarketMage brand"');
     expect(html).toContain('class="brand-icon"');
+    expect(html).toContain('data-theme="light"');
+    expect(html).toContain('aria-label="Toggle dashboard theme"');
+    expect(html).toContain('aria-pressed="false"');
+    expect(html).toContain("Dark mode");
     expect(html).toContain("Hypothetical starting balance");
     expect(html).toContain("10,000 USD");
     expect(html).toContain("Daily reference rates, not real-time quotes.");
@@ -838,5 +842,39 @@ describe("DashboardApp", () => {
     expect(styles).toContain("left: 50%;");
     expect(styles).toContain("transform: translateX(-50%);");
     expect(styles).not.toContain(".bottom-nav {\n  position: sticky;");
+  });
+
+  it("defines readable light and dark theme tokens", () => {
+    const styles = readFileSync(
+      resolve(process.cwd(), "src/client/styles.css"),
+      "utf8",
+    );
+    const requiredThemeTokens = [
+      "--page-bg:",
+      "--card-bg:",
+      "--elevated-surface:",
+      "--text-primary:",
+      "--text-secondary:",
+      "--text-muted:",
+      "--text-accent:",
+      "--border:",
+      "--button-bg:",
+      "--button-hover-bg:",
+      "--active-nav-bg:",
+    ];
+    const lightThemeBlock =
+      styles.match(/\.app-shell\[data-theme="light"\]\s*\{[^}]+\}/s)?.[0] ??
+      "";
+    const darkThemeBlock =
+      styles.match(/\.app-shell\[data-theme="dark"\]\s*\{[^}]+\}/s)?.[0] ??
+      "";
+
+    expect(lightThemeBlock).toContain('.app-shell[data-theme="light"]');
+    expect(darkThemeBlock).toContain('.app-shell[data-theme="dark"]');
+
+    for (const token of requiredThemeTokens) {
+      expect(lightThemeBlock).toContain(token);
+      expect(darkThemeBlock).toContain(token);
+    }
   });
 });

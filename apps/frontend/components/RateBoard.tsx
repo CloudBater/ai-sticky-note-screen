@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState } from "react";
 
-import { TwdUnsupportedCard } from "@/components/TwdUnsupportedCard";
 import {
   computeDayChange,
   fetchHistoryRates,
@@ -108,7 +107,11 @@ export function RateBoard() {
       <section className="space-y-2">
         <h2 className="text-2xl font-semibold text-zinc-50">Daily Rate Board</h2>
         <p className="text-sm text-zinc-400">
-          {baseCurrency} base · Frankfurter ECB reference rates · updated once per business day (~16:00 CET)
+          {baseCurrency} base · Frankfurter ECB reference rates · once per business day (~16:00 CET)
+          {" · "}
+          Last updated {loading ? "…" : latest?.date ?? "—"}
+          {" · "}
+          daily reference, not a live feed
         </p>
       </section>
 
@@ -138,18 +141,7 @@ export function RateBoard() {
                 dayChange={dayChanges[code] ?? null}
               />
             ))}
-        <TwdUnsupportedCard />
       </div>
-
-      <section className="rounded-lg border border-zinc-800 bg-zinc-900/40 p-4">
-        <p className="text-xs uppercase tracking-wider text-zinc-500">Last updated</p>
-        <p className="mt-1 font-mono text-sm text-zinc-300">
-          {loading ? "Loading…" : latest?.date ?? "—"}
-        </p>
-        <p className="mt-1 text-xs text-zinc-500">
-          Daily reference — not a live trading feed.
-        </p>
-      </section>
     </div>
   );
 }

@@ -52,19 +52,21 @@ export function AllocationPieChart({
   totalUsd,
   slices,
   baseCurrency = "USD",
+  embedded = false,
 }: {
   title: string;
   totalUsd: number;
   slices: AllocationSlice[];
   baseCurrency?: string;
+  embedded?: boolean;
 }) {
   const positiveSlices = slices.filter((slice) => slice.weight_percent > 0);
   let cursor = 0;
 
   return (
-    <div className="rounded-lg border border-zinc-800 bg-zinc-900/40 p-4">
+    <div className={embedded ? "space-y-3" : "rounded-lg border border-zinc-800 bg-zinc-900/40 p-4"}>
       <p className="text-xs uppercase tracking-wider text-zinc-500">{title}</p>
-      <div className="mt-4 flex flex-col items-center gap-3 lg:flex-row lg:items-start">
+      <div className={`mt-4 flex flex-col items-center gap-3 ${embedded ? "" : "lg:flex-row lg:items-start"}`}>
         <svg viewBox="0 0 220 220" className="h-56 w-56">
           {positiveSlices.map((slice) => {
             const sweep = (slice.weight_percent / 100) * 360;

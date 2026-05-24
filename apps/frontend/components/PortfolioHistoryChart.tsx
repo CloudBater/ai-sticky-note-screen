@@ -29,16 +29,18 @@ export function PortfolioHistoryChart({
   points,
   markers,
   baseCurrency,
+  embedded = false,
 }: {
   points: PortfolioHistoryPoint[];
   markers: string[];
   baseCurrency: string;
+  embedded?: boolean;
 }) {
   if (points.length === 0) {
     return (
-      <section className="rounded-lg border border-zinc-800 bg-zinc-900/40 p-4 text-sm text-zinc-400">
+      <div className={embedded ? "text-sm text-zinc-400" : "rounded-lg border border-zinc-800 bg-zinc-900/40 p-4 text-sm text-zinc-400"}>
         Portfolio history is not available yet.
-      </section>
+      </div>
     );
   }
 
@@ -50,7 +52,7 @@ export function PortfolioHistoryChart({
   const last = points[points.length - 1];
 
   return (
-    <section className="space-y-3 rounded-lg border border-zinc-800 bg-zinc-900/40 p-4">
+    <div className={embedded ? "space-y-3" : "space-y-3 rounded-lg border border-zinc-800 bg-zinc-900/40 p-4"}>
       <div className="flex items-center justify-between gap-4">
         <h3 className="text-lg font-semibold text-zinc-50">30-day portfolio value</h3>
         <p className="font-mono text-sm text-emerald-400">
@@ -80,6 +82,6 @@ export function PortfolioHistoryChart({
       <div className="flex flex-wrap gap-4 text-xs text-zinc-400">
         <span>Latest daily P/L: {formatMoney(last.daily_pl_usd, baseCurrency)}</span>
       </div>
-    </section>
+    </div>
   );
 }

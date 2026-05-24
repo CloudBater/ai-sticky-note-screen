@@ -1,8 +1,9 @@
 :root {
   color-scheme: light dark;
-  font-family:
-    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
-    sans-serif;
+  --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-serif: 'Fraunces', 'Source Serif Pro', Georgia, serif;
+  --font-mono: 'JetBrains Mono', 'IBM Plex Mono', ui-monospace, monospace;
+  font-family: var(--font-sans);
   --page-bg: #edf3f1;
   --card-bg: rgb(255 255 255 / 0.82);
   --elevated-surface: rgb(255 255 255 / 0.94);
@@ -85,7 +86,7 @@ button {
   width: min(1180px, calc(100% - 32px));
   min-height: 100vh;
   margin: 0 auto;
-  padding: 24px 0 112px;
+  padding: 24px 0 48px;
   color: var(--text-primary);
 }
 
@@ -123,6 +124,10 @@ button {
   --shadow: 0 18px 52px rgb(30 55 50 / 0.12);
   --shadow-soft: 0 10px 28px rgb(30 55 50 / 0.08);
   --inner-highlight: inset 0 1px 0 rgb(255 255 255 / 0.62);
+  --up: #168a5b;
+  --down: #9e4044;
+  --info-bg: rgb(255 255 255 / 0.42);
+  --info-bar: #0f8f78;
 }
 
 .app-shell[data-theme="dark"] {
@@ -161,12 +166,15 @@ button {
   --shadow: 0 16px 44px rgb(0 0 0 / 0.28);
   --shadow-soft: 0 10px 28px rgb(0 0 0 / 0.2);
   --inner-highlight: inset 0 1px 0 rgb(255 255 255 / 0.08);
+  --up: #86C99C;
+  --down: #D69590;
+  --info-bg: #13191a;
+  --info-bar: #3F6A62;
 }
 
 .app-header,
 .panel,
-.trust-strip,
-.bottom-nav {
+.top-nav {
   border: 1px solid var(--line);
   border-radius: 8px;
   background: var(--panel);
@@ -222,13 +230,11 @@ p {
 
 .brand-lockup h1 {
   margin-bottom: 0;
-  color: transparent;
-  background: linear-gradient(96deg, var(--brand-a), var(--brand-b) 54%, var(--accent));
-  background-clip: text;
-  -webkit-background-clip: text;
+  color: var(--text-primary);
+  font-family: var(--font-serif);
   padding-bottom: 0.08em;
   font-size: clamp(2.25rem, 4vw, 3.2rem);
-  font-weight: 840;
+  font-weight: 400;
   letter-spacing: 0;
   line-height: 1.16;
 }
@@ -329,6 +335,7 @@ h3 {
 
 .metric-card strong {
   color: var(--accent-strong);
+  font-family: var(--font-mono);
   font-size: clamp(1.65rem, 2.6vw, 2.08rem);
   letter-spacing: 0;
   line-height: 1;
@@ -359,6 +366,7 @@ h3 {
 
 .simulation-balance-editor strong {
   color: var(--accent-strong);
+  font-family: var(--font-mono);
   font-size: clamp(1.75rem, 3vw, 2.35rem);
   line-height: 1;
 }
@@ -401,15 +409,32 @@ h3 {
 
 .trust-strip {
   margin-top: 12px;
-  padding: 9px 12px;
-  background: var(--panel-glass);
+  padding: 16px 20px;
+  background: var(--info-bg);
+  border-left: 2px solid var(--info-bar);
   box-shadow: none;
 }
 
+.trust-strip .eyebrow {
+  margin: 0 0 4px;
+  color: var(--muted-soft);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.trust-strip .disclaimer-title {
+  margin: 0 0 12px;
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
 .trust-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px 12px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px 24px;
   padding: 0;
   margin: 0;
   list-style: none;
@@ -422,24 +447,24 @@ h3 {
   background: transparent;
   color: var(--status-badge-text);
   font-size: 0.76rem;
-  font-weight: 560;
+  font-weight: 500;
   line-height: 1.5;
 }
 
 .trust-list li::before {
-  content: "•";
-  margin-right: 8px;
+  content: "·";
+  margin-right: 6px;
   color: var(--muted-soft);
 }
 
-.bottom-nav button:focus-visible,
+.top-nav button:focus-visible,
 .currency-tab:focus-visible,
 .rate-card:focus-visible {
   outline: 3px solid var(--focus-ring);
   outline-offset: 3px;
 }
 
-.bottom-nav button:active,
+.top-nav button:active,
 .currency-tab:active,
 .rate-card:active {
   transform: translateY(0) scale(0.99);
@@ -617,6 +642,7 @@ h3 {
 .rate-card strong,
 .animated-rate {
   color: var(--accent-strong);
+  font-family: var(--font-mono);
   font-size: clamp(1.85rem, 3.2vw, 2.45rem);
   letter-spacing: 0;
   line-height: 1;
@@ -737,15 +763,15 @@ h3 {
 .market-status {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  width: fit-content;
-  padding: 8px 10px;
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  background: var(--status-badge-bg);
-  color: var(--status-badge-text);
+  gap: 6px;
+  margin-top: 6px;
   font-size: 0.82rem;
-  font-weight: 720;
+  font-weight: 400;
+}
+
+.market-status .market-pct {
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
 }
 
 .trend-kpi-row {
@@ -777,25 +803,20 @@ h3 {
   font-size: 0.94rem;
 }
 
-.market-status span {
-  display: grid;
-  width: 20px;
-  height: 20px;
-  place-items: center;
-  border-radius: 999px;
-  background: var(--bg-soft);
-  font-weight: 900;
-  animation: status-marker-in 340ms var(--motion-ease) both;
-}
-
 .market-status-up {
-  border-color: rgb(22 138 91 / 0.2);
-  color: var(--success);
+  color: var(--up);
 }
 
 .market-status-down {
-  border-color: rgb(189 79 85 / 0.22);
-  color: var(--danger);
+  color: var(--down);
+}
+
+.market-status-flat {
+  color: var(--muted-soft);
+}
+
+.market-status-note {
+  color: var(--muted-soft);
 }
 
 .simulation-control-row {
@@ -1027,6 +1048,43 @@ h3 {
   grid-column: 1 / -1;
 }
 
+input[type="range"] {
+  appearance: none;
+  width: 100%;
+  height: 4px;
+  background: var(--panel-strong);
+  border-radius: 999px;
+  outline: none;
+  cursor: pointer;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  background: var(--text-primary);
+  border: 2px solid var(--panel);
+  transition: transform 120ms ease-out;
+}
+
+input[type="range"]::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  background: var(--text-primary);
+  border: 2px solid var(--panel);
+  transition: transform 120ms ease-out;
+}
+
+input[type="range"]:hover::-webkit-slider-thumb {
+  transform: scale(1.15);
+}
+
+input[type="range"]:hover::-moz-range-thumb {
+  transform: scale(1.15);
+}
+
 .allocation-pills,
 .allocation-summary-row {
   display: flex;
@@ -1171,54 +1229,45 @@ h3 {
   animation: chart-enter var(--chart-switch-duration) var(--motion-ease) both;
 }
 
-.bottom-nav {
-  position: fixed;
-  bottom: 14px;
-  left: 50%;
+.top-nav {
+  position: sticky;
+  top: 0;
   z-index: 20;
-  width: min(640px, 100%);
-  margin: 0;
-  padding: 8px;
-  border-radius: 999px;
-  background: var(--button-bg);
-  box-shadow:
-    0 18px 42px rgb(30 55 50 / 0.15),
-    inset 0 1px 0 rgb(255 255 255 / 0.7);
-  transform: translateX(-50%);
+  margin-top: 12px;
+  padding: 0 4px;
+  border-radius: 8px;
 }
 
-.bottom-nav-inner {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 7px;
+.top-nav-inner {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid var(--line);
 }
 
-.bottom-nav button {
-  min-height: 34px;
-  border: 1px solid transparent;
-  border-radius: 999px;
+.top-nav button {
+  min-height: 40px;
+  padding: 0 16px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
   background: transparent;
   color: var(--text-secondary);
-  font-size: 0.78rem;
-  font-weight: 760;
+  font-size: 0.84rem;
+  font-weight: 500;
   cursor: pointer;
   transition:
-    background-color 180ms ease,
-    border-color 180ms ease,
-    color 180ms ease,
-    transform 180ms ease;
+    color 120ms ease-out,
+    border-color 120ms ease-out;
+  margin-bottom: -1px;
 }
 
-.bottom-nav button:hover {
-  border-color: var(--line-strong);
-  background: var(--button-hover-bg);
+.top-nav button:hover {
   color: var(--text-primary);
 }
 
-.bottom-nav button[aria-current="page"] {
-  border-color: var(--line-strong);
-  background: var(--active-nav-bg);
-  color: var(--accent-strong);
+.top-nav button[aria-current="page"] {
+  color: var(--text-primary);
+  border-bottom-color: var(--text-primary);
 }
 
 @keyframes currency-content-exit {
@@ -1293,7 +1342,7 @@ h3 {
 
   .currency-tab:hover,
   .rate-card:hover,
-  .bottom-nav button:active,
+  .top-nav button:active,
   .currency-tab:active,
   .rate-card:active {
     transform: none;

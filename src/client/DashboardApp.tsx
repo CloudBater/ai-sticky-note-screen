@@ -188,7 +188,29 @@ export function DashboardApp({ viewModel }: DashboardAppProps) {
         </div>
       </header>
 
-      <section aria-label="Trust notes" className="trust-strip">
+      <nav
+        aria-label="Dashboard sections"
+        className="top-nav"
+        data-top-nav-shell="true"
+      >
+        <div className="top-nav-inner">
+          {viewModel.navigationItems.map((item) => (
+            <button
+              aria-current={activeSection === item.id ? "page" : undefined}
+              data-section-target={item.id}
+              key={item.id}
+              onClick={() => setActiveSection(item.id)}
+              type="button"
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
+      </nav>
+
+      <section aria-label="Reference and safety notes" className="trust-strip">
+        <p className="eyebrow">Reference &amp; Safety</p>
+        <p className="disclaimer-title">What this product is, and isn't.</p>
         <ul className="trust-list">
           {viewModel.trustMessages.map((message) => (
             <li key={message}>{message}</li>
@@ -468,25 +490,6 @@ export function DashboardApp({ viewModel }: DashboardAppProps) {
         </section>
       </div>
 
-      <nav
-        aria-label="Dashboard sections"
-        className="bottom-nav"
-        data-bottom-nav-shell="true"
-      >
-        <div className="bottom-nav-inner">
-          {viewModel.navigationItems.map((item) => (
-            <button
-              aria-current={activeSection === item.id ? "page" : undefined}
-              data-section-target={item.id}
-              key={item.id}
-              onClick={() => setActiveSection(item.id)}
-              type="button"
-            >
-              {item.label}
-            </button>
-          ))}
-        </div>
-      </nav>
     </main>
   );
 }
@@ -979,18 +982,22 @@ function OverviewTrendCard({
 }
 
 function MarketStatus({ direction }: { direction: TrendDirection }) {
-  const label =
-    direction === "up"
-      ? "Historical move up"
-      : direction === "down"
-        ? "Historical move down"
-        : "Historical movement pending";
-  const marker = direction === "up" ? "+" : direction === "down" ? "-" : "=";
+  if (direction === "flat") {
+    return (
+      <p className="market-status market-status-flat">
+        <span className="market-status-note">Historical reference only.</span>
+      </p>
+    );
+  }
+
+  const arrow = direction === "up" ? "↑" : "↓";
 
   return (
     <p className={`market-status market-status-${direction}`}>
-      <span aria-hidden="true">{marker}</span>
-      {label}. Historical reference only.
+      <span aria-hidden="true" className="market-pct">{arrow}</span>
+      {direction === "up" ? "Moved up" : "Moved down"}
+      <span aria-hidden="true" className="market-status-note"> · </span>
+      <span className="market-status-note">Historical reference only.</span>
     </p>
   );
 }

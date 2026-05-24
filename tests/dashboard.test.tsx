@@ -687,6 +687,9 @@ describe("DashboardApp", () => {
     expect(html).toContain("Dark mode");
     expect(html).toContain("Hypothetical starting balance");
     expect(html).toContain("10,000 USD");
+    expect(html).toContain('aria-label="Adjust simulation amount"');
+    expect(html).toContain('name="simulation-balance-amount"');
+    expect(html).toContain("Hypothetical amount only");
     expect(html).toContain("Daily reference rates, not real-time quotes.");
     expect(html).toContain("No deposits, withdrawals, or trades.");
     expect(html).toContain("Supported currencies");

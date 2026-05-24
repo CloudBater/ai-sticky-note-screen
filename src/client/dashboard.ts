@@ -3,6 +3,16 @@ import { previewPortfolioAllocation } from "../shared/portfolio-preview";
 import { summarizeHistoricalTrend } from "./historical-trend-summary";
 import type { SimulationHistoryEntry } from "./simulation-history";
 
+export type HistoricalTrendChartPoint = {
+  date: string;
+  rate: number;
+};
+
+export type HistoricalTrendChartSeries = {
+  symbol: string;
+  points: HistoricalTrendChartPoint[];
+};
+
 type FetchJson = (url: string) => Promise<unknown>;
 
 export type DashboardViewModelInput = {
@@ -34,6 +44,10 @@ export type DashboardViewModel = {
   };
   historicalTrend: {
     summary: string;
+    baseCurrency: string;
+    symbol: string;
+    points: HistoricalTrendChartPoint[];
+    allSeries: HistoricalTrendChartSeries[];
   };
   allocationPreview: DashboardAllocationPreview;
   simulationHistory: {
@@ -131,6 +145,10 @@ export function buildDashboardViewModel(
     historicalTrend: {
       summary:
         "Historical movement summary will appear after daily reference rates load.",
+      baseCurrency,
+      symbol: "",
+      points: [],
+      allSeries: [],
     },
     allocationPreview: buildPendingAllocationPreview(
       baseCurrency,
@@ -264,8 +282,23 @@ export async function loadDashboardViewModel(
         points: historicalRates.points,
       });
 
+      const allSeries = historicalRatesResponses.map((response) => ({
+        symbol: response.symbol.toUpperCase(),
+        points: response.points.map((point) => ({
+          date: point.date,
+          rate: point.rate,
+        })),
+      }));
+
       viewModel.historicalTrend = {
         summary: summary.summary,
+        baseCurrency: historicalRates.base,
+        symbol: historicalRates.symbol.toUpperCase(),
+        points: historicalRates.points.map((point) => ({
+          date: point.date,
+          rate: point.rate,
+        })),
+        allSeries,
       };
       viewModel.allocationPreview = buildManualAllocationPreview({
         baseCurrency: historicalRates.base,
@@ -276,6 +309,10 @@ export async function loadDashboardViewModel(
       viewModel.historicalTrend = {
         summary:
           "Historical movement summary will appear after daily reference rates load.",
+        baseCurrency: referenceData.latestRates.base,
+        symbol: "",
+        points: [],
+        allSeries: [],
       };
       viewModel.allocationPreview = buildPendingAllocationPreview(
         referenceData.latestRates.base,

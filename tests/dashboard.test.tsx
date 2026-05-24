@@ -82,6 +82,10 @@ describe("buildDashboardViewModel", () => {
       historicalTrend: {
         summary:
           "Historical movement summary will appear after daily reference rates load.",
+        baseCurrency: "USD",
+        symbol: "",
+        points: [],
+        allSeries: [],
       },
       allocationPreview: {
         baseCurrency: "USD",
@@ -521,6 +525,10 @@ const fallbackViewModel: DashboardViewModel = {
   historicalTrend: {
     summary:
       "Historical movement summary will appear after daily reference rates load.",
+    baseCurrency: "USD",
+    symbol: "",
+    points: [],
+    allSeries: [],
   },
   allocationPreview: {
     baseCurrency: "USD",
@@ -552,6 +560,21 @@ const loadedViewModel: DashboardViewModel = {
   historicalTrend: {
     summary:
       "EUR moved up 5% against USD from 2024-08-21 to 2024-08-23. Historical reference only, not a forecast.",
+    baseCurrency: "USD",
+    symbol: "EUR",
+    points: [
+      { date: "2024-08-21", rate: 0.9 },
+      { date: "2024-08-23", rate: 0.945 },
+    ],
+    allSeries: [
+      {
+        symbol: "EUR",
+        points: [
+          { date: "2024-08-21", rate: 0.9 },
+          { date: "2024-08-23", rate: 0.945 },
+        ],
+      },
+    ],
   },
   simulationHistory: {
     entries: [],
@@ -636,6 +659,21 @@ describe("DashboardApp", () => {
           historicalTrend: {
             summary:
               "EUR moved up 5% against USD from 2024-08-21 to 2024-08-23. Historical reference only, not a forecast.",
+            baseCurrency: "USD",
+            symbol: "EUR",
+            points: [
+              { date: "2024-08-21", rate: 0.9 },
+              { date: "2024-08-23", rate: 0.945 },
+            ],
+            allSeries: [
+              {
+                symbol: "EUR",
+                points: [
+                  { date: "2024-08-21", rate: 0.9 },
+                  { date: "2024-08-23", rate: 0.945 },
+                ],
+              },
+            ],
           },
           allocationPreview: {
             baseCurrency: "USD",
@@ -763,6 +801,10 @@ describe("DashboardApp", () => {
           historicalTrend: {
             summary:
               "Historical movement summary will appear after daily reference rates load.",
+            baseCurrency: "USD",
+            symbol: "",
+            points: [],
+            allSeries: [],
           },
           allocationPreview: {
             baseCurrency: "USD",
@@ -816,6 +858,10 @@ describe("DashboardApp", () => {
           historicalTrend: {
             summary:
               "Historical movement summary will appear after daily reference rates load.",
+            baseCurrency: "USD",
+            symbol: "",
+            points: [],
+            allSeries: [],
           },
           allocationPreview: {
             baseCurrency: "USD",

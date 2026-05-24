@@ -811,6 +811,11 @@ export function DashboardApp({
 
         {/* History tab */}
         <section className="panel history-panel" data-glass="true" hidden={!showHistory} id="history">
+          <div className="history-supported-currencies">
+            <p className="eyebrow">Supported currencies</p>
+            <h3>Selected currencies</h3>
+            <p className="meta-dim">{viewModel.currencySupport.supported.join(", ")}</p>
+          </div>
           <div className="section-heading">
             <p className="eyebrow">Review</p>
             <h2>Simulation history</h2>

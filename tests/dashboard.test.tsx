@@ -124,7 +124,7 @@ describe("buildDashboardViewModel", () => {
         }),
         fetchHistoricalRates: async (request) => ({
           base: request.baseCurrency,
-          symbol: request.symbol,
+          symbol: request.symbols[0],
           startDate: request.startDate,
           endDate: request.endDate,
           points: [
@@ -275,7 +275,7 @@ describe("fetchHistoricalReferenceRates", () => {
 
       if (
         url ===
-        "/api/rates/history?base=USD&symbol=EUR&start=2024-08-21&end=2024-08-23"
+        "/api/rates/history?base=USD&symbols=EUR&start=2024-08-21&end=2024-08-23"
       ) {
         return {
           base: "USD",
@@ -296,7 +296,7 @@ describe("fetchHistoricalReferenceRates", () => {
     await expect(
       fetchHistoricalReferenceRates({
         baseCurrency: "usd",
-        symbol: "eur",
+        symbols: ["eur"],
         startDate: "2024-08-21",
         endDate: "2024-08-23",
         fetchJson,
@@ -313,7 +313,7 @@ describe("fetchHistoricalReferenceRates", () => {
       ],
     });
     expect(requestedUrls).toEqual([
-      "/api/rates/history?base=USD&symbol=EUR&start=2024-08-21&end=2024-08-23",
+      "/api/rates/history?base=USD&symbols=EUR&start=2024-08-21&end=2024-08-23",
     ]);
   });
 });
@@ -372,7 +372,7 @@ describe("loadDashboardViewModel", () => {
   it("loads a historical trend summary for the first supported target currency", async () => {
     const historicalRequests: Array<{
       baseCurrency: string;
-      symbol: string;
+      symbols: string[];
       startDate: string;
       endDate: string;
     }> = [];
@@ -401,7 +401,7 @@ describe("loadDashboardViewModel", () => {
 
           return {
             base: request.baseCurrency,
-            symbol: request.symbol,
+            symbol: request.symbols[0],
             startDate: request.startDate,
             endDate: request.endDate,
             points: [
@@ -420,13 +420,13 @@ describe("loadDashboardViewModel", () => {
     expect(historicalRequests).toEqual([
       {
         baseCurrency: "USD",
-        symbol: "EUR",
+        symbols: ["EUR"],
         startDate: "2024-07-24",
         endDate: "2024-08-23",
       },
       {
         baseCurrency: "USD",
-        symbol: "JPY",
+        symbols: ["JPY"],
         startDate: "2024-07-24",
         endDate: "2024-08-23",
       },
@@ -455,11 +455,11 @@ describe("loadDashboardViewModel", () => {
         }),
         fetchHistoricalRates: async (request) => ({
           base: request.baseCurrency,
-          symbol: request.symbol,
+          symbol: request.symbols[0],
           startDate: request.startDate,
           endDate: request.endDate,
           points:
-            request.symbol === "EUR"
+            request.symbols[0] === "EUR"
               ? [
                   { date: "2024-08-21", rate: 0.9 },
                   { date: "2024-08-23", rate: 0.945 },
@@ -567,7 +567,7 @@ const loadedViewModel: DashboardViewModel = {
     ],
     allSeries: [
       {
-        symbol: "EUR",
+        symbols: ["EUR"],
         points: [
           { date: "2024-08-21", rate: 0.9 },
           { date: "2024-08-23", rate: 0.945 },
@@ -666,7 +666,7 @@ describe("DashboardApp", () => {
             ],
             allSeries: [
               {
-                symbol: "EUR",
+                symbols: ["EUR"],
                 points: [
                   { date: "2024-08-21", rate: 0.9 },
                   { date: "2024-08-22", rate: 0.902 },

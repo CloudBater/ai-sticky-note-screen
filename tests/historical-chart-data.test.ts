@@ -25,7 +25,7 @@ describe("historical chart data pipeline", () => {
       }),
       fetchHistoricalRates: async (request) => ({
         base: request.baseCurrency,
-        symbol: request.symbol,
+        symbol: request.symbols[0],
         startDate: request.startDate,
         endDate: request.endDate,
         points: [
@@ -87,11 +87,11 @@ describe("historical chart data pipeline", () => {
       }),
       fetchHistoricalRates: async (request) => ({
         base: request.baseCurrency,
-        symbol: request.symbol,
+        symbol: request.symbols[0],
         startDate: request.startDate,
         endDate: request.endDate,
         points:
-          request.symbol === "EUR"
+          request.symbols[0] === "EUR"
             ? [
                 { date: "2024-08-21", rate: 0.9 },
                 { date: "2024-08-23", rate: 0.945 },
@@ -105,14 +105,14 @@ describe("historical chart data pipeline", () => {
 
     expect(viewModel.historicalTrend.allSeries).toEqual([
       {
-        symbol: "EUR",
+        symbols: ["EUR"],
         points: [
           { date: "2024-08-21", rate: 0.9 },
           { date: "2024-08-23", rate: 0.945 },
         ],
       },
       {
-        symbol: "JPY",
+        symbols: ["JPY"],
         points: [
           { date: "2024-08-21", rate: 140 },
           { date: "2024-08-23", rate: 144.9 },

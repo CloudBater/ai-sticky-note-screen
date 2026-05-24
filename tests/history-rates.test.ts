@@ -50,7 +50,7 @@ describe("GET /api/rates/history", () => {
     try {
       const { port } = server.address() as AddressInfo;
       const response = await fetch(
-        `http://127.0.0.1:${port}/api/rates/history?base=usd&symbol=eur&start=2024-08-21&end=2024-08-23`,
+        `http://127.0.0.1:${port}/api/rates/history?base=usd&symbols=eur&start=2024-08-21&end=2024-08-23`,
       );
 
       expect(response.status).toBe(200);
@@ -107,7 +107,7 @@ describe("GET /api/rates/history", () => {
     try {
       const { port } = server.address() as AddressInfo;
       const response = await fetch(
-        `http://127.0.0.1:${port}/api/rates/history?base=usd&symbol=&start=2024-08-23&end=2024-08-21`,
+        `http://127.0.0.1:${port}/api/rates/history?base=usd&symbols=&start=2024-08-23&end=2024-08-21`,
       );
 
       expect(response.status).toBe(400);
@@ -163,7 +163,7 @@ describe("GET /api/rates/history", () => {
     try {
       const { port } = server.address() as AddressInfo;
       const response = await fetch(
-        `http://127.0.0.1:${port}/api/rates/history?base=usd&symbol=eur&start=2024-08-21&end=2024-08-23`,
+        `http://127.0.0.1:${port}/api/rates/history?base=usd&symbols=eur&start=2024-08-21&end=2024-08-23`,
       );
 
       expect(response.status).toBe(502);
@@ -205,7 +205,7 @@ describe("GET /api/rates/history", () => {
     try {
       const { port } = server.address() as AddressInfo;
       const response = await fetch(
-        `http://127.0.0.1:${port}/api/rates/history?base=usd&symbol=eur&start=2024-08-21&end=2024-08-23`,
+        `http://127.0.0.1:${port}/api/rates/history?base=usd&symbols=eur&start=2024-08-21&end=2024-08-23`,
       );
 
       expect(response.status).toBe(502);
@@ -263,7 +263,7 @@ describe("GET /api/rates/history", () => {
 
     try {
       const { port } = server.address() as AddressInfo;
-      const url = `http://127.0.0.1:${port}/api/rates/history?base=usd&symbol=eur&start=2024-08-21&end=2024-08-23`;
+      const url = `http://127.0.0.1:${port}/api/rates/history?base=usd&symbols=eur&start=2024-08-21&end=2024-08-23`;
 
       const firstResponse = await fetch(url);
       const secondResponse = await fetch(url);

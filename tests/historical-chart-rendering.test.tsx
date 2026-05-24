@@ -40,7 +40,7 @@ describe("historical chart rendering", () => {
       ],
       allSeries: [
         {
-          symbol: "EUR",
+          symbols: ["EUR"],
           points: [
             { date: "2024-08-21", rate: 0.899 },
             { date: "2024-08-22", rate: 0.902 },

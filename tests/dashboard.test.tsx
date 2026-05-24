@@ -421,7 +421,71 @@ describe("loadDashboardViewModel", () => {
         startDate: "2024-07-24",
         endDate: "2024-08-23",
       },
+      {
+        baseCurrency: "USD",
+        symbol: "JPY",
+        startDate: "2024-07-24",
+        endDate: "2024-08-23",
+      },
     ]);
+  });
+
+  it("loads allocation preview histories for every supported target currency", async () => {
+    await expect(
+      loadDashboardViewModel({
+        simulationBalance: 10_000,
+        requestedCurrencies: ["usd", "eur", "jpy"],
+        fetchReferenceData: async () => ({
+          currencies: {
+            USD: "US Dollar",
+            EUR: "Euro",
+            JPY: "Japanese Yen",
+          },
+          latestRates: {
+            base: "USD",
+            date: "2024-08-23",
+            rates: {
+              EUR: 0.945,
+              JPY: 144.9,
+            },
+          },
+        }),
+        fetchHistoricalRates: async (request) => ({
+          base: request.baseCurrency,
+          symbol: request.symbol,
+          startDate: request.startDate,
+          endDate: request.endDate,
+          points:
+            request.symbol === "EUR"
+              ? [
+                  { date: "2024-08-21", rate: 0.9 },
+                  { date: "2024-08-23", rate: 0.945 },
+                ]
+              : [
+                  { date: "2024-08-21", rate: 140 },
+                  { date: "2024-08-23", rate: 144.9 },
+                ],
+        }),
+      }),
+    ).resolves.toMatchObject({
+      allocationPreview: {
+        currencyOptions: [
+          { currency: "USD", label: "USD" },
+          { currency: "EUR", label: "EUR" },
+          { currency: "JPY", label: "JPY" },
+        ],
+        referenceRatesByDate: {
+          "2024-08-21": {
+            EUR: 0.9,
+            JPY: 140,
+          },
+          "2024-08-23": {
+            EUR: 0.945,
+            JPY: 144.9,
+          },
+        },
+      },
+    });
   });
 });
 

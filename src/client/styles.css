@@ -954,27 +954,26 @@ h3 {
   box-shadow: var(--inner-highlight);
 }
 
-.line-chart-preview {
-  display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  align-items: end;
-  gap: 8px;
+.historical-line-chart {
+  display: block;
+  width: 100%;
   height: 100%;
 }
 
-.line-chart-preview span {
-  display: block;
-  height: var(--bar-height);
-  border-radius: 8px 8px 0 0;
-  background: linear-gradient(180deg, var(--accent), rgb(15 143 120 / 0.28));
-  box-shadow: 0 10px 22px rgb(15 143 120 / 0.14);
+.chart-date-range {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 8px;
+  color: var(--muted-soft);
+  font-size: 0.76rem;
+  font-weight: 700;
 }
 
-.chart-window[data-transition-state="exiting"] .line-chart-preview {
+.chart-window[data-transition-state="exiting"] .historical-line-chart {
   animation: chart-exit var(--chart-switch-duration) var(--motion-ease) both;
 }
 
-.chart-window[data-transition-state="entering"] .line-chart-preview {
+.chart-window[data-transition-state="entering"] .historical-line-chart {
   animation: chart-enter var(--chart-switch-duration) var(--motion-ease) both;
 }
 

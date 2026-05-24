@@ -166,7 +166,6 @@ button {
 .app-header,
 .panel,
 .trust-strip,
-.quick-action-strip,
 .bottom-nav {
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -198,16 +197,16 @@ button {
 
 .brand-lockup {
   display: inline-grid;
-  grid-template-columns: 42px minmax(0, auto);
-  gap: 12px;
+  grid-template-columns: 54px minmax(0, auto);
+  gap: 14px;
   align-items: center;
-  margin-bottom: 6px;
+  margin-bottom: 4px;
 }
 
 .brand-icon {
-  width: 42px;
-  height: 42px;
-  border-radius: 10px;
+  width: 54px;
+  height: 54px;
+  border-radius: 12px;
   object-fit: cover;
   box-shadow:
     0 8px 18px rgb(81 86 214 / 0.18),
@@ -227,10 +226,11 @@ p {
   background: linear-gradient(96deg, var(--brand-a), var(--brand-b) 54%, var(--accent));
   background-clip: text;
   -webkit-background-clip: text;
-  font-size: clamp(1.45rem, 2.4vw, 2.1rem);
-  font-weight: 820;
+  padding-bottom: 0.08em;
+  font-size: clamp(2.25rem, 4vw, 3.2rem);
+  font-weight: 840;
   letter-spacing: 0;
-  line-height: 1;
+  line-height: 1.16;
 }
 
 h2 {
@@ -284,7 +284,7 @@ h3 {
 
 .simulation-balance-card {
   justify-self: end;
-  width: 286px;
+  width: 236px;
 }
 
 .header-actions {
@@ -329,18 +329,23 @@ h3 {
 
 .metric-card strong {
   color: var(--accent-strong);
-  font-size: clamp(1.45rem, 2.4vw, 1.95rem);
+  font-size: clamp(1.65rem, 2.6vw, 2.08rem);
   letter-spacing: 0;
   line-height: 1;
 }
 
-.simulation-amount-control {
+.simulation-balance-editor {
   display: grid;
-  gap: 6px;
-  margin-top: 4px;
+  max-width: 320px;
+  gap: 7px;
+  margin-bottom: 14px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel-strong);
 }
 
-.simulation-amount-control span {
+.simulation-balance-editor span {
   color: var(--text-secondary);
   font-size: 0.72rem;
   font-weight: 800;
@@ -348,7 +353,7 @@ h3 {
   text-transform: uppercase;
 }
 
-.simulation-amount-control input {
+.simulation-balance-editor input {
   min-height: 34px;
   width: 100%;
   padding: 0 12px;
@@ -360,7 +365,12 @@ h3 {
   font-weight: 760;
 }
 
-.simulation-amount-control input:focus-visible {
+.simulation-balance-editor small {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.simulation-balance-editor input:focus-visible {
   border-color: var(--line-strong);
   outline: 3px solid var(--focus-ring);
   outline-offset: 3px;
@@ -399,52 +409,16 @@ h3 {
   color: var(--muted-soft);
 }
 
-.quick-action-strip {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 12px;
-  padding: 10px;
-  background: var(--panel);
-  box-shadow: var(--inner-highlight), 0 8px 22px rgb(30 55 50 / 0.06);
-}
-
-.quick-action-strip button {
-  min-height: 34px;
-  padding: 0 12px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: var(--button-bg);
-  color: var(--text-primary);
-  cursor: pointer;
-  font-size: 0.8rem;
-  font-weight: 720;
-  transition:
-    background-color 180ms ease,
-    border-color 180ms ease,
-    color 180ms ease,
-    transform 180ms ease;
-}
-
-.quick-action-strip button:hover {
-  border-color: var(--line-strong);
-  background: var(--button-hover-bg);
-  color: var(--accent-strong);
-  transform: translateY(-1px);
-}
-
 .bottom-nav button:focus-visible,
 .currency-tab:focus-visible,
-.rate-card:focus-visible,
-.quick-action-strip button:focus-visible {
+.rate-card:focus-visible {
   outline: 3px solid var(--focus-ring);
   outline-offset: 3px;
 }
 
 .bottom-nav button:active,
 .currency-tab:active,
-.rate-card:active,
-.quick-action-strip button:active {
+.rate-card:active {
   transform: translateY(0) scale(0.99);
 }
 
@@ -1271,13 +1245,13 @@ h3 {
   }
 
   .brand-lockup {
-    grid-template-columns: 40px minmax(0, auto);
-    gap: 10px;
+    grid-template-columns: 46px minmax(0, auto);
+    gap: 12px;
   }
 
   .brand-icon {
-    width: 40px;
-    height: 40px;
+    width: 46px;
+    height: 46px;
     border-radius: 10px;
   }
 

@@ -1,7 +1,6 @@
 import {
   useEffect,
   useMemo,
-  useRef,
   useState,
   type CSSProperties,
   type FormEvent,
@@ -60,7 +59,6 @@ export function DashboardApp({ viewModel }: DashboardAppProps) {
   const [simulationHistoryEntries, setSimulationHistoryEntries] = useState<
     SimulationHistoryEntry[]
   >(viewModel.simulationHistory.entries);
-  const simulationAmountInputRef = useRef<HTMLInputElement>(null);
   const watchlistCurrencies = useMemo(
     () => [
       ...viewModel.currencySupport.supported,
@@ -186,23 +184,6 @@ export function DashboardApp({ viewModel }: DashboardAppProps) {
               {simulationBalanceAmount.toLocaleString("en-US")}{" "}
               {viewModel.simulationBalance.currency}
             </strong>
-            <label className="simulation-amount-control">
-              <span>Adjust amount</span>
-              <input
-                aria-label="Adjust simulation amount"
-                max={MAX_SIMULATION_BALANCE}
-                min={MIN_SIMULATION_BALANCE}
-                name="simulation-balance-amount"
-                onChange={(event) =>
-                  handleSimulationBalanceChange(event.target.value)
-                }
-                ref={simulationAmountInputRef}
-                step="100"
-                type="number"
-                value={simulationBalanceInput}
-              />
-              <small>Hypothetical amount only</small>
-            </label>
           </div>
         </div>
       </header>
@@ -213,24 +194,6 @@ export function DashboardApp({ viewModel }: DashboardAppProps) {
             <li key={message}>{message}</li>
           ))}
         </ul>
-      </section>
-
-      <section aria-label="Quick actions" className="quick-action-strip">
-        <button onClick={() => setActiveSection("trend")} type="button">
-          View trend
-        </button>
-        <button
-          onClick={() => simulationAmountInputRef.current?.focus()}
-          type="button"
-        >
-          Adjust amount
-        </button>
-        <button onClick={() => setActiveSection("simulation")} type="button">
-          Preview conversion
-        </button>
-        <button onClick={() => setActiveSection("history")} type="button">
-          Review history
-        </button>
       </section>
 
       <div className="dashboard-grid">
@@ -423,6 +386,22 @@ export function DashboardApp({ viewModel }: DashboardAppProps) {
             <p className="eyebrow">Simulation</p>
             <h2>Simulated conversion preview</h2>
           </div>
+          <label className="simulation-balance-editor">
+            <span>Adjust amount</span>
+            <input
+              aria-label="Adjust simulation amount"
+              max={MAX_SIMULATION_BALANCE}
+              min={MIN_SIMULATION_BALANCE}
+              name="simulation-balance-amount"
+              onChange={(event) =>
+                handleSimulationBalanceChange(event.target.value)
+              }
+              step="100"
+              type="number"
+              value={simulationBalanceInput}
+            />
+            <small>Hypothetical amount only</small>
+          </label>
           <p>
             Preview a simulated conversion using daily reference rates before
             adding it to simulation history.

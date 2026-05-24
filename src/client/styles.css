@@ -866,3 +866,108 @@ select:focus {
     line-height: 48px;
   }
 }
+
+/* Dropdown component */
+.available-currencies-dropdown {
+  margin-top: var(--space-5);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  background: var(--surface-1);
+  overflow: hidden;
+}
+
+.dropdown-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: var(--space-3) var(--space-4);
+  font-size: 14px;
+  font-weight: 500;
+  text-align: left;
+  background: transparent;
+  color: var(--text-primary);
+  border: none;
+  cursor: pointer;
+  transition: background 120ms ease;
+}
+
+.dropdown-toggle:hover {
+  background: var(--surface-2);
+}
+
+.dropdown-chevron {
+  font-size: 10px;
+  transition: transform 200ms ease;
+}
+
+.dropdown-chevron[data-open="true"] {
+  transform: rotate(180deg);
+}
+
+.dropdown-content-wrapper {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 250ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.dropdown-content-wrapper[data-open="true"] {
+  grid-template-rows: 1fr;
+}
+
+.dropdown-content {
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.dropdown-filter {
+  margin: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: 14px;
+}
+
+.dropdown-filter:focus {
+  outline: 1px solid var(--border-strong);
+}
+
+.dropdown-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 250px;
+  overflow-y: auto;
+  border-top: 1px solid var(--border-default);
+}
+
+.dropdown-list-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  padding: var(--space-3);
+  text-align: left;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--border-default);
+  cursor: pointer;
+  transition: background 120ms ease;
+}
+
+.dropdown-list-item:last-child {
+  border-bottom: none;
+}
+
+.dropdown-list-item:hover {
+  background: var(--surface-3);
+}
+
+.currency-name {
+  color: var(--text-secondary);
+  font-size: 14px;
+}

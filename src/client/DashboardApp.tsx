@@ -65,6 +65,8 @@ export function DashboardApp({ viewModel }: DashboardAppProps) {
     ],
   );
   const [watchlistCurrencyInput, setWatchlistCurrencyInput] = useState("");
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [dropdownFilter, setDropdownFilter] = useState("");
   const [simulationHistoryEntries, setSimulationHistoryEntries] = useState<
     SimulationHistoryEntry[]
   >(viewModel.simulationHistory.entries);
@@ -258,9 +260,9 @@ export function DashboardApp({ viewModel }: DashboardAppProps) {
             <button type="submit">Add currency</button>
           </form>
           <p className="meta-dim watchlist-note">
-            Enter a 3-letter code. Unsupported currencies stay visible but muted.
+            Enter a 3-letter code or select from available currencies below. Unsupported currencies stay visible but muted.
           </p>
-          <div className="currency-pills">
+          <div className="currency-pills" style={{ marginBottom: "var(--space-4)" }}>
             {watchlistEntries.map((entry) => (
               <span
                 aria-label={
@@ -277,6 +279,64 @@ export function DashboardApp({ viewModel }: DashboardAppProps) {
                 <Code>{entry.currency}</Code>
               </span>
             ))}
+          </div>
+
+          <div className="available-currencies-dropdown">
+            <button
+              aria-controls="available-currencies-list"
+              aria-expanded={isDropdownOpen}
+              className="dropdown-toggle"
+              onClick={() => setIsDropdownOpen((prev) => !prev)}
+              type="button"
+            >
+              Available currencies
+              <span className="dropdown-chevron" aria-hidden="true" data-open={isDropdownOpen}>â–¼</span>
+            </button>
+            <div
+              className="dropdown-content-wrapper"
+              data-open={isDropdownOpen}
+            >
+              <div className="dropdown-content">
+                <input
+                  aria-label="Filter available currencies"
+                  className="dropdown-filter"
+                  onChange={(e) => setDropdownFilter(e.target.value)}
+                  placeholder="Filter currencies..."
+                  type="text"
+                  value={dropdownFilter}
+                />
+                <ul className="dropdown-list" id="available-currencies-list">
+                  {Object.entries(currencyCatalog)
+                    .filter(([code, name]) => {
+                      if (watchlistCurrencies.includes(code)) return false;
+                      if (!dropdownFilter) return true;
+                      const filterLower = dropdownFilter.toLowerCase();
+                      return (
+                        code.toLowerCase().includes(filterLower) ||
+                        name.toLowerCase().includes(filterLower)
+                      );
+                    })
+                    .map(([code, name]) => (
+                      <li key={code}>
+                        <button
+                          className="dropdown-list-item"
+                          onClick={() => {
+                            setWatchlistCurrencies((current) =>
+                              addCurrencyToWatchlist(current, code),
+                            );
+                            setIsDropdownOpen(false);
+                            setDropdownFilter("");
+                          }}
+                          type="button"
+                        >
+                          <Code>{code}</Code>
+                          <span className="currency-name">{name}</span>
+                        </button>
+                      </li>
+                    ))}
+                </ul>
+              </div>
+            </div>
           </div>
         </section>
 
@@ -1046,13 +1106,13 @@ function MarketStatus({ direction }: { direction: TrendDirection }) {
     );
   }
 
-  const arrow = direction === "up" ? "¡ô" : "¡õ";
+  const arrow = direction === "up" ? "ï¿½ï¿½" : "ï¿½ï¿½";
 
   return (
     <p className={`market-status market-status-${direction}`}>
       <span aria-hidden="true" className="market-pct">{arrow}</span>
       {direction === "up" ? "Moved up" : "Moved down"}
-      <span aria-hidden="true" className="market-status-note"> ¡P </span>
+      <span aria-hidden="true" className="market-status-note"> ï¿½P </span>
       <span className="market-status-note">Historical reference only.</span>
     </p>
   );

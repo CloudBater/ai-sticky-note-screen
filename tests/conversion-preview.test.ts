@@ -82,6 +82,18 @@ describe("previewSimulatedConversion", () => {
     });
   });
 
+  it("rounds simulated converted amounts to cents", () => {
+    expect(
+      previewSimulatedConversion({
+        sourceCurrency: "usd",
+        targetCurrency: "eur",
+        amount: 100,
+        date: "2024-08-23",
+        dailyReferenceRate: 0.901,
+      }).convertedAmount,
+    ).toBe(90.1);
+  });
+
   it("rejects non-positive simulated conversion amounts", () => {
     expect(() =>
       previewSimulatedConversion({
@@ -302,7 +314,7 @@ describe("POST /api/simulations/conversion-preview", () => {
           sourceCurrency: "USD",
           targetCurrency: "EUR",
           sourceAmount: 100,
-          convertedAmount: 90.10000000000001,
+          convertedAmount: 90.1,
           rate: 0.901,
           date: "2024-08-23",
           kind: "simulation-preview",

@@ -354,10 +354,18 @@ export function DashboardApp({ viewModel }: DashboardAppProps) {
             Preview a simulated conversion using daily reference rates before
             adding it to simulation history.
           </p>
-          <AllocationPreviewCard
-            preview={viewModel.allocationPreview}
-            startingAmount={simulationBalanceAmount}
-          />
+          <div className="simulation-preview-layout">
+            <AllocationPreviewCard
+              preview={viewModel.allocationPreview}
+              startingAmount={simulationBalanceAmount}
+            />
+            <SimulatedConversionPreviewCard
+              baseCurrency={viewModel.latestRates.baseCurrency}
+              dataDate={viewModel.latestRates.dataDate}
+              latestRates={viewModel.latestRates.cards}
+              simulationBalanceAmount={simulationBalanceAmount}
+            />
+          </div>
         </section>
 
         <section className="panel history-panel" hidden={!showHistory} id="history">
@@ -415,6 +423,82 @@ export function DashboardApp({ viewModel }: DashboardAppProps) {
   );
 }
 
+function SimulatedConversionPreviewCard({
+  baseCurrency,
+  dataDate,
+  latestRates,
+  simulationBalanceAmount,
+}: {
+  baseCurrency: string;
+  dataDate: string;
+  latestRates: LatestRateCard[];
+  simulationBalanceAmount: number;
+}) {
+  const targetCurrency = latestRates[0]?.currency ?? baseCurrency;
+
+  return (
+    <article className="conversion-preview-card" data-layout-slot="conversion-right">
+      <div className="section-heading">
+        <p className="eyebrow">Conversion preview</p>
+        <h3>Preview simulated conversion</h3>
+      </div>
+      <fieldset className="conversion-controls">
+        <legend>No trades are executed.</legend>
+        <label>
+          <span>Source currency</span>
+          <select
+            aria-label="Simulated conversion source currency"
+            name="simulated-conversion-source-currency"
+            defaultValue={baseCurrency}
+          >
+            <option value={baseCurrency}>{baseCurrency}</option>
+          </select>
+        </label>
+        <label>
+          <span>Target currency</span>
+          <select
+            aria-label="Simulated conversion target currency"
+            name="simulated-conversion-target-currency"
+            defaultValue={targetCurrency}
+          >
+            {[baseCurrency, ...latestRates.map((rate) => rate.currency)].map(
+              (currency) => (
+                <option key={currency} value={currency}>
+                  {currency}
+                </option>
+              ),
+            )}
+          </select>
+        </label>
+        <label>
+          <span>Amount</span>
+          <input
+            aria-label="Simulated conversion amount"
+            min="1"
+            name="simulated-conversion-amount"
+            step="100"
+            type="number"
+            defaultValue={Math.min(simulationBalanceAmount, 2500)}
+          />
+        </label>
+        <label>
+          <span>Reference date</span>
+          <input
+            aria-label="Simulated conversion reference date"
+            name="simulated-conversion-reference-date"
+            type="date"
+            defaultValue={dataDate === "Unavailable" ? "" : dataDate}
+          />
+        </label>
+      </fieldset>
+      <p className="empty-state">
+        Preview only. Daily reference rates are informational and no simulated
+        conversion becomes a real transaction.
+      </p>
+    </article>
+  );
+}
+
 function AllocationPreviewCard({
   preview,
   startingAmount,
@@ -445,7 +529,7 @@ function AllocationPreviewCard({
     preview.status === "ready" && preview.currencyOptions.length >= 2;
 
   return (
-    <article className="allocation-preview-card">
+    <article className="allocation-preview-card" data-layout-slot="allocation-left">
       <div className="section-heading">
         <p className="eyebrow">Manual allocation</p>
         <h3>Manual allocation historical preview</h3>

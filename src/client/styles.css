@@ -428,9 +428,12 @@ h3 {
   grid-column: span 6;
 }
 
-.simulation-panel,
 .history-panel {
   grid-column: span 3;
+}
+
+.simulation-panel {
+  grid-column: span 6;
 }
 
 .section-heading {
@@ -659,10 +662,19 @@ h3 {
   color: var(--danger);
 }
 
+.simulation-preview-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 18px;
+  align-items: start;
+  margin-top: 18px;
+}
+
 .allocation-preview-card {
+  grid-column: 1;
   display: grid;
   gap: 14px;
-  margin-top: 20px;
+  margin-top: 0;
   padding: 18px;
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -670,6 +682,82 @@ h3 {
     linear-gradient(135deg, var(--panel-glass), transparent),
     var(--accent-soft);
   box-shadow: var(--inner-highlight), 0 12px 26px rgb(30 55 50 / 0.07);
+}
+
+.conversion-preview-card {
+  grid-column: 2;
+  display: grid;
+  gap: 14px;
+  margin-top: 0;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel-strong);
+  box-shadow: var(--inner-highlight), 0 12px 26px rgb(30 55 50 / 0.06);
+}
+
+.conversion-preview-card .section-heading {
+  margin-bottom: 0;
+}
+
+.conversion-preview-card h3 {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 1.02rem;
+}
+
+.conversion-preview-card p {
+  margin-bottom: 0;
+}
+
+.conversion-controls {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  padding: 0;
+  margin: 0;
+  border: 0;
+}
+
+.conversion-controls legend {
+  grid-column: 1 / -1;
+  margin-bottom: 2px;
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+  font-weight: 760;
+}
+
+.conversion-controls label {
+  display: grid;
+  gap: 6px;
+}
+
+.conversion-controls label span {
+  color: var(--text-muted);
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.conversion-controls select,
+.conversion-controls input {
+  min-height: 40px;
+  width: 100%;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--button-bg);
+  color: var(--text-primary);
+  font: inherit;
+  font-weight: 760;
+}
+
+.conversion-controls select:focus-visible,
+.conversion-controls input:focus-visible {
+  border-color: var(--line-strong);
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 3px;
 }
 
 .allocation-preview-card .section-heading {
@@ -1013,5 +1101,18 @@ h3 {
 
   .allocation-controls {
     grid-template-columns: 1fr;
+  }
+
+  .conversion-controls {
+    grid-template-columns: 1fr;
+  }
+
+  .simulation-preview-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .allocation-preview-card,
+  .conversion-preview-card {
+    grid-column: 1;
   }
 }

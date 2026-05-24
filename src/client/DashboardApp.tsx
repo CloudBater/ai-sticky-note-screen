@@ -4,6 +4,7 @@ import {
   useRef,
   useState,
   type CSSProperties,
+  type FormEvent,
 } from "react";
 
 import type {
@@ -30,6 +31,12 @@ import {
   MIN_SIMULATION_BALANCE,
   normalizeSimulationBalanceInput,
 } from "./simulation-balance";
+import { previewSimulatedConversionViaBackend } from "./simulated-conversion-client";
+import {
+  addSimulatedConversionToHistory,
+  type SimulationHistoryEntry,
+} from "./simulation-history";
+import type { SimulatedConversionPreview } from "../shared/conversion-preview";
 
 type DashboardAppProps = {
   viewModel: DashboardViewModel;
@@ -50,6 +57,9 @@ export function DashboardApp({ viewModel }: DashboardAppProps) {
   const [simulationBalanceInput, setSimulationBalanceInput] = useState(
     String(viewModel.simulationBalance.amount),
   );
+  const [simulationHistoryEntries, setSimulationHistoryEntries] = useState<
+    SimulationHistoryEntry[]
+  >(viewModel.simulationHistory.entries);
   const watchlistCurrencies = useMemo(
     () => [
       ...viewModel.currencySupport.supported,
@@ -363,6 +373,14 @@ export function DashboardApp({ viewModel }: DashboardAppProps) {
               baseCurrency={viewModel.latestRates.baseCurrency}
               dataDate={viewModel.latestRates.dataDate}
               latestRates={viewModel.latestRates.cards}
+              onAddPreview={(preview) =>
+                setSimulationHistoryEntries((existingEntries) =>
+                  addSimulatedConversionToHistory({
+                    existingEntries,
+                    preview,
+                  }),
+                )
+              }
               simulationBalanceAmount={simulationBalanceAmount}
             />
           </div>
@@ -373,9 +391,9 @@ export function DashboardApp({ viewModel }: DashboardAppProps) {
             <p className="eyebrow">Review</p>
             <h2>Simulation history</h2>
           </div>
-          {viewModel.simulationHistory.entries.length > 0 ? (
+          {simulationHistoryEntries.length > 0 ? (
             <ul className="history-list">
-              {viewModel.simulationHistory.entries.map((entry) => (
+              {simulationHistoryEntries.map((entry) => (
                 <li key={entry.id}>
                   <strong>
                     {entry.sourceAmount.toLocaleString("en-US")}{" "}
@@ -427,14 +445,47 @@ function SimulatedConversionPreviewCard({
   baseCurrency,
   dataDate,
   latestRates,
+  onAddPreview,
   simulationBalanceAmount,
 }: {
   baseCurrency: string;
   dataDate: string;
   latestRates: LatestRateCard[];
+  onAddPreview: (preview: SimulatedConversionPreview) => void;
   simulationBalanceAmount: number;
 }) {
-  const targetCurrency = latestRates[0]?.currency ?? baseCurrency;
+  const defaultTargetCurrency = latestRates[0]?.currency ?? baseCurrency;
+  const [targetCurrency, setTargetCurrency] = useState(defaultTargetCurrency);
+  const [amount, setAmount] = useState(
+    String(Math.min(simulationBalanceAmount, 2500)),
+  );
+  const [referenceDate, setReferenceDate] = useState(
+    dataDate === "Unavailable" ? "" : dataDate,
+  );
+  const [preview, setPreview] = useState<SimulatedConversionPreview | null>(null);
+  const [previewError, setPreviewError] = useState<string | null>(null);
+  const [isPreviewing, setIsPreviewing] = useState(false);
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setPreviewError(null);
+    setIsPreviewing(true);
+
+    try {
+      setPreview(
+        await previewSimulatedConversionViaBackend({
+          sourceCurrency: baseCurrency,
+          targetCurrency,
+          amount: Number(amount),
+          date: referenceDate,
+        }),
+      );
+    } catch {
+      setPreview(null);
+      setPreviewError("Unable to preview simulated conversion.");
+    } finally {
+      setIsPreviewing(false);
+    }
+  };
 
   return (
     <article className="conversion-preview-card" data-layout-slot="conversion-right">
@@ -442,55 +493,85 @@ function SimulatedConversionPreviewCard({
         <p className="eyebrow">Conversion preview</p>
         <h3>Preview simulated conversion</h3>
       </div>
-      <fieldset className="conversion-controls">
-        <legend>No trades are executed.</legend>
-        <label>
-          <span>Source currency</span>
-          <select
-            aria-label="Simulated conversion source currency"
-            name="simulated-conversion-source-currency"
-            defaultValue={baseCurrency}
+      <form aria-label="Preview simulated conversion form" onSubmit={handleSubmit}>
+        <fieldset className="conversion-controls">
+          <legend>No trades are executed.</legend>
+          <label>
+            <span>Source currency</span>
+            <select
+              aria-label="Simulated conversion source currency"
+              name="simulated-conversion-source-currency"
+              defaultValue={baseCurrency}
+            >
+              <option value={baseCurrency}>{baseCurrency}</option>
+            </select>
+          </label>
+          <label>
+            <span>Target currency</span>
+            <select
+              aria-label="Simulated conversion target currency"
+              name="simulated-conversion-target-currency"
+              onChange={(event) => setTargetCurrency(event.target.value)}
+              value={targetCurrency}
+            >
+              {[baseCurrency, ...latestRates.map((rate) => rate.currency)].map(
+                (currency) => (
+                  <option key={currency} value={currency}>
+                    {currency}
+                  </option>
+                ),
+              )}
+            </select>
+          </label>
+          <label>
+            <span>Amount</span>
+            <input
+              aria-label="Simulated conversion amount"
+              min="1"
+              name="simulated-conversion-amount"
+              onChange={(event) => setAmount(event.target.value)}
+              step="100"
+              type="number"
+              value={amount}
+            />
+          </label>
+          <label>
+            <span>Reference date</span>
+            <input
+              aria-label="Simulated conversion reference date"
+              name="simulated-conversion-reference-date"
+              onChange={(event) => setReferenceDate(event.target.value)}
+              type="date"
+              value={referenceDate}
+            />
+          </label>
+        </fieldset>
+        <div className="conversion-actions">
+          <button disabled={isPreviewing} type="submit">
+            {isPreviewing ? "Previewing..." : "Preview simulated conversion"}
+          </button>
+          <button
+            disabled={preview === null}
+            onClick={() => {
+              if (preview) {
+                onAddPreview(preview);
+              }
+            }}
+            type="button"
           >
-            <option value={baseCurrency}>{baseCurrency}</option>
-          </select>
-        </label>
-        <label>
-          <span>Target currency</span>
-          <select
-            aria-label="Simulated conversion target currency"
-            name="simulated-conversion-target-currency"
-            defaultValue={targetCurrency}
-          >
-            {[baseCurrency, ...latestRates.map((rate) => rate.currency)].map(
-              (currency) => (
-                <option key={currency} value={currency}>
-                  {currency}
-                </option>
-              ),
-            )}
-          </select>
-        </label>
-        <label>
-          <span>Amount</span>
-          <input
-            aria-label="Simulated conversion amount"
-            min="1"
-            name="simulated-conversion-amount"
-            step="100"
-            type="number"
-            defaultValue={Math.min(simulationBalanceAmount, 2500)}
-          />
-        </label>
-        <label>
-          <span>Reference date</span>
-          <input
-            aria-label="Simulated conversion reference date"
-            name="simulated-conversion-reference-date"
-            type="date"
-            defaultValue={dataDate === "Unavailable" ? "" : dataDate}
-          />
-        </label>
-      </fieldset>
+            Add to simulation history
+          </button>
+        </div>
+      </form>
+      {preview ? (
+        <p className="conversion-result">
+          {preview.sourceAmount.toLocaleString("en-US")} {preview.sourceCurrency} =
+          {" "}
+          {preview.convertedAmount.toLocaleString("en-US")}{" "}
+          {preview.targetCurrency} at daily reference rate {preview.rate}.
+        </p>
+      ) : null}
+      {previewError ? <p className="warning-text">{previewError}</p> : null}
       <p className="empty-state">
         Preview only. Daily reference rates are informational and no simulated
         conversion becomes a real transaction.

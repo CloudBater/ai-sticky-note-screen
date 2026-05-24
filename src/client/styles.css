@@ -51,38 +51,43 @@ button {
 
 .brand-lockup {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: var(--space-3);
 }
 
-.brand-mark {
+.brand-icon-frame {
   display: inline-flex;
-  width: 36px;
-  height: 36px;
+  width: 52px;
+  height: 52px;
   align-items: center;
   justify-content: center;
   align-self: center;
-  border: 1px solid var(--border-default);
+  overflow: hidden;
+  border: 1px solid var(--text-primary);
   border-radius: var(--radius-sm);
-  color: var(--text-primary);
-  font-family: var(--font-serif);
-  font-size: 28px;
-  font-style: italic;
-  font-weight: 400;
+  background: var(--surface-0);
+}
+
+.brand-icon {
+  width: 100%;
+  height: 100%;
+  display: block;
+  filter: grayscale(1) contrast(1.12);
+  object-fit: cover;
 }
 
 .brand-lockup h1 {
   color: var(--text-primary);
   font-family: var(--font-serif);
-  font-size: 28px;
+  font-size: 42px;
   font-weight: 400;
   letter-spacing: 0;
-  line-height: 36px;
+  line-height: 48px;
 }
 
 .hero-copy {
   margin-top: var(--space-1);
-  margin-left: 48px;
+  margin-left: 64px;
   color: var(--text-tertiary);
   font-size: 13px;
   line-height: 20px;
@@ -95,6 +100,8 @@ button {
 }
 
 .simulation-balance-card {
+  min-width: 210px;
+  padding: var(--space-4) var(--space-5);
   text-align: right;
 }
 
@@ -104,6 +111,11 @@ button {
   gap: var(--space-2);
   color: var(--text-primary);
   font-weight: 400;
+}
+
+.simulation-balance-card .num-m {
+  font-size: 22px;
+  line-height: 30px;
 }
 
 .tabs {
@@ -299,8 +311,45 @@ output {
 }
 
 .watchlist-panel,
-.data-coverage-panel {
+.conversion-exposure-panel {
   grid-column: span 6;
+}
+
+.exposure-summary-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  gap: var(--space-3);
+}
+
+.exposure-metric {
+  display: grid;
+  min-width: 0;
+  gap: var(--space-1);
+  padding: var(--space-4);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+}
+
+.exposure-metric-primary {
+  grid-row: span 2;
+}
+
+.exposure-metric strong {
+  display: inline-flex;
+  min-width: 0;
+  align-items: baseline;
+  gap: var(--space-2);
+  color: var(--text-primary);
+  font-weight: 400;
+}
+
+.exposure-metric strong[data-profit-state="gain"] {
+  color: var(--up);
+}
+
+.exposure-metric strong[data-profit-state="loss"] {
+  color: var(--down);
 }
 
 .rates-panel,
@@ -877,6 +926,11 @@ select:focus {
     margin-left: 0;
   }
 
+  .brand-lockup h1 {
+    font-size: 34px;
+    line-height: 40px;
+  }
+
   .simulation-balance-card {
     text-align: left;
   }
@@ -891,8 +945,16 @@ select:focus {
   }
 
   .watchlist-panel,
-  .data-coverage-panel {
+  .conversion-exposure-panel {
     grid-column: span 12;
+  }
+
+  .exposure-summary-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .exposure-metric-primary {
+    grid-row: auto;
   }
 
   .overview-chart-window,

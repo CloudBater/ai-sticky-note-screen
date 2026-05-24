@@ -39,6 +39,7 @@ import {
   type SimulationHistoryEntry,
 } from "./simulation-history";
 import type { SimulatedConversionPreview } from "../shared/conversion-preview";
+import marketMageIconUrl from "../resources/MarketMage-icon.jpg";
 
 type DashboardAppProps = {
   viewModel: DashboardViewModel;
@@ -164,6 +165,19 @@ export function DashboardApp({
       ),
     [viewModel.latestRates.cards],
   );
+  const conversionExposure = useMemo(
+    () =>
+      summarizeConversionExposure({
+        baseCurrency: viewModel.latestRates.baseCurrency,
+        entries: simulationHistoryEntries,
+        latestRates: rateCardsByCurrency,
+      }),
+    [
+      rateCardsByCurrency,
+      simulationHistoryEntries,
+      viewModel.latestRates.baseCurrency,
+    ],
+  );
   const selectedChartSeries = useMemo(() => {
     const originalBase = viewModel.latestRates.baseCurrency;
     
@@ -272,7 +286,13 @@ export function DashboardApp({
       <header className="app-header" id="overview">
         <div className="header-copy-block">
           <div aria-label="MarketMage brand" className="brand-lockup">
-            <span aria-hidden="true" className="brand-mark">M</span>
+            <span aria-hidden="true" className="brand-icon-frame">
+              <img
+                alt=""
+                className="brand-icon"
+                src={marketMageIconUrl}
+              />
+            </span>
             <h1>{viewModel.title}</h1>
           </div>
           <p className="hero-copy">
@@ -440,20 +460,64 @@ export function DashboardApp({
         </section>
 
         <section
-          className="panel data-coverage-panel"
-          aria-labelledby="data-coverage-heading"
+          className="panel conversion-exposure-panel"
+          aria-labelledby="conversion-exposure-heading"
           hidden={!showOverview}
         >
           <div className="section-heading">
-            <p className="eyebrow">Upstream data</p>
-            <h2 id="data-coverage-heading">Frankfurter ECB reference</h2>
+            <p className="eyebrow">Simulation history</p>
+            <h2 id="conversion-exposure-heading">Simulated conversion exposure</h2>
           </div>
-          <p className="meta">
-            Daily reference rates, updated once per business day.
-          </p>
-          <p className="meta-dim">
-            Not suitable for transactions.
-          </p>
+          {conversionExposure ? (
+            <>
+              <div className="exposure-summary-grid">
+                <div className="exposure-metric exposure-metric-primary">
+                  <span className="eyebrow">Amount</span>
+                  <strong>
+                    <Num
+                      size="m"
+                      value={formatExposureAmount(
+                        conversionExposure.amount,
+                      )}
+                    />{" "}
+                    <Code>{conversionExposure.currency}</Code>
+                  </strong>
+                </div>
+                <div className="exposure-metric">
+                  <span className="eyebrow">Avg cost</span>
+                  <strong>
+                    <Num
+                      size="s"
+                      value={formatRate(conversionExposure.averageCost)}
+                    />{" "}
+                    <Code>{conversionExposure.baseCurrency}</Code>
+                  </strong>
+                </div>
+                <div className="exposure-metric">
+                  <span className="eyebrow">Reference P/L</span>
+                  <strong data-profit-state={conversionExposure.profitState}>
+                    <Num
+                      size="s"
+                      value={formatSignedAmount(
+                        conversionExposure.referenceProfit,
+                      )}
+                    />{" "}
+                    <Code>{conversionExposure.baseCurrency}</Code>
+                  </strong>
+                </div>
+              </div>
+              <p className="meta-dim">
+                {conversionExposure.entryCount} simulated entries. Historical reference only.
+              </p>
+            </>
+          ) : (
+            <>
+              <p className="empty-state">No simulated conversions yet.</p>
+              <p className="meta-dim">
+                Preview simulated conversions to see amount, average cost, and reference P/L here.
+              </p>
+            </>
+          )}
           <p className="data-date">
             Data date: <Num size="s" value={viewModel.latestRates.dataDate} />
           </p>
@@ -1558,6 +1622,106 @@ function getDisplayRateCard(
     label: card?.label ?? `1 ${baseCurrency} = ??? ${currency}`,
     value: card ? formatRate(card.rate) : "---",
   };
+}
+
+type ConversionExposureSummary = {
+  amount: number;
+  averageCost: number;
+  baseCurrency: string;
+  currency: string;
+  entryCount: number;
+  profitState: "gain" | "loss" | "flat";
+  referenceProfit: number;
+};
+
+function summarizeConversionExposure({
+  baseCurrency,
+  entries,
+  latestRates,
+}: {
+  baseCurrency: string;
+  entries: SimulationHistoryEntry[];
+  latestRates: Map<string, LatestRateCard>;
+}): ConversionExposureSummary | undefined {
+  const groups = new Map<
+    string,
+    {
+      amount: number;
+      cost: number;
+      entryCount: number;
+    }
+  >();
+
+  entries.forEach((entry) => {
+    if (entry.sourceCurrency !== baseCurrency) {
+      return;
+    }
+
+    if (!latestRates.has(entry.targetCurrency)) {
+      return;
+    }
+
+    const group = groups.get(entry.targetCurrency) ?? {
+      amount: 0,
+      cost: 0,
+      entryCount: 0,
+    };
+
+    group.amount += entry.convertedAmount;
+    group.cost += entry.sourceAmount;
+    group.entryCount += 1;
+    groups.set(entry.targetCurrency, group);
+  });
+
+  const [currency, group] =
+    [...groups.entries()].sort(
+      ([leftCurrency, left], [rightCurrency, right]) =>
+        right.cost - left.cost || leftCurrency.localeCompare(rightCurrency),
+    )[0] ?? [];
+
+  if (currency === undefined || group === undefined || group.amount === 0) {
+    return undefined;
+  }
+
+  const latestRate = latestRates.get(currency)?.rate;
+
+  if (latestRate === undefined || latestRate === 0) {
+    return undefined;
+  }
+
+  const latestReferenceValue = group.amount / latestRate;
+  const referenceProfit = latestReferenceValue - group.cost;
+  const profitState =
+    Math.abs(referenceProfit) < 0.01
+      ? "flat"
+      : referenceProfit > 0
+        ? "gain"
+        : "loss";
+
+  return {
+    amount: group.amount,
+    averageCost: group.cost / group.amount,
+    baseCurrency,
+    currency,
+    entryCount: group.entryCount,
+    profitState,
+    referenceProfit,
+  };
+}
+
+function formatExposureAmount(value: number): string {
+  return value.toLocaleString("en-US", {
+    maximumFractionDigits: 2,
+  });
+}
+
+function formatSignedAmount(value: number): string {
+  const roundedValue = Math.round(value * 100) / 100;
+  const sign = roundedValue > 0 ? "+" : "";
+
+  return `${sign}${roundedValue.toLocaleString("en-US", {
+    maximumFractionDigits: 2,
+  })}`;
 }
 
 function formatRate(value: number, decimals = getRateDecimals(value)): string {

@@ -1,4 +1,5 @@
 import { splitRequestedCurrenciesBySupport } from "../shared/currency-support";
+import { previewPortfolioAllocation } from "../shared/portfolio-preview";
 import { summarizeHistoricalTrend } from "./historical-trend-summary";
 import type { SimulationHistoryEntry } from "./simulation-history";
 
@@ -34,6 +35,7 @@ export type DashboardViewModel = {
   historicalTrend: {
     summary: string;
   };
+  allocationPreview: DashboardAllocationPreview;
   simulationHistory: {
     entries: SimulationHistoryEntry[];
   };
@@ -43,6 +45,27 @@ export type LatestRateCard = {
   currency: string;
   label: string;
   rate: number;
+};
+
+export type DashboardAllocationPreview = {
+  baseCurrency: string;
+  startingAmount: number;
+  status: "pending" | "ready";
+  summary: string;
+  allocations: DashboardAllocationPreviewAllocation[];
+  points: DashboardAllocationPreviewPoint[];
+};
+
+export type DashboardAllocationPreviewAllocation = {
+  currency: string;
+  percent: number;
+  label: string;
+};
+
+export type DashboardAllocationPreviewPoint = {
+  date: string;
+  value: number;
+  label: string;
 };
 
 export type NavigationItem = {
@@ -102,6 +125,10 @@ export function buildDashboardViewModel(
       summary:
         "Historical movement summary will appear after daily reference rates load.",
     },
+    allocationPreview: buildPendingAllocationPreview(
+      baseCurrency,
+      input.simulationBalance,
+    ),
     simulationHistory: {
       entries: [],
     },
@@ -222,11 +249,21 @@ export async function loadDashboardViewModel(
       viewModel.historicalTrend = {
         summary: summary.summary,
       };
+      viewModel.allocationPreview = buildManualAllocationPreview({
+        baseCurrency: historicalRates.base,
+        startingAmount: input.simulationBalance,
+        symbol: historicalRates.symbol,
+        points: historicalRates.points,
+      });
     } catch {
       viewModel.historicalTrend = {
         summary:
           "Historical movement summary will appear after daily reference rates load.",
       };
+      viewModel.allocationPreview = buildPendingAllocationPreview(
+        referenceData.latestRates.base,
+        input.simulationBalance,
+      );
     }
   }
 
@@ -366,4 +403,76 @@ function getHistoricalWindow(
 
 function formatIsoDate(date: Date): string {
   return date.toISOString().slice(0, 10);
+}
+
+function buildPendingAllocationPreview(
+  baseCurrency: string,
+  startingAmount: number,
+): DashboardAllocationPreview {
+  return {
+    baseCurrency,
+    startingAmount,
+    status: "pending",
+    summary:
+      "Manual allocation historical preview will appear after daily history loads.",
+    allocations: [],
+    points: [],
+  };
+}
+
+function buildManualAllocationPreview(input: {
+  baseCurrency: string;
+  startingAmount: number;
+  symbol: string;
+  points: HistoricalReferenceRatePoint[];
+}): DashboardAllocationPreview {
+  const baseCurrency = input.baseCurrency.toUpperCase();
+  const symbol = input.symbol.toUpperCase();
+  const preview = previewPortfolioAllocation({
+    baseCurrency,
+    startingAmount: input.startingAmount,
+    allocations: [
+      { currency: baseCurrency, percent: 50 },
+      { currency: symbol, percent: 50 },
+    ],
+    referenceRatesByDate: Object.fromEntries(
+      input.points.map((point) => [point.date, { [symbol]: point.rate }]),
+    ),
+  });
+  const points = preview.points.map((point) => {
+    const value = roundDisplayAmount(point.value);
+
+    return {
+      date: point.date,
+      value,
+      label: formatDisplayAmount(value, baseCurrency),
+    };
+  });
+  const firstPoint = points[0];
+  const lastPoint = points[points.length - 1];
+
+  return {
+    baseCurrency,
+    startingAmount: input.startingAmount,
+    status: "ready",
+    summary:
+      firstPoint !== undefined && lastPoint !== undefined
+        ? `Manual 50% ${baseCurrency} / 50% ${symbol} allocation moved from ${firstPoint.label} to ${lastPoint.label}. Historical reference only.`
+        : "Manual allocation historical preview will appear after daily history loads.",
+    allocations: [
+      { currency: baseCurrency, percent: 50, label: `50% ${baseCurrency}` },
+      { currency: symbol, percent: 50, label: `50% ${symbol}` },
+    ],
+    points,
+  };
+}
+
+function roundDisplayAmount(value: number): number {
+  return Math.round(value * 10) / 10;
+}
+
+function formatDisplayAmount(value: number, currency: string): string {
+  return `${value.toLocaleString("en-US", {
+    maximumFractionDigits: 1,
+  })} ${currency}`;
 }

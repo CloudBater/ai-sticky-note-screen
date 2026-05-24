@@ -6,7 +6,11 @@ import {
   type CSSProperties,
 } from "react";
 
-import type { DashboardViewModel, LatestRateCard } from "./dashboard";
+import type {
+  DashboardAllocationPreview,
+  DashboardViewModel,
+  LatestRateCard,
+} from "./dashboard";
 import marketMageIconUrl from "../resources/MarketMage-icon.jpg";
 import {
   cardHoverMotion,
@@ -290,6 +294,7 @@ export function DashboardApp({ viewModel }: DashboardAppProps) {
             Preview a simulated conversion using daily reference rates before
             adding it to simulation history.
           </p>
+          <AllocationPreviewCard preview={viewModel.allocationPreview} />
         </section>
 
         <section className="panel history-panel" hidden={!showHistory} id="history">
@@ -344,6 +349,43 @@ export function DashboardApp({ viewModel }: DashboardAppProps) {
         </div>
       </nav>
     </main>
+  );
+}
+
+function AllocationPreviewCard({
+  preview,
+}: {
+  preview: DashboardAllocationPreview;
+}) {
+  return (
+    <article className="allocation-preview-card">
+      <div className="section-heading">
+        <p className="eyebrow">Manual allocation</p>
+        <h3>Manual allocation historical preview</h3>
+      </div>
+      <p>{preview.summary}</p>
+      {preview.status === "ready" ? (
+        <>
+          <div className="allocation-pills">
+            {preview.allocations.map((allocation) => (
+              <span key={allocation.currency}>{allocation.label}</span>
+            ))}
+          </div>
+          <div className="allocation-points">
+            {preview.points.map((point) => (
+              <span key={point.date}>
+                <small>{point.date}</small>
+                <strong>{point.label}</strong>
+              </span>
+            ))}
+          </div>
+        </>
+      ) : (
+        <p className="empty-state">
+          Historical allocation preview will appear after daily history loads.
+        </p>
+      )}
+    </article>
   );
 }
 

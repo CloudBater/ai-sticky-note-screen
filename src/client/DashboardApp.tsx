@@ -124,7 +124,7 @@ export function DashboardApp({
   const [simulationHistoryEntries, setSimulationHistoryEntries] = useState<
     SimulationHistoryEntry[]
   >(viewModel.simulationHistory.entries);
-  const currencyCatalog = viewModel.currencyCatalog ?? {};
+  const currencyCatalog = viewModel.currencyCatalog ?? EMPTY_CURRENCY_CATALOG;
   const selectorCurrencies = useMemo(
     () => {
       const baseCurrency = viewModel.latestRates.baseCurrency;
@@ -390,7 +390,11 @@ export function DashboardApp({
         historyTargetOptions.find((currency) => currency === "CNY") ??
         historyTargetOptions[0];
 
-      return defaultCurrency ? [defaultCurrency] : [];
+      return defaultCurrency
+        ? [defaultCurrency]
+        : currentCurrencies.length === 0
+          ? currentCurrencies
+          : [];
     });
   }, [
     historyBaseCurrency,
@@ -854,6 +858,7 @@ export function DashboardApp({
 }
 
 const BADGE_OVERFLOW_THRESHOLD = 10;
+const EMPTY_CURRENCY_CATALOG: Record<string, string> = {};
 
 function HistoryReferenceRatesPanel({
   dataDate,

@@ -331,6 +331,38 @@ h3 {
   line-height: 1;
 }
 
+.simulation-amount-control {
+  display: grid;
+  gap: 7px;
+  margin-top: 8px;
+}
+
+.simulation-amount-control span {
+  color: var(--text-secondary);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.simulation-amount-control input {
+  min-height: 40px;
+  width: 100%;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--button-bg);
+  color: var(--text-primary);
+  font: inherit;
+  font-weight: 760;
+}
+
+.simulation-amount-control input:focus-visible {
+  border-color: var(--line-strong);
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 3px;
+}
+
 .trust-banner {
   margin-top: 22px;
   padding: 12px 14px;

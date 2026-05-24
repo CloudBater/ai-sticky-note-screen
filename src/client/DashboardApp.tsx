@@ -25,6 +25,11 @@ import {
   persistDashboardTheme,
   type DashboardTheme,
 } from "./dashboard-theme";
+import {
+  MAX_SIMULATION_BALANCE,
+  MIN_SIMULATION_BALANCE,
+  normalizeSimulationBalanceInput,
+} from "./simulation-balance";
 
 type DashboardAppProps = {
   viewModel: DashboardViewModel;
@@ -39,6 +44,12 @@ export function DashboardApp({ viewModel }: DashboardAppProps) {
   const [activeSection, setActiveSection] =
     useState<DashboardSection>("overview");
   const [theme, setTheme] = useState<DashboardTheme>(getInitialDashboardTheme);
+  const [simulationBalanceAmount, setSimulationBalanceAmount] = useState(
+    viewModel.simulationBalance.amount,
+  );
+  const [simulationBalanceInput, setSimulationBalanceInput] = useState(
+    String(viewModel.simulationBalance.amount),
+  );
   const watchlistCurrencies = useMemo(
     () => [
       ...viewModel.currencySupport.supported,
@@ -112,6 +123,13 @@ export function DashboardApp({ viewModel }: DashboardAppProps) {
     persistDashboardTheme(theme);
   }, [theme]);
 
+  const handleSimulationBalanceChange = (input: string) => {
+    setSimulationBalanceInput(input);
+    setSimulationBalanceAmount((currentAmount) =>
+      normalizeSimulationBalanceInput(input, currentAmount),
+    );
+  };
+
   return (
     <main className="app-shell" data-theme={theme} style={appMotionStyle}>
       <header className="hero-panel" id="overview">
@@ -147,10 +165,26 @@ export function DashboardApp({ viewModel }: DashboardAppProps) {
           <div className="metric-card hero-balance-card">
             <span>{viewModel.simulationBalanceLabel}</span>
             <strong>
-              {viewModel.simulationBalance.amount.toLocaleString("en-US")}{" "}
+              {simulationBalanceAmount.toLocaleString("en-US")}{" "}
               {viewModel.simulationBalance.currency}
             </strong>
             <small>Simulation balance only</small>
+            <label className="simulation-amount-control">
+              <span>Adjust simulation amount</span>
+              <input
+                aria-label="Adjust simulation amount"
+                max={MAX_SIMULATION_BALANCE}
+                min={MIN_SIMULATION_BALANCE}
+                name="simulation-balance-amount"
+                onChange={(event) =>
+                  handleSimulationBalanceChange(event.target.value)
+                }
+                step="100"
+                type="number"
+                value={simulationBalanceInput}
+              />
+              <small>Hypothetical amount only</small>
+            </label>
           </div>
         </div>
       </header>
@@ -320,7 +354,10 @@ export function DashboardApp({ viewModel }: DashboardAppProps) {
             Preview a simulated conversion using daily reference rates before
             adding it to simulation history.
           </p>
-          <AllocationPreviewCard preview={viewModel.allocationPreview} />
+          <AllocationPreviewCard
+            preview={viewModel.allocationPreview}
+            startingAmount={simulationBalanceAmount}
+          />
         </section>
 
         <section className="panel history-panel" hidden={!showHistory} id="history">
@@ -380,8 +417,10 @@ export function DashboardApp({ viewModel }: DashboardAppProps) {
 
 function AllocationPreviewCard({
   preview,
+  startingAmount,
 }: {
   preview: DashboardAllocationPreview;
+  startingAmount: number;
 }) {
   const [firstCurrency, setFirstCurrency] = useState(
     preview.allocations[0]?.currency ?? preview.baseCurrency,
@@ -400,6 +439,7 @@ function AllocationPreviewCard({
     firstPercent,
     preview,
     secondCurrency,
+    startingAmount,
   });
   const canConfigure =
     preview.status === "ready" && preview.currencyOptions.length >= 2;
@@ -489,11 +529,13 @@ function buildConfiguredAllocationPreview({
   firstPercent,
   preview,
   secondCurrency,
+  startingAmount,
 }: {
   firstCurrency: string;
   firstPercent: number;
   preview: DashboardAllocationPreview;
   secondCurrency: string;
+  startingAmount: number;
 }): DashboardAllocationPreview {
   const secondPercent = 100 - firstPercent;
 
@@ -509,7 +551,7 @@ function buildConfiguredAllocationPreview({
   try {
     const configuredPreview = previewPortfolioAllocation({
       baseCurrency: preview.baseCurrency,
-      startingAmount: preview.startingAmount,
+      startingAmount,
       allocations: [
         { currency: firstCurrency, percent: firstPercent },
         { currency: secondCurrency, percent: secondPercent },

@@ -597,7 +597,7 @@ select:focus {
 }
 
 .historical-line-chart {
-  animation: chart-line-draw 600ms cubic-bezier(.2,.8,.2,1) both;
+  animation: chart-line-draw 600ms cubic-bezier(.2, .8, .2, 1) both;
 }
 
 .chart-line,
@@ -790,30 +790,52 @@ select:focus {
 
 .currency-detail-frame[data-transition-state="exiting"] .currency-detail-card,
 .chart-window[data-transition-state="exiting"] .historical-line-chart {
-  animation: panel-exit 200ms cubic-bezier(.2,.8,.2,1) both;
+  animation: panel-exit 200ms cubic-bezier(.2, .8, .2, 1) both;
 }
 
 .currency-detail-frame[data-transition-state="entering"] .currency-detail-card,
 .chart-window[data-transition-state="entering"] .historical-line-chart {
-  animation: panel-enter 200ms cubic-bezier(.2,.8,.2,1) both;
+  animation: panel-enter 200ms cubic-bezier(.2, .8, .2, 1) both;
 }
 
 @keyframes panel-exit {
-  from { opacity: 1; transform: translateY(0); }
-  to { opacity: 0; transform: translateY(-8px); }
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  to {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
 }
 
 @keyframes panel-enter {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes chart-line-draw {
-  from { opacity: 0; transform: translateY(4px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
+
   *,
   *::before,
   *::after {
@@ -983,7 +1005,7 @@ select:focus {
 .marquee-content {
   display: flex;
   gap: var(--space-4);
-  animation: marquee 30s linear infinite;
+  animation: marquee 20s linear infinite;
   flex-wrap: nowrap;
 }
 
@@ -996,6 +1018,61 @@ select:focus {
 }
 
 @keyframes marquee {
-  0% { transform: translateX(0); }
-  100% { transform: translateX(calc(-50% - (var(--space-4) / 2))); }
+  0% {
+    transform: translateX(0);
+  }
+
+  100% {
+    transform: translateX(calc(-50% - (var(--space-4) / 2)));
+  }
+}
+
+/* Trend Pair Selector */
+.trend-pair-selector {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+
+.currency-select {
+  background: var(--surface-2);
+  color: var(--text-primary);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 4px 8px;
+  font-size: 1.2rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.to-text {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.trend-percentage {
+  margin-left: var(--space-3);
+  font-size: 1rem;
+  font-weight: bold;
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+}
+
+.percentage-up {
+  color: #10b981;
+  /* green */
+  background: rgba(16, 185, 129, 0.1);
+}
+
+.percentage-down {
+  color: #ef4444;
+  /* red */
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.percentage-flat {
+  color: var(--text-secondary);
+  background: var(--surface-2);
 }

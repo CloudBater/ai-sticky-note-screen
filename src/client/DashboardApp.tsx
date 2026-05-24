@@ -115,6 +115,9 @@ export function DashboardApp({ viewModel }: DashboardAppProps) {
       watchlistCurrencies,
     ],
   );
+  const [selectedBaseCurrency, setSelectedBaseCurrency] = useState(
+    viewModel.latestRates.baseCurrency,
+  );
   const [selectedCurrency, setSelectedCurrency] = useState(
     selectorCurrencies[0] ?? viewModel.latestRates.baseCurrency,
   );
@@ -131,13 +134,38 @@ export function DashboardApp({ viewModel }: DashboardAppProps) {
   const displayedRateCard =
     findRateCard(viewModel.latestRates.cards, displayedCurrency) ??
     selectedRateCard;
-  const selectedChartSeries = useMemo(
-    () =>
-      viewModel.historicalTrend.allSeries.find(
-        (series) => series.symbol === displayedCurrency,
-      ) ?? { symbol: displayedCurrency, points: [] },
-    [displayedCurrency, viewModel.historicalTrend.allSeries],
-  );
+  const selectedChartSeries = useMemo(() => {
+    const originalBase = viewModel.latestRates.baseCurrency;
+    
+    // A reference series to get dates if both are originalBase
+    const refSeries = viewModel.historicalTrend.allSeries[0] ?? { points: [] };
+
+    // Get target series
+    const targetSeries = displayedCurrency === originalBase 
+      ? { points: refSeries.points.map(p => ({ date: p.date, rate: 1 })) }
+      : viewModel.historicalTrend.allSeries.find(
+          (series) => series.symbol === displayedCurrency,
+        );
+    
+    // Get base series
+    const baseSeries = selectedBaseCurrency === originalBase 
+      ? { points: refSeries.points.map(p => ({ date: p.date, rate: 1 })) }
+      : viewModel.historicalTrend.allSeries.find(
+          (series) => series.symbol === selectedBaseCurrency,
+        );
+
+    if (!targetSeries || !baseSeries || !baseSeries.points) {
+      return { symbol: displayedCurrency, points: [] };
+    }
+
+    const points = targetSeries.points.map((tPoint, index) => {
+      const bPoint = baseSeries.points[index];
+      const rate = bPoint && bPoint.rate !== 0 ? tPoint.rate / bPoint.rate : 0;
+      return { date: tPoint.date, rate };
+    });
+
+    return { symbol: displayedCurrency, points };
+  }, [displayedCurrency, selectedBaseCurrency, viewModel.historicalTrend.allSeries, viewModel.latestRates.baseCurrency]);
   const displayedChartPoints = useMemo(
     () => selectedChartSeries.points.slice(-trendWindowDays),
     [selectedChartSeries.points, trendWindowDays],
@@ -409,14 +437,17 @@ export function DashboardApp({ viewModel }: DashboardAppProps) {
               >
                 {displayedChartPoints.length > 0 ? (
                   <OverviewTrendCard
-                    baseCurrency={viewModel.latestRates.baseCurrency}
-                    card={displayedRateCard}
-                    points={displayedChartPoints}
-                    selectedWindowDays={trendWindowDays}
-                    symbol={displayedCurrency}
-                    trendDirection={trendDirection}
-                    onWindowChange={setTrendWindowDays}
-                  />
+                      availableCurrencies={watchlistCurrencies}
+                      baseCurrency={selectedBaseCurrency}
+                      card={displayedRateCard}
+                      onBaseCurrencyChange={setSelectedBaseCurrency}
+                      onSymbolChange={setSelectedCurrency}
+                      onWindowChange={setTrendWindowDays}
+                      points={displayedChartPoints}
+                      selectedWindowDays={trendWindowDays}
+                      symbol={displayedCurrency}
+                      trendDirection={trendDirection}
+                    />
                 ) : (
                   <p className="empty-state">
                     Historical chart data will appear after daily reference
@@ -1041,16 +1072,22 @@ function AllocationHistoryLineChart({
 
 /* Overview trend card */
 function OverviewTrendCard({
+  availableCurrencies,
   baseCurrency,
   card,
+  onBaseCurrencyChange,
+  onSymbolChange,
   onWindowChange,
   points,
   selectedWindowDays,
   symbol,
   trendDirection,
 }: {
+  availableCurrencies: string[];
   baseCurrency: string;
   card: LatestRateCard | undefined;
+  onBaseCurrencyChange: (currency: string) => void;
+  onSymbolChange: (currency: string) => void;
   onWindowChange: (windowDays: TrendWindowDays) => void;
   points: { date: string; rate: number }[];
   selectedWindowDays: TrendWindowDays;
@@ -1060,14 +1097,42 @@ function OverviewTrendCard({
   const firstPoint = points[0];
   const lastPoint = points[points.length - 1];
 
+  let percentageChange = 0;
+  if (firstPoint && lastPoint && firstPoint.rate !== 0) {
+    percentageChange = ((lastPoint.rate - firstPoint.rate) / firstPoint.rate) * 100;
+  }
+  const pctString = percentageChange > 0 ? "+" + percentageChange.toFixed(2) + "%" : percentageChange.toFixed(2) + "%";
+  const pctClass = percentageChange > 0 ? "percentage-up" : percentageChange < 0 ? "percentage-down" : "percentage-flat";
+
   return (
     <article className="currency-detail-card" data-overview-trend={symbol}>
       <div className="overview-trend-header">
         <div>
           <p className="eyebrow">Selected daily trend</p>
-          <h3>
-            {baseCurrency} to {symbol}
-          </h3>
+          <div className="trend-pair-selector">
+            <select
+              aria-label="Select base currency"
+              className="currency-select"
+              onChange={(e) => onBaseCurrencyChange(e.target.value)}
+              value={baseCurrency}
+            >
+              {availableCurrencies.map((c) => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+            </select>
+            <span className="to-text">to</span>
+            <select
+              aria-label="Select target currency"
+              className="currency-select"
+              onChange={(e) => onSymbolChange(e.target.value)}
+              value={symbol}
+            >
+              {availableCurrencies.map((c) => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+            </select>
+            <span className={`trend-percentage ${pctClass}`}>{pctString}</span>
+          </div>
         </div>
         <label className="trend-window-control">
           <span>Trend window</span>
@@ -1106,35 +1171,18 @@ function OverviewTrendCard({
       </div>
       {card ? (
         <p className="meta-dim">
-          {card.label}
+          {card.label} &middot; Historical reference only.
         </p>
-      ) : null}
-      <MarketStatus direction={trendDirection} />
+      ) : (
+        <p className="meta-dim">
+          Historical reference only.
+        </p>
+      )}
     </article>
   );
 }
 
-/* Market status */
-function MarketStatus({ direction }: { direction: TrendDirection }) {
-  if (direction === "flat") {
-    return (
-      <p className="market-status market-status-flat">
-        <span className="market-status-note">Historical reference only.</span>
-      </p>
-    );
-  }
 
-  const arrow = direction === "up" ? "��" : "��";
-
-  return (
-    <p className={`market-status market-status-${direction}`}>
-      <span aria-hidden="true" className="market-pct">{arrow}</span>
-      {direction === "up" ? "Moved up" : "Moved down"}
-      <span aria-hidden="true" className="market-status-note"> �P </span>
-      <span className="market-status-note">Historical reference only.</span>
-    </p>
-  );
-}
 
 /* Historical line chart with area fill, grid lines, and high/low marks */
 function HistoricalLineChart({
@@ -1223,7 +1271,13 @@ function HistoricalLineChart({
         strokeWidth="1.5"
       />
       <circle cx={highPoint.x} cy={highPoint.y} r="3.5" fill="var(--accent)" />
+      <text x={Math.min(highPoint.x + 8, width - 40)} y={Math.max(highPoint.y - 8, 12)} fill="var(--text-primary)" fontSize="12" fontWeight="bold">
+        {formatRate(highPoint.rate)}
+      </text>
       <circle cx={lowPoint.x} cy={lowPoint.y} r="3.5" fill="var(--accent)" />
+      <text x={Math.min(lowPoint.x + 8, width - 40)} y={Math.min(lowPoint.y + 16, height - 4)} fill="var(--text-primary)" fontSize="12" fontWeight="bold">
+        {formatRate(lowPoint.rate)}
+      </text>
     </svg>
   );
 }

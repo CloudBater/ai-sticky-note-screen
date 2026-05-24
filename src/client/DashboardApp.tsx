@@ -268,9 +268,9 @@ export function DashboardApp({
       viewModel.latestRates.baseCurrency,
     ],
   );
-  const conversionExposure = useMemo(
+  const conversionExposures = useMemo(
     () =>
-      summarizeConversionExposure({
+      summarizeAllConversionExposures({
         baseCurrency: viewModel.latestRates.baseCurrency,
         entries: simulationHistoryEntries,
         latestRates: rateCardsByCurrency,
@@ -281,6 +281,8 @@ export function DashboardApp({
       viewModel.latestRates.baseCurrency,
     ],
   );
+  // Keep the legacy single-currency accessor for any downstream that still uses it
+  const conversionExposure = conversionExposures[0] as ConversionExposureSummary | undefined;
   const selectedChartSeries = useMemo(() => {
     const originalBase = viewModel.latestRates.baseCurrency;
     
@@ -626,48 +628,8 @@ export function DashboardApp({
             <p className="eyebrow">Simulation history</p>
             <h2 id="conversion-exposure-heading">Simulated conversion exposure</h2>
           </div>
-          {conversionExposure ? (
-            <>
-              <div className="exposure-summary-grid">
-                <div className="exposure-metric exposure-metric-primary">
-                  <span className="eyebrow">Amount</span>
-                  <strong>
-                    <Num
-                      size="m"
-                      value={formatExposureAmount(
-                        conversionExposure.amount,
-                      )}
-                    />{" "}
-                    <Code>{conversionExposure.currency}</Code>
-                  </strong>
-                </div>
-                <div className="exposure-metric">
-                  <span className="eyebrow">Avg cost</span>
-                  <strong>
-                    <Num
-                      size="s"
-                      value={formatRate(conversionExposure.averageCost)}
-                    />{" "}
-                    <Code>{conversionExposure.baseCurrency}</Code>
-                  </strong>
-                </div>
-                <div className="exposure-metric">
-                  <span className="eyebrow">Reference P/L</span>
-                  <strong data-profit-state={conversionExposure.profitState}>
-                    <Num
-                      size="s"
-                      value={formatSignedAmount(
-                        conversionExposure.referenceProfit,
-                      )}
-                    />{" "}
-                    <Code>{conversionExposure.baseCurrency}</Code>
-                  </strong>
-                </div>
-              </div>
-              <p className="meta-dim">
-                {conversionExposure.entryCount} simulated entries. Historical reference only.
-              </p>
-            </>
+          {conversionExposures.length > 0 ? (
+            <ExposureGrid exposures={conversionExposures} />
           ) : (
             <>
               <p className="empty-state">No simulated conversions yet.</p>
@@ -1253,6 +1215,7 @@ function SimulationWorkspace({
         onViewHistory={onViewHistory}
         referenceDate={forwardReferenceDate}
         simulationBalanceAmount={simulationBalanceAmount}
+        simulationBalanceCurrency={simulationBalanceCurrency}
         sourceCurrency={forwardSourceCurrency}
         targetCurrency={forwardTargetCurrency}
         title="Forward simulated conversion"
@@ -1277,6 +1240,7 @@ function SimulationWorkspace({
         onViewHistory={onViewHistory}
         referenceDate={reverseReferenceDate}
         simulationBalanceAmount={simulationBalanceAmount}
+        simulationBalanceCurrency={simulationBalanceCurrency}
         sourceCurrency={reverseSourceCurrency}
         targetCurrency={reverseTargetCurrency}
         title="Reverse simulated conversion"
@@ -1327,6 +1291,7 @@ function SimulatedConversionRow({
   onViewHistory,
   referenceDate,
   simulationBalanceAmount,
+  simulationBalanceCurrency,
   sourceCurrency,
   targetCurrency,
   title,
@@ -1345,6 +1310,7 @@ function SimulatedConversionRow({
   onViewHistory: () => void;
   referenceDate: string;
   simulationBalanceAmount: number;
+  simulationBalanceCurrency: string;
   sourceCurrency: string;
   targetCurrency: string;
   title: string;
@@ -1389,6 +1355,7 @@ function SimulatedConversionRow({
         onViewHistory={onViewHistory}
         referenceDate={referenceDate}
         simulationBalanceAmount={simulationBalanceAmount}
+        simulationBalanceCurrency={simulationBalanceCurrency}
         sourceCurrency={sourceCurrency}
         targetCurrency={targetCurrency}
         title={title}
@@ -1412,6 +1379,7 @@ function SimulatedConversionPreviewCard({
   onViewHistory,
   referenceDate,
   simulationBalanceAmount,
+  simulationBalanceCurrency,
   sourceCurrency,
   targetCurrency,
   title,
@@ -1429,6 +1397,7 @@ function SimulatedConversionPreviewCard({
   onViewHistory: () => void;
   referenceDate: string;
   simulationBalanceAmount: number;
+  simulationBalanceCurrency: string;
   sourceCurrency: string;
   targetCurrency: string;
   title: string;
@@ -1437,8 +1406,21 @@ function SimulatedConversionPreviewCard({
   const [previewError, setPreviewError] = useState<string | null>(null);
   const [isPreviewing, setIsPreviewing] = useState(false);
   const [hasAddedToHistory, setHasAddedToHistory] = useState(false);
-  const maxConversionAmount = Math.max(0, simulationBalanceAmount);
-  const minConversionAmount = simulationBalanceAmount > 0 ? 1 : 0;
+
+  // Compute how much of sourceCurrency the user can actually spend,
+  // given that their balance is in simulationBalanceCurrency.
+  const derivedBalance = computeDerivedBalance({
+    balanceAmount: simulationBalanceAmount,
+    balanceCurrency: simulationBalanceCurrency,
+    baseCurrency,
+    latestRates,
+    sourceCurrency,
+  });
+  const isCrossCurrency =
+    sourceCurrency.toUpperCase() !== simulationBalanceCurrency.toUpperCase();
+
+  const maxConversionAmount = Math.max(0, derivedBalance);
+  const minConversionAmount = derivedBalance > 0 ? 1 : 0;
   const livePreview = buildLiveConversionPreview({
     amount: Number(amount.replaceAll(",", "").trim()),
     baseCurrency,
@@ -1454,8 +1436,8 @@ function SimulatedConversionPreviewCard({
 
     const normalizedAmount = normalizeSimulatedConversionAmountInput(
       amount,
-      simulationBalanceAmount,
-      Math.min(simulationBalanceAmount, 2500),
+      derivedBalance,
+      Math.min(derivedBalance, 2500),
     );
 
     onAmountChange(String(normalizedAmount));
@@ -1485,6 +1467,18 @@ function SimulatedConversionPreviewCard({
       <div className="section-heading">
         <p className="eyebrow">Conversion preview</p>
         <h3>{title}</h3>
+      </div>
+      {/* Direction banner — makes clear what is being given vs received */}
+      <div className="conversion-direction-banner" data-conversion-direction-label>
+        <span className="conversion-direction-giving">
+          <span className="eyebrow">Giving</span>
+          <strong><Code>{sourceCurrency}</Code></strong>
+        </span>
+        <span className="conversion-direction-arrow" aria-hidden="true" />
+        <span className="conversion-direction-receiving">
+          <span className="eyebrow">Receiving</span>
+          <strong><Code>{targetCurrency}</Code></strong>
+        </span>
       </div>
       <form aria-label="Preview simulated conversion form" onSubmit={handleSubmit}>
         <fieldset className="conversion-controls">
@@ -1530,9 +1524,11 @@ function SimulatedConversionPreviewCard({
             </select>
           </label>
           <label>
-            <span>Amount</span>
+            <span>Amount ({sourceCurrency})</span>
             <input
               aria-label="Simulated conversion amount"
+              data-amount-currency={sourceCurrency}
+              data-derived-balance={maxConversionAmount}
               max={maxConversionAmount}
               min={minConversionAmount}
               name="simulated-conversion-amount"
@@ -1546,6 +1542,21 @@ function SimulatedConversionPreviewCard({
               value={amount}
             />
           </label>
+          {isCrossCurrency && (
+            <p className="from-balance-note" data-from-balance-note>
+              Your{" "}
+              <strong>
+                {simulationBalanceAmount.toLocaleString("en-US")}{" "}
+                <Code>{simulationBalanceCurrency}</Code>
+              </strong>{" "}
+              simulation balance converts to approximately{" "}
+              <strong>
+                {derivedBalance.toLocaleString("en-US")}{" "}
+                <Code>{sourceCurrency}</Code>
+              </strong>{" "}
+              at the daily reference rate. Hypothetical only.
+            </p>
+          )}
           <label>
             <span>Reference date</span>
             <input
@@ -1561,24 +1572,27 @@ function SimulatedConversionPreviewCard({
           <button disabled={isPreviewing || simulationBalanceAmount <= 0} type="submit">
             {isPreviewing ? "Previewing..." : "Preview simulated conversion"}
           </button>
-          <button
-            disabled={preview === null}
-            onClick={() => {
-              if (preview) {
-                onAddPreview(preview);
-                setPreview(null);
-                setHasAddedToHistory(true);
-              }
-            }}
-            type="button"
-          >
-            Add to simulation history
-          </button>
         </div>
       </form>
       {livePreview ? (
         <ConversionResult preview={livePreview} />
       ) : null}
+      <div className="conversion-add-row">
+        <button
+          data-cta="add-to-history"
+          disabled={preview === null}
+          onClick={() => {
+            if (preview) {
+              onAddPreview(preview);
+              setPreview(null);
+              setHasAddedToHistory(true);
+            }
+          }}
+          type="button"
+        >
+          Add to simulation history
+        </button>
+      </div>
       {previewError ? <p className="warning-text">{previewError}</p> : null}
       <p
         aria-live="polite"
@@ -1621,6 +1635,90 @@ function ConversionResult({ preview }: { preview: LiveConversionPreview }) {
         Rate <Num size="s" value={formatRate(preview.rate)} />
       </span>
     </p>
+  );
+}
+
+/* Exposure grid — 2×2 layout for simulated conversion exposure */
+const EXPOSURE_OVERFLOW_THRESHOLD = 4; // overflow kicks in when count > this
+const EXPOSURE_VISIBLE_WHEN_OVERFLOW = 3; // visible currency cells in overflow mode
+
+function ExposureCurrencyCell({
+  exposure,
+}: {
+  exposure: ConversionExposureSummary;
+}) {
+  return (
+    <div className="exposure-grid-cell" data-exposure-grid-cell>
+      <div className="exposure-cell-currency">
+        <Code>{exposure.currency}</Code>
+      </div>
+      <div className="exposure-metric exposure-metric-primary">
+        <span className="eyebrow">Amount</span>
+        <strong>
+          <Num size="m" value={formatExposureAmount(exposure.amount)} />{" "}
+          <Code>{exposure.currency}</Code>
+        </strong>
+      </div>
+      <div className="exposure-metric">
+        <span className="eyebrow">Avg cost</span>
+        <strong>
+          <Num size="s" value={formatRate(exposure.averageCost)} />{" "}
+          <Code>{exposure.baseCurrency}</Code>
+        </strong>
+      </div>
+      <div className="exposure-metric">
+        <span className="eyebrow">Reference P/L</span>
+        <strong data-profit-state={exposure.profitState}>
+          <Num size="s" value={formatSignedAmount(exposure.referenceProfit)} />{" "}
+          <Code>{exposure.baseCurrency}</Code>
+        </strong>
+      </div>
+      <p className="meta-dim">
+        {exposure.entryCount} simulated{" "}
+        {exposure.entryCount === 1 ? "entry" : "entries"}. Historical reference only.
+      </p>
+    </div>
+  );
+}
+
+function ExposureGrid({
+  exposures,
+}: {
+  exposures: ConversionExposureSummary[];
+}) {
+  const gridSize = exposures.length;
+  const hasOverflow = gridSize > EXPOSURE_OVERFLOW_THRESHOLD;
+  const visibleExposures = hasOverflow
+    ? exposures.slice(0, EXPOSURE_VISIBLE_WHEN_OVERFLOW)
+    : exposures;
+  const overflowCount = hasOverflow
+    ? gridSize - EXPOSURE_VISIBLE_WHEN_OVERFLOW
+    : 0;
+
+  return (
+    <>
+      <div
+        className="exposure-multi-grid"
+        data-exposure-grid-size={String(gridSize)}
+      >
+        {visibleExposures.map((exposure) => (
+          <ExposureCurrencyCell key={exposure.currency} exposure={exposure} />
+        ))}
+        {overflowCount > 0 && (
+          <div
+            className="exposure-grid-cell exposure-grid-overflow"
+            data-exposure-grid-cell
+            data-exposure-overflow
+          >
+            <span className="exposure-overflow-count">+{overflowCount}</span>
+            <span className="exposure-overflow-label">more currencies</span>
+          </div>
+        )}
+      </div>
+      <p className="meta-dim">
+        Historical reference only. No trades are executed.
+      </p>
+    </>
   );
 }
 
@@ -2151,7 +2249,7 @@ type ConversionExposureSummary = {
   referenceProfit: number;
 };
 
-function summarizeConversionExposure({
+function buildExposureGroups({
   baseCurrency,
   entries,
   latestRates,
@@ -2159,7 +2257,7 @@ function summarizeConversionExposure({
   baseCurrency: string;
   entries: SimulationHistoryEntry[];
   latestRates: Map<string, LatestRateCard>;
-}): ConversionExposureSummary | undefined {
+}): ConversionExposureSummary[] {
   const groups = new Map<
     string,
     {
@@ -2190,40 +2288,64 @@ function summarizeConversionExposure({
     groups.set(entry.targetCurrency, group);
   });
 
-  const [currency, group] =
-    [...groups.entries()].sort(
-      ([leftCurrency, left], [rightCurrency, right]) =>
-        right.cost - left.cost || leftCurrency.localeCompare(rightCurrency),
-    )[0] ?? [];
+  const sorted = [...groups.entries()].sort(
+    ([leftCurrency, left], [rightCurrency, right]) =>
+      right.cost - left.cost || leftCurrency.localeCompare(rightCurrency),
+  );
 
-  if (currency === undefined || group === undefined || group.amount === 0) {
-    return undefined;
+  const result: ConversionExposureSummary[] = [];
+
+  for (const [currency, group] of sorted) {
+    if (group.amount === 0) continue;
+
+    const latestRate = latestRates.get(currency)?.rate;
+    if (latestRate === undefined || latestRate === 0) continue;
+
+    const latestReferenceValue = group.amount / latestRate;
+    const referenceProfit = latestReferenceValue - group.cost;
+    const profitState =
+      Math.abs(referenceProfit) < 0.01
+        ? "flat"
+        : referenceProfit > 0
+          ? "gain"
+          : "loss";
+
+    result.push({
+      amount: group.amount,
+      averageCost: group.cost / group.amount,
+      baseCurrency,
+      currency,
+      entryCount: group.entryCount,
+      profitState,
+      referenceProfit,
+    });
   }
 
-  const latestRate = latestRates.get(currency)?.rate;
+  return result;
+}
 
-  if (latestRate === undefined || latestRate === 0) {
-    return undefined;
-  }
+function summarizeConversionExposure({
+  baseCurrency,
+  entries,
+  latestRates,
+}: {
+  baseCurrency: string;
+  entries: SimulationHistoryEntry[];
+  latestRates: Map<string, LatestRateCard>;
+}): ConversionExposureSummary | undefined {
+  return buildExposureGroups({ baseCurrency, entries, latestRates })[0];
+}
 
-  const latestReferenceValue = group.amount / latestRate;
-  const referenceProfit = latestReferenceValue - group.cost;
-  const profitState =
-    Math.abs(referenceProfit) < 0.01
-      ? "flat"
-      : referenceProfit > 0
-        ? "gain"
-        : "loss";
-
-  return {
-    amount: group.amount,
-    averageCost: group.cost / group.amount,
-    baseCurrency,
-    currency,
-    entryCount: group.entryCount,
-    profitState,
-    referenceProfit,
-  };
+function summarizeAllConversionExposures({
+  baseCurrency,
+  entries,
+  latestRates,
+}: {
+  baseCurrency: string;
+  entries: SimulationHistoryEntry[];
+  latestRates: Map<string, LatestRateCard>;
+}): ConversionExposureSummary[] {
+  return buildExposureGroups({ baseCurrency, entries, latestRates });
 }
 
 function formatExposureAmount(value: number): string {
@@ -2299,6 +2421,57 @@ function getMovementState(points: { rate: number }[]): "up" | "down" | "flat" {
 
 function isDateOnlyString(value: string): boolean {
   return /^\d{4}-\d{2}-\d{2}$/.test(value);
+}
+
+/**
+ * Compute how much of `sourceCurrency` is available given a balance in
+ * `balanceCurrency`. When they match the raw balance is returned. When
+ * they differ, the cross-rate is derived via the shared base currency.
+ *
+ * Example: 10 000 USD balance, source = EUR, base = USD, EUR rate = 0.901
+ *   → 10 000 × (0.901 / 1.0) = 9 010 EUR available
+ */
+function computeDerivedBalance({
+  balanceAmount,
+  balanceCurrency,
+  baseCurrency,
+  latestRates,
+  sourceCurrency,
+}: {
+  balanceAmount: number;
+  balanceCurrency: string;
+  baseCurrency: string;
+  latestRates: LatestRateCard[];
+  sourceCurrency: string;
+}): number {
+  const normalizedBalance = balanceCurrency.toUpperCase();
+  const normalizedSource = sourceCurrency.toUpperCase();
+
+  if (normalizedBalance === normalizedSource) {
+    return balanceAmount;
+  }
+
+  // Build a map of [currency → units per base]
+  const ratesByCode = new Map<string, number>([[baseCurrency.toUpperCase(), 1]]);
+  latestRates.forEach((card) => {
+    ratesByCode.set(card.currency.toUpperCase(), card.rate);
+  });
+
+  const balancePerBase = ratesByCode.get(normalizedBalance);
+  const sourcePerBase = ratesByCode.get(normalizedSource);
+
+  if (
+    balancePerBase === undefined ||
+    sourcePerBase === undefined ||
+    balancePerBase <= 0
+  ) {
+    // Rate unknown — fall back to raw balance so the form stays usable
+    return balanceAmount;
+  }
+
+  // cross-rate: how many sourceUnits per 1 balanceUnit
+  const crossRate = sourcePerBase / balancePerBase;
+  return Math.floor(balanceAmount * crossRate);
 }
 
 function arraysEqual(left: string[], right: string[]): boolean {

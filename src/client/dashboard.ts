@@ -236,17 +236,28 @@ export async function loadDashboardViewModel(
     supportedCurrencies: referenceData.currencies,
     latestRates: referenceData.latestRates.rates,
   });
-  const historicalSymbol = Object.keys(referenceData.latestRates.rates).sort()[0];
+  const historicalSymbols = Object.keys(referenceData.latestRates.rates).sort();
+  const historicalSymbol = historicalSymbols[0];
   const historicalWindow = getHistoricalWindow(referenceData.latestRates.date);
 
   if (historicalSymbol !== undefined && historicalWindow !== undefined) {
     try {
-      const historicalRates = await fetchHistoricalRates({
-        baseCurrency: referenceData.latestRates.base,
-        symbol: historicalSymbol,
-        startDate: historicalWindow.startDate,
-        endDate: historicalWindow.endDate,
-      });
+      const historicalRatesResponses = await Promise.all(
+        historicalSymbols.map((symbol) =>
+          fetchHistoricalRates({
+            baseCurrency: referenceData.latestRates.base,
+            symbol,
+            startDate: historicalWindow.startDate,
+            endDate: historicalWindow.endDate,
+          }),
+        ),
+      );
+      const historicalRates = historicalRatesResponses[0];
+
+      if (historicalRates === undefined) {
+        return viewModel;
+      }
+
       const summary = summarizeHistoricalTrend({
         baseCurrency: historicalRates.base,
         symbol: historicalRates.symbol,
@@ -259,8 +270,7 @@ export async function loadDashboardViewModel(
       viewModel.allocationPreview = buildManualAllocationPreview({
         baseCurrency: historicalRates.base,
         startingAmount: input.simulationBalance,
-        symbol: historicalRates.symbol,
-        points: historicalRates.points,
+        histories: historicalRatesResponses,
       });
     } catch {
       viewModel.historicalTrend = {
@@ -432,20 +442,23 @@ function buildPendingAllocationPreview(
 function buildManualAllocationPreview(input: {
   baseCurrency: string;
   startingAmount: number;
-  symbol: string;
-  points: HistoricalReferenceRatePoint[];
+  histories: HistoricalReferenceRatesResponse[];
 }): DashboardAllocationPreview {
   const baseCurrency = input.baseCurrency.toUpperCase();
-  const symbol = input.symbol.toUpperCase();
-  const referenceRatesByDate = Object.fromEntries(
-    input.points.map((point) => [point.date, { [symbol]: point.rate }]),
-  );
+  const primaryHistory = input.histories[0];
+
+  if (primaryHistory === undefined) {
+    return buildPendingAllocationPreview(baseCurrency, input.startingAmount);
+  }
+
+  const primarySymbol = primaryHistory.symbol.toUpperCase();
+  const referenceRatesByDate = mergeHistoricalReferenceRates(input.histories);
   const preview = previewPortfolioAllocation({
     baseCurrency,
     startingAmount: input.startingAmount,
     allocations: [
       { currency: baseCurrency, percent: 50 },
-      { currency: symbol, percent: 50 },
+      { currency: primarySymbol, percent: 50 },
     ],
     referenceRatesByDate,
   });
@@ -467,19 +480,43 @@ function buildManualAllocationPreview(input: {
     status: "ready",
     summary:
       firstPoint !== undefined && lastPoint !== undefined
-        ? `Manual 50% ${baseCurrency} / 50% ${symbol} allocation moved from ${firstPoint.label} to ${lastPoint.label}. Historical reference only.`
+        ? `Manual 50% ${baseCurrency} / 50% ${primarySymbol} allocation moved from ${firstPoint.label} to ${lastPoint.label}. Historical reference only.`
         : "Manual allocation historical preview will appear after daily history loads.",
     currencyOptions: [
       { currency: baseCurrency, label: baseCurrency },
-      { currency: symbol, label: symbol },
+      ...input.histories.map((history) => {
+        const symbol = history.symbol.toUpperCase();
+
+        return { currency: symbol, label: symbol };
+      }),
     ],
     referenceRatesByDate,
     allocations: [
       { currency: baseCurrency, percent: 50, label: `50% ${baseCurrency}` },
-      { currency: symbol, percent: 50, label: `50% ${symbol}` },
+      { currency: primarySymbol, percent: 50, label: `50% ${primarySymbol}` },
     ],
     points,
   };
+}
+
+function mergeHistoricalReferenceRates(
+  histories: HistoricalReferenceRatesResponse[],
+): Record<string, Record<string, number>> {
+  return histories.reduce<Record<string, Record<string, number>>>(
+    (referenceRatesByDate, history) => {
+      const symbol = history.symbol.toUpperCase();
+
+      history.points.forEach((point) => {
+        referenceRatesByDate[point.date] = {
+          ...referenceRatesByDate[point.date],
+          [symbol]: point.rate,
+        };
+      });
+
+      return referenceRatesByDate;
+    },
+    {},
+  );
 }
 
 function roundDisplayAmount(value: number): number {

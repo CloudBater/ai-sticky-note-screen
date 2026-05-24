@@ -64,8 +64,15 @@ export function createApp(options: CreateAppOptions = {}) {
         return;
       }
 
-      const currencies =
-        (await upstreamResponse.json()) as FrankfurterCurrenciesResponse;
+      const currencies = await readUpstreamJson<FrankfurterCurrenciesResponse>(
+        upstreamResponse,
+        response,
+        "Unable to fetch supported currencies",
+      );
+
+      if (currencies === undefined) {
+        return;
+      }
 
       const responseBody = { currencies };
 
@@ -112,8 +119,15 @@ export function createApp(options: CreateAppOptions = {}) {
         upstreamUrl.searchParams.set("to", targetCurrency);
 
         const upstreamResponse = await fetchFrankfurter(upstreamUrl);
-        const upstreamBody =
-          (await upstreamResponse.json()) as FrankfurterLatestResponse;
+        const upstreamBody = await readUpstreamJson<FrankfurterLatestResponse>(
+          upstreamResponse,
+          response,
+          "Unable to fetch conversion reference rate",
+        );
+
+        if (upstreamBody === undefined) {
+          return;
+        }
 
         rateDate = upstreamBody.date;
         dailyReferenceRate = upstreamBody.rates[targetCurrency];
@@ -191,8 +205,16 @@ export function createApp(options: CreateAppOptions = {}) {
         return;
       }
 
-      const upstreamBody =
-        (await upstreamResponse.json()) as FrankfurterHistoryResponse;
+      const upstreamBody = await readUpstreamJson<FrankfurterHistoryResponse>(
+        upstreamResponse,
+        response,
+        "Unable to fetch historical reference rates",
+      );
+
+      if (upstreamBody === undefined) {
+        return;
+      }
+
       const points = Object.entries(upstreamBody.rates)
         .sort(([leftDate], [rightDate]) => leftDate.localeCompare(rightDate))
         .map(([date, dailyRates]) => ({
@@ -267,8 +289,15 @@ export function createApp(options: CreateAppOptions = {}) {
         return;
       }
 
-      const upstreamBody =
-        (await upstreamResponse.json()) as FrankfurterLatestResponse;
+      const upstreamBody = await readUpstreamJson<FrankfurterLatestResponse>(
+        upstreamResponse,
+        response,
+        "Unable to fetch latest reference rates",
+      );
+
+      if (upstreamBody === undefined) {
+        return;
+      }
 
       const responseBody = {
         base: upstreamBody.base,
@@ -292,6 +321,19 @@ function sendJson(
 ) {
   response.writeHead(statusCode, { "Content-Type": "application/json" });
   response.end(JSON.stringify(body));
+}
+
+async function readUpstreamJson<T>(
+  upstreamResponse: Response,
+  response: ServerResponse,
+  error: string,
+): Promise<T | undefined> {
+  try {
+    return (await upstreamResponse.json()) as T;
+  } catch {
+    sendJson(response, 502, { error });
+    return undefined;
+  }
 }
 
 async function readJsonBody(request: IncomingMessage): Promise<unknown> {

@@ -1000,6 +1000,8 @@ describe("DashboardApp", () => {
     expect(html).toContain("Add to simulation history");
     expect(html).toContain('class="conversion-added-confirm"');
     expect(html).toContain("View simulation history");
+    expect(html).toContain('class="history-link-button"');
+    expect(html).toContain('data-section-target="history"');
   });
 
   it("renders disclaimer panel with eyebrow and structured safety title", () => {

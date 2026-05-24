@@ -93,9 +93,12 @@ export function DashboardApp({ viewModel }: DashboardAppProps) {
   const displayedRateCard =
     findRateCard(viewModel.latestRates.cards, displayedCurrency) ??
     selectedRateCard;
-  const chartBars = useMemo(
-    () => buildChartBars(displayedCurrency),
-    [displayedCurrency],
+  const selectedChartSeries = useMemo(
+    () =>
+      viewModel.historicalTrend.allSeries.find(
+        (series) => series.symbol === displayedCurrency,
+      ) ?? { symbol: displayedCurrency, points: [] },
+    [displayedCurrency, viewModel.historicalTrend.allSeries],
   );
   const trendDirection = getTrendDirection(
     viewModel.historicalTrend.summary,
@@ -329,21 +332,26 @@ export function DashboardApp({ viewModel }: DashboardAppProps) {
             <p className="eyebrow">Historical preview</p>
             <h2>Historical line chart</h2>
           </div>
-          <div
-            className="chart-window"
-            data-chart-currency={displayedCurrency}
-            data-transition-state={transitionState}
-          >
-            <div className="line-chart-preview" aria-hidden="true">
-              {chartBars.map((height, index) => {
-                const barStyle: CssVars = {
-                  "--bar-height": `${height}%`,
-                };
-
-                return <span key={`${displayedCurrency}-${index}`} style={barStyle} />;
-              })}
-            </div>
-          </div>
+          {selectedChartSeries.points.length > 0 ? (
+            <>
+              <div
+                className="chart-window"
+                data-chart-currency={displayedCurrency}
+                data-transition-state={transitionState}
+              >
+                <HistoricalLineChart points={selectedChartSeries.points} />
+              </div>
+              <p className="chart-date-range">
+                {selectedChartSeries.points[0]?.date} –{" "}
+                {selectedChartSeries.points[selectedChartSeries.points.length - 1]?.date}
+              </p>
+            </>
+          ) : (
+            <p className="empty-state">
+              Historical chart data will appear after daily reference rates
+              load.
+            </p>
+          )}
           <p>
             Historical movement for {displayedCurrency} is shown as a daily
             line chart, not candlesticks.
@@ -974,14 +982,53 @@ function getTrendDirection(summary: string, currency: string): TrendDirection {
   return "flat";
 }
 
-function buildChartBars(currency: string): number[] {
-  const seed = Array.from(currency).reduce(
-    (total, character) => total + character.charCodeAt(0),
-    0,
-  );
+function HistoricalLineChart({
+  points,
+}: {
+  points: { date: string; rate: number }[];
+}) {
+  if (points.length === 0) {
+    return null;
+  }
 
-  return [38, 62, 48, 72, 58, 82].map(
-    (height, index) => 28 + ((height + seed + index * 11) % 56),
+  const width = 600;
+  const height = 200;
+  const paddingX = 0;
+  const paddingY = 16;
+  const chartWidth = width - paddingX * 2;
+  const chartHeight = height - paddingY * 2;
+  const rates = points.map((point) => point.rate);
+  const minRate = Math.min(...rates);
+  const maxRate = Math.max(...rates);
+  const rateRange = maxRate - minRate || 1;
+  const polylinePoints = points
+    .map((point, index) => {
+      const x = paddingX + (index / Math.max(points.length - 1, 1)) * chartWidth;
+      const y =
+        paddingY +
+        chartHeight -
+        ((point.rate - minRate) / rateRange) * chartHeight;
+
+      return `${x},${y}`;
+    })
+    .join(" ");
+
+  return (
+    <svg
+      data-chart-type="historical-line"
+      viewBox={`0 0 ${width} ${height}`}
+      className="historical-line-chart"
+      aria-label="Historical daily rate line chart"
+    >
+      <polyline
+        fill="none"
+        points={polylinePoints}
+        stroke="var(--accent)"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="2.5"
+      />
+    </svg>
   );
 }
 

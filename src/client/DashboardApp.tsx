@@ -812,17 +812,6 @@ export function DashboardApp({
         {/* History tab */}
         <section className="panel history-panel" data-glass="true" hidden={!showHistory} id="history">
           <div className="section-heading">
-            <p className="eyebrow">Selected currencies</p>
-            <h2>Supported currencies</h2>
-          </div>
-          <p className="meta-dim">
-            {watchlistEntries
-              .filter((entry) => entry.supported)
-              .map((entry) => `${entry.currency}`)
-              .join(", ")}
-          </p>
-
-          <div className="section-heading history-entry-heading">
             <p className="eyebrow">Review</p>
             <h2>Simulation history</h2>
           </div>
@@ -1347,7 +1336,7 @@ function SimulatedConversionRow({
             <Code>{sourceCurrency}</Code> / <Code>{targetCurrency}</Code>
           </h3>
         </div>
-        {/* Direction banner — lives on the chart side for visual pairing with the curve */}
+        {/* Direction banner ??? lives on the chart side for visual pairing with the curve */}
         <div className="conversion-direction-banner" data-conversion-direction-label>
           <span className="conversion-direction-giving">
             <span className="eyebrow">Giving</span>
@@ -1663,7 +1652,7 @@ function ConversionResult({ preview }: { preview: LiveConversionPreview }) {
   );
 }
 
-/* Exposure grid — 2×2 layout for simulated conversion exposure */
+/* Exposure grid ??? 2??2 layout for simulated conversion exposure */
 const EXPOSURE_OVERFLOW_THRESHOLD = 4; // overflow kicks in when count > this
 const EXPOSURE_VISIBLE_WHEN_OVERFLOW = 3; // visible currency cells in overflow mode
 
@@ -2454,7 +2443,7 @@ function isDateOnlyString(value: string): boolean {
  * they differ, the cross-rate is derived via the shared base currency.
  *
  * Example: 10 000 USD balance, source = EUR, base = USD, EUR rate = 0.901
- *   → 10 000 × (0.901 / 1.0) = 9 010 EUR available
+ *   ??? 10 000 ?? (0.901 / 1.0) = 9 010 EUR available
  */
 function computeDerivedBalance({
   balanceAmount,
@@ -2476,7 +2465,7 @@ function computeDerivedBalance({
     return balanceAmount;
   }
 
-  // Build a map of [currency → units per base]
+  // Build a map of [currency ??? units per base]
   const ratesByCode = new Map<string, number>([[baseCurrency.toUpperCase(), 1]]);
   latestRates.forEach((card) => {
     ratesByCode.set(card.currency.toUpperCase(), card.rate);
@@ -2490,7 +2479,7 @@ function computeDerivedBalance({
     sourcePerBase === undefined ||
     balancePerBase <= 0
   ) {
-    // Rate unknown — fall back to raw balance so the form stays usable
+    // Rate unknown ??? fall back to raw balance so the form stays usable
     return balanceAmount;
   }
 

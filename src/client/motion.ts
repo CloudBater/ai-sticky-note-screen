@@ -24,3 +24,10 @@ export const cardHoverMotion = {
 export const numberTransition = {
   durationMs: 200,
 } as const;
+
+// Spring easing: cubic-bezier(0.34, 1.56, 0.64, 1)
+// y2 = 1.56 overshoots past 1.0 → physical spring bounce
+export const sectionSpringTransition = {
+  durationMs: 420,
+  easing: "cubic-bezier(0.34, 1.56, 0.64, 1)",
+} as const;

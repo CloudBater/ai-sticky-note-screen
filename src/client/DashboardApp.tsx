@@ -1,5 +1,6 @@
 import {
   useEffect,
+  useRef,
   useMemo,
   useState,
   type FormEvent,
@@ -74,6 +75,28 @@ export function DashboardApp({
 }: DashboardAppProps) {
   const [activeSection, setActiveSection] =
     useState<DashboardSection>("overview");
+  const navRef = useRef<HTMLElement>(null);
+
+  // Drive the spring tab-slider indicator
+  useEffect(() => {
+    const nav = navRef.current;
+    if (!nav) return;
+
+    const activeBtn = nav.querySelector<HTMLButtonElement>(
+      '[aria-current="page"]',
+    );
+    const slider = nav.querySelector<HTMLSpanElement>(".tab-slider");
+    if (!activeBtn || !slider) return;
+
+    const navRect = nav.getBoundingClientRect();
+    const btnRect = activeBtn.getBoundingClientRect();
+    const x = btnRect.left - navRect.left + nav.scrollLeft;
+    const w = btnRect.width;
+
+    slider.style.setProperty("--tab-x", `${x}px`);
+    slider.style.setProperty("--tab-w", `${w}px`);
+    nav.dataset.sliderReady = "true";
+  }, [activeSection]);
   const [simulationBalanceAmount, setSimulationBalanceAmount] = useState(
     viewModel.simulationBalance.amount,
   );
@@ -445,10 +468,12 @@ export function DashboardApp({
         aria-label="Dashboard sections"
         className="tabs"
         data-top-nav-shell="true"
+        ref={navRef}
       >
-        {viewModel.navigationItems.map((item) => (
+        {viewModel.navigationItems.map((item, index) => (
           <Tab
             active={activeSection === item.id}
+            data-section-index={index}
             data-section-target={item.id}
             key={item.id}
             onClick={() => setActiveSection(item.id)}
@@ -456,6 +481,7 @@ export function DashboardApp({
             {item.label}
           </Tab>
         ))}
+        <span aria-hidden="true" className="tab-slider" />
       </nav>
 
       {/* Disclaimer is always visible on every tab. */}
@@ -468,6 +494,7 @@ export function DashboardApp({
         <section
           className="panel watchlist-panel"
           aria-labelledby="watchlist-heading"
+          data-glass="true"
           hidden={!showOverview}
         >
           <div className="section-heading">
@@ -592,6 +619,7 @@ export function DashboardApp({
         <section
           className="panel conversion-exposure-panel"
           aria-labelledby="conversion-exposure-heading"
+          data-glass="true"
           hidden={!showOverview}
         >
           <div className="section-heading">
@@ -656,6 +684,7 @@ export function DashboardApp({
         <section
           className="panel rates-panel"
           aria-labelledby="latest-rates-heading"
+          data-glass="true"
           data-selected-currency={selectedCurrency}
           hidden={!showOverview}
         >
@@ -735,7 +764,7 @@ export function DashboardApp({
         </section>
 
         {/* Trend tab */}
-        <section className="panel trend-panel" hidden={!showTrend} id="trend">
+        <section className="panel trend-panel" data-glass="true" hidden={!showTrend} id="trend">
           <HistoryReferenceRatesPanel
             dataDate={viewModel.latestRates.dataDate}
             historyAllCurrencies={historyCurrencyOptions}
@@ -757,6 +786,7 @@ export function DashboardApp({
         {/* Simulation tab */}
         <section
           className="panel simulation-panel"
+          data-glass="true"
           hidden={!showSimulation}
           id="simulation"
         >
@@ -800,7 +830,7 @@ export function DashboardApp({
         </section>
 
         {/* History tab */}
-        <section className="panel history-panel" hidden={!showHistory} id="history">
+        <section className="panel history-panel" data-glass="true" hidden={!showHistory} id="history">
           <div className="section-heading">
             <p className="eyebrow">Selected currencies</p>
             <h2>Supported currencies</h2>

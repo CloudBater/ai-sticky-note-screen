@@ -771,12 +771,14 @@ describe("DashboardApp", () => {
     expect(html).toContain('aria-label="Simulated conversion source currency"');
     expect(html).toContain('aria-label="Simulated conversion target currency"');
     expect(html).toContain('aria-label="Simulated conversion amount"');
+    expect(html).toContain('max="10000"');
     expect(html).toContain('aria-label="Simulated conversion reference date"');
     expect(html).toContain('aria-label="Preview simulated conversion form"');
     expect(html).toContain('type="submit"');
     expect(html).toContain("Preview simulated conversion");
     expect(html).toContain("Add to simulation history");
     expect(html).toContain("No trades are executed.");
+    expect(html).toContain("Available simulation balance only.");
     expect(html).toContain("Manual 50% USD / 50% EUR allocation moved");
     expect(html).toContain("50% USD");
     expect(html).toContain("50% EUR");

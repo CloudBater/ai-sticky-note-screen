@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { createRoot } from "react-dom/client";
 
+import { STARTING_BALANCE, buildPortfolioCurve, buildSignal } from "./portfolio.js";
 import "./styles.css";
 
 const DEFAULT_SYMBOLS = ["EUR", "JPY", "GBP", "CNY", "SGD"];
@@ -39,6 +40,37 @@ function MiniChart({ rates, symbol }) {
   return (
     <svg className="chart" viewBox="0 0 100 100" role="img" aria-label={`${symbol} daily trend`}>
       <polyline points={points} />
+    </svg>
+  );
+}
+
+function PortfolioChart({ points }) {
+  const line = useMemo(() => {
+    if (points.length === 0) {
+      return "";
+    }
+
+    const values = points.map((point) => point.value);
+    const min = Math.min(...values);
+    const max = Math.max(...values);
+    const spread = max - min || 1;
+
+    return points
+      .map((point, index) => {
+        const x = (index / Math.max(points.length - 1, 1)) * 100;
+        const y = 100 - ((point.value - min) / spread) * 82 - 9;
+        return `${x},${y}`;
+      })
+      .join(" ");
+  }, [points]);
+
+  if (!line) {
+    return <div className="empty-chart">No portfolio history yet</div>;
+  }
+
+  return (
+    <svg className="chart pnl-chart" viewBox="0 0 100 100" role="img" aria-label="Simulated portfolio curve">
+      <polyline points={line} />
     </svg>
   );
 }
@@ -82,6 +114,10 @@ function App() {
   const supportedCodes = currencies?.supported?.map((currency) => currency.code) || DEFAULT_SYMBOLS;
   const rates = latest?.rates || {};
   const summary = history?.summary;
+  const summaryWithSymbol = summary ? { ...summary, symbol: selected } : null;
+  const signal = buildSignal(summaryWithSymbol);
+  const portfolioCurve = buildPortfolioCurve(history?.rates, selected);
+  const portfolioLast = portfolioCurve[portfolioCurve.length - 1];
 
   return (
     <main>
@@ -163,6 +199,46 @@ function App() {
               <strong>{currencies?.unsupported?.join(", ") || "checking..."}</strong>
             </li>
           </ul>
+        </div>
+      </section>
+
+      <section className="portfolio-layout">
+        <div className="panel">
+          <div className="panel-heading">
+            <div>
+              <h2>$10,000 simulation lab</h2>
+              <p>Historical what-if curve for holding {selected}. It is not managed trading.</p>
+            </div>
+            <div className="pnl-pill">
+              <span>Sim P/L</span>
+              <strong className={portfolioLast?.pnl >= 0 ? "up" : "down"}>
+                {portfolioLast ? `${portfolioLast.pnl >= 0 ? "+" : "-"}$${Math.abs(portfolioLast.pnl).toLocaleString()}` : "..."}
+              </strong>
+            </div>
+          </div>
+          <PortfolioChart points={portfolioCurve} />
+          {portfolioLast ? (
+            <div className="summary">
+              <span>Start: ${STARTING_BALANCE.toLocaleString()}</span>
+              <strong className={portfolioLast.pnlPercent >= 0 ? "up" : "down"}>
+                {portfolioLast.pnlPercent >= 0 ? "+" : ""}{portfolioLast.pnlPercent}%
+              </strong>
+              <span>Now: ${portfolioLast.value.toLocaleString()}</span>
+            </div>
+          ) : null}
+        </div>
+
+        <div className="panel signal-panel">
+          <p className="eyebrow">Guardrailed signal</p>
+          <h2>{signal.label}</h2>
+          <p>{signal.reason}</p>
+          <div className="blocked-actions">
+            <button type="button" disabled>50x leverage blocked</button>
+            <button type="button" disabled>YOLO rebalance blocked</button>
+          </div>
+          <small>
+            These controls are intentionally disabled because simulated leverage and auto-trading can still teach the wrong behavior.
+          </small>
         </div>
       </section>
     </main>

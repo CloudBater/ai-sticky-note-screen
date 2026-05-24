@@ -32,6 +32,8 @@ npm test
 - In-memory cache for repeated currency/rate/history requests.
 - Basic local request rate limiting.
 - Tests for rate helper behavior and unsupported currency handling.
+- A $10,000 read-only simulation lab that charts historical P/L.
+- Disabled leverage and auto-rebalance controls that document the product boundary.
 
 ## Scope Notes
 
@@ -39,6 +41,7 @@ npm test
 - TWD is called out as unsupported instead of being silently dropped.
 - Historical movement is shown as a simple line chart, not a candlestick chart, because the upstream API has no intraday OHLC data.
 - No leverage, auto-rebalance, social leaderboard, or AI prediction claim is implemented.
+- The "signal" panel is based on historical movement only. It is not an AI forecast and does not require an API key.
 
 ---
 

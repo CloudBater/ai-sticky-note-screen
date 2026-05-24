@@ -39,6 +39,8 @@ Topic 1 - MarketMage
 - Small in-memory caching so repeated client requests do not hammer the upstream API.
 - Basic request shaping on the backend to avoid runaway local clients.
 - A React dashboard that compares selected currencies, shows the data date, and charts recent daily movement.
+- A $10,000 read-only simulation lab that shows historical P/L for holding one selected currency.
+- Disabled leverage / rebalance controls that explain why those actions are blocked instead of pretending they are safe.
 - Tests for the rate-shaping logic and backend behavior.
 
 ## How to run locally

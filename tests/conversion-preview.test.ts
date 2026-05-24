@@ -246,4 +246,73 @@ describe("POST /api/simulations/conversion-preview", () => {
       await closeServer(server);
     }
   });
+
+  it("caches identical conversion reference rate lookups during the app lifetime", async () => {
+    const upstreamRequests: string[] = [];
+    const fetchFrankfurter: FetchFrankfurter = async (url) => {
+      upstreamRequests.push(String(url));
+
+      return new Response(
+        JSON.stringify({
+          amount: 1,
+          base: "USD",
+          date: "2024-08-23",
+          rates: {
+            EUR: 0.901,
+          },
+        }),
+        {
+          headers: { "Content-Type": "application/json" },
+          status: 200,
+        },
+      );
+    };
+
+    const server = await startConversionPreviewServer(fetchFrankfurter);
+
+    try {
+      const firstResponse = await postConversionPreview(server, {
+        sourceCurrency: "usd",
+        targetCurrency: "eur",
+        amount: 2500,
+        date: "2024-08-23",
+      });
+      const secondResponse = await postConversionPreview(server, {
+        sourceCurrency: "usd",
+        targetCurrency: "eur",
+        amount: 100,
+        date: "2024-08-23",
+      });
+
+      expect(firstResponse.status).toBe(200);
+      expect(secondResponse.status).toBe(200);
+      await expect(firstResponse.json()).resolves.toEqual({
+        preview: {
+          sourceCurrency: "USD",
+          targetCurrency: "EUR",
+          sourceAmount: 2500,
+          convertedAmount: 2252.5,
+          rate: 0.901,
+          date: "2024-08-23",
+          kind: "simulation-preview",
+        },
+      });
+      await expect(secondResponse.json()).resolves.toEqual({
+        preview: {
+          sourceCurrency: "USD",
+          targetCurrency: "EUR",
+          sourceAmount: 100,
+          convertedAmount: 90.10000000000001,
+          rate: 0.901,
+          date: "2024-08-23",
+          kind: "simulation-preview",
+        },
+      });
+      expect(upstreamRequests).toEqual([
+        "https://api.frankfurter.test/2024-08-23?from=USD&to=EUR",
+      ]);
+    } finally {
+      await closeServer(server);
+    }
+  });
 });

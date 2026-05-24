@@ -827,6 +827,18 @@ describe("DashboardApp", () => {
     expect(html).toContain('British Pound');
   });
 
+  it("wires dropdown currency selections through the watchlist refresh callback", () => {
+    const source = readFileSync(
+      resolve(process.cwd(), "src/client/DashboardApp.tsx"),
+      "utf8",
+    );
+
+    expect(source).toContain("const commitWatchlistCurrency =");
+    expect(source).toContain("commitWatchlistCurrency(code);");
+    expect(source).toContain("currencyCatalog[currency]");
+    expect(source).toContain("setSelectedCurrency(normalizedCurrency);");
+  });
+
   it("renders an empty state when latest reference rates are unavailable", () => {
     const html = renderToStaticMarkup(
       <DashboardApp

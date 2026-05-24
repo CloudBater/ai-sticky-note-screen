@@ -486,6 +486,7 @@ output {
 }
 
 .currency-detail-card,
+.simulation-rate-chart,
 .simulation-balance-editor,
 .conversion-preview-card {
   display: grid;
@@ -498,6 +499,22 @@ output {
 
 .simulation-balance-editor {
   background: var(--surface-2);
+}
+
+.simulation-stack {
+  display: grid;
+  gap: var(--space-5);
+}
+
+.simulation-conversion-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 0.9fr);
+  gap: var(--space-5);
+  align-items: stretch;
+}
+
+.simulation-rate-chart {
+  min-width: 0;
 }
 
 .overview-trend-header,
@@ -575,7 +592,6 @@ select:focus {
 }
 
 .conversion-controls,
-.simulation-control-row,
 .trend-kpi-row {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -637,6 +653,7 @@ select:focus {
 }
 
 .overview-chart-window,
+.simulation-chart-window,
 .chart-window {
   height: 280px;
   padding: var(--space-5);
@@ -732,8 +749,24 @@ select:focus {
 }
 
 .conversion-result {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-2);
   border: 1px solid var(--border-default);
   background: var(--surface-2);
+}
+
+.conversion-result-source,
+.conversion-result-target,
+.conversion-result-rate {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-1);
+}
+
+.conversion-result-rate {
+  color: var(--text-secondary);
 }
 
 .conversion-added-confirm {
@@ -891,7 +924,7 @@ select:focus {
 
   .disclaimer-panel ul,
   .conversion-controls,
-  .simulation-control-row,
+  .simulation-conversion-row,
   .trend-kpi-row,
   .trend-layout {
     grid-template-columns: 1fr;
@@ -911,6 +944,7 @@ select:focus {
   }
 
   .overview-chart-window,
+  .simulation-chart-window,
   .chart-window {
     height: 220px;
   }

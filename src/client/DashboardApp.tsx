@@ -5,7 +5,11 @@ import {
   type FormEvent,
 } from "react";
 
-import type { DashboardViewModel, LatestRateCard } from "./dashboard";
+import type {
+  DashboardViewModel,
+  HistoricalTrendChartSeries,
+  LatestRateCard,
+} from "./dashboard";
 import {
   Code,
   DisclaimerPanel,
@@ -34,6 +38,10 @@ import {
 } from "./simulation-history";
 import type { SimulatedConversionPreview } from "../shared/conversion-preview";
 import marketMageIconUrl from "../resources/MarketMage-icon.jpg";
+import {
+  buildLiveConversionPreview,
+  type LiveConversionPreview,
+} from "./live-conversion-preview";
 
 type DashboardAppProps = {
   viewModel: DashboardViewModel;
@@ -671,61 +679,39 @@ export function DashboardApp({
             <p className="eyebrow">Simulation</p>
             <h2>Simulated conversion preview</h2>
           </div>
-          <div className="simulation-control-row">
-            <article className="simulation-balance-editor" data-layout-slot="amount-left">
-              <div className="section-heading">
-                <p className="eyebrow">Simulation balance</p>
-                <h3>Adjust simulation amount</h3>
-              </div>
-              <strong className="display-num">
-                {simulationBalanceAmount.toLocaleString("en-US")}
-                <span className="display-num-unit">
-                  {viewModel.simulationBalance.currency}
-                </span>
-              </strong>
-              <label>
-                <span>Amount</span>
-                <input
-                  aria-label="Adjust simulation amount"
-                  max={MAX_SIMULATION_BALANCE}
-                  min={MIN_SIMULATION_BALANCE}
-                  name="simulation-balance-amount"
-                  onChange={(event) =>
-                    handleSimulationBalanceChange(event.target.value)
-                  }
-                  step="100"
-                  type="number"
-                  value={simulationBalanceInput}
-                />
-              </label>
-              <small>Hypothetical amount only.</small>
-            </article>
-            <SimulatedConversionPreviewCard
-              key={viewModel.latestRates.dataDate}
-              baseCurrency={viewModel.latestRates.baseCurrency}
-              dataDate={viewModel.latestRates.dataDate}
-              latestRates={viewModel.latestRates.cards}
-              onAddPreview={(preview) => {
-                setSimulationHistoryEntries((existingEntries) =>
-                  addSimulatedConversionToHistory({
-                    existingEntries,
-                    preview,
-                  }),
-                );
-                setSimulationBalanceAmount((currentAmount) => {
-                  const nextAmount = applySimulatedConversionToBalance(
-                    currentAmount,
-                    preview.sourceAmount,
-                  );
+          <SimulationWorkspace
+            key={`${viewModel.latestRates.baseCurrency}-${viewModel.latestRates.dataDate}`}
+            baseCurrency={viewModel.latestRates.baseCurrency}
+            dataDate={viewModel.latestRates.dataDate}
+            historicalSeries={viewModel.historicalTrend.allSeries}
+            latestRates={viewModel.latestRates.cards}
+            onAddPreview={(preview) => {
+              setSimulationHistoryEntries((existingEntries) =>
+                addSimulatedConversionToHistory({
+                  existingEntries,
+                  preview,
+                }),
+              );
+              setSimulationBalanceAmount((currentAmount) => {
+                if (preview.sourceCurrency !== viewModel.simulationBalance.currency) {
+                  return currentAmount;
+                }
 
-                  setSimulationBalanceInput(String(nextAmount));
-                  return nextAmount;
-                });
-              }}
-              onViewHistory={() => setActiveSection("history")}
-              simulationBalanceAmount={simulationBalanceAmount}
-            />
-          </div>
+                const nextAmount = applySimulatedConversionToBalance(
+                  currentAmount,
+                  preview.sourceAmount,
+                );
+
+                setSimulationBalanceInput(String(nextAmount));
+                return nextAmount;
+              });
+            }}
+            onViewHistory={() => setActiveSection("history")}
+            onSimulationBalanceChange={handleSimulationBalanceChange}
+            simulationBalanceAmount={simulationBalanceAmount}
+            simulationBalanceCurrency={viewModel.simulationBalance.currency}
+            simulationBalanceInput={simulationBalanceInput}
+          />
         </section>
 
         {/* History tab */}
@@ -796,21 +782,28 @@ function TrendStatsColumn({
   );
 }
 
-/* Simulated conversion preview card */
-function SimulatedConversionPreviewCard({
+function SimulationWorkspace({
   baseCurrency,
   dataDate,
+  historicalSeries,
   latestRates,
   onAddPreview,
+  onSimulationBalanceChange,
   onViewHistory,
   simulationBalanceAmount,
+  simulationBalanceCurrency,
+  simulationBalanceInput,
 }: {
   baseCurrency: string;
   dataDate: string;
+  historicalSeries: HistoricalTrendChartSeries[];
   latestRates: LatestRateCard[];
   onAddPreview: (preview: SimulatedConversionPreview) => void;
+  onSimulationBalanceChange: (input: string) => void;
   onViewHistory: () => void;
   simulationBalanceAmount: number;
+  simulationBalanceCurrency: string;
+  simulationBalanceInput: string;
 }) {
   const defaultTargetCurrency = latestRates[0]?.currency ?? baseCurrency;
   const conversionCurrencyOptions = useMemo(
@@ -819,44 +812,277 @@ function SimulatedConversionPreviewCard({
     ],
     [baseCurrency, latestRates],
   );
-  const [sourceCurrency, setSourceCurrency] = useState(baseCurrency);
-  const [targetCurrency, setTargetCurrency] = useState(defaultTargetCurrency);
-  const [amount, setAmount] = useState(
-    String(Math.min(simulationBalanceAmount, 2500)),
-  );
-  const [referenceDate, setReferenceDate] = useState(
-    dataDate === "Unavailable" || dataDate === "Loading..." ? "" : dataDate,
-  );
-  const [preview, setPreview] = useState<SimulatedConversionPreview | null>(null);
-  const [previewError, setPreviewError] = useState<string | null>(null);
-  const [isPreviewing, setIsPreviewing] = useState(false);
-  const [hasAddedToHistory, setHasAddedToHistory] = useState(false);
-  const maxConversionAmount = Math.max(0, simulationBalanceAmount);
-  const minConversionAmount = simulationBalanceAmount > 0 ? 1 : 0;
+  const defaultAmount = String(Math.min(simulationBalanceAmount, 2500));
+  const defaultReferenceDate =
+    dataDate === "Unavailable" || dataDate === "Loading..." ? "" : dataDate;
+  const [forwardSourceCurrency, setForwardSourceCurrency] =
+    useState(baseCurrency);
+  const [forwardTargetCurrency, setForwardTargetCurrency] =
+    useState(defaultTargetCurrency);
+  const [forwardAmount, setForwardAmount] = useState(defaultAmount);
+  const [forwardReferenceDate, setForwardReferenceDate] =
+    useState(defaultReferenceDate);
+  const [reverseSourceCurrency, setReverseSourceCurrency] =
+    useState(defaultTargetCurrency);
+  const [reverseTargetCurrency, setReverseTargetCurrency] =
+    useState(baseCurrency);
+  const [reverseAmount, setReverseAmount] = useState(defaultAmount);
+  const [reverseReferenceDate, setReverseReferenceDate] =
+    useState(defaultReferenceDate);
 
   useEffect(() => {
-    setAmount((currentAmount) =>
+    const normalizeAmount = (currentAmount: string) =>
       String(
         normalizeSimulatedConversionAmountInput(
           currentAmount,
           simulationBalanceAmount,
           Math.min(simulationBalanceAmount, 2500),
         ),
-      ),
-    );
+      );
+
+    setForwardAmount(normalizeAmount);
+    setReverseAmount(normalizeAmount);
   }, [simulationBalanceAmount]);
 
   useEffect(() => {
-    if (sourceCurrency !== targetCurrency) {
+    if (forwardSourceCurrency !== forwardTargetCurrency) {
       return;
     }
 
-    const nextTargetCurrency =
-      conversionCurrencyOptions.find((currency) => currency !== sourceCurrency) ??
-      sourceCurrency;
+    setForwardTargetCurrency(
+      conversionCurrencyOptions.find(
+        (currency) => currency !== forwardSourceCurrency,
+      ) ?? forwardSourceCurrency,
+    );
+  }, [conversionCurrencyOptions, forwardSourceCurrency, forwardTargetCurrency]);
 
-    setTargetCurrency(nextTargetCurrency);
-  }, [conversionCurrencyOptions, sourceCurrency, targetCurrency]);
+  useEffect(() => {
+    if (reverseSourceCurrency !== reverseTargetCurrency) {
+      return;
+    }
+
+    setReverseTargetCurrency(
+      conversionCurrencyOptions.find(
+        (currency) => currency !== reverseSourceCurrency,
+      ) ?? reverseSourceCurrency,
+    );
+  }, [conversionCurrencyOptions, reverseSourceCurrency, reverseTargetCurrency]);
+
+  return (
+    <div className="simulation-stack">
+      <SimulatedConversionRow
+        amount={forwardAmount}
+        baseCurrency={baseCurrency}
+        chartPoints={buildPairChartPoints({
+          baseCurrency,
+          series: historicalSeries,
+          sourceCurrency: forwardSourceCurrency,
+          targetCurrency: forwardTargetCurrency,
+        })}
+        conversionCurrencyOptions={conversionCurrencyOptions}
+        dataLayoutPrefix="forward"
+        latestRates={latestRates}
+        onAddPreview={onAddPreview}
+        onAmountChange={setForwardAmount}
+        onReferenceDateChange={setForwardReferenceDate}
+        onSourceCurrencyChange={setForwardSourceCurrency}
+        onTargetCurrencyChange={setForwardTargetCurrency}
+        onViewHistory={onViewHistory}
+        referenceDate={forwardReferenceDate}
+        simulationBalanceAmount={simulationBalanceAmount}
+        sourceCurrency={forwardSourceCurrency}
+        targetCurrency={forwardTargetCurrency}
+        title="Forward simulated conversion"
+      />
+      <SimulatedConversionRow
+        amount={reverseAmount}
+        baseCurrency={baseCurrency}
+        chartPoints={buildPairChartPoints({
+          baseCurrency,
+          series: historicalSeries,
+          sourceCurrency: reverseSourceCurrency,
+          targetCurrency: reverseTargetCurrency,
+        })}
+        conversionCurrencyOptions={conversionCurrencyOptions}
+        dataLayoutPrefix="reverse"
+        latestRates={latestRates}
+        onAddPreview={onAddPreview}
+        onAmountChange={setReverseAmount}
+        onReferenceDateChange={setReverseReferenceDate}
+        onSourceCurrencyChange={setReverseSourceCurrency}
+        onTargetCurrencyChange={setReverseTargetCurrency}
+        onViewHistory={onViewHistory}
+        referenceDate={reverseReferenceDate}
+        simulationBalanceAmount={simulationBalanceAmount}
+        sourceCurrency={reverseSourceCurrency}
+        targetCurrency={reverseTargetCurrency}
+        title="Reverse simulated conversion"
+      />
+      <article
+        className="simulation-balance-editor simulation-balance-editor-bottom"
+        data-layout-slot="amount-bottom"
+      >
+        <div className="section-heading">
+          <p className="eyebrow">Simulation balance</p>
+          <h3>Adjust simulation amount</h3>
+        </div>
+        <strong className="display-num">
+          {simulationBalanceAmount.toLocaleString("en-US")}
+          <span className="display-num-unit">{simulationBalanceCurrency}</span>
+        </strong>
+        <label>
+          <span>Amount</span>
+          <input
+            aria-label="Adjust simulation amount"
+            max={MAX_SIMULATION_BALANCE}
+            min={MIN_SIMULATION_BALANCE}
+            name="simulation-balance-amount"
+            onChange={(event) => onSimulationBalanceChange(event.target.value)}
+            step="100"
+            type="number"
+            value={simulationBalanceInput}
+          />
+        </label>
+        <small>Hypothetical amount only.</small>
+      </article>
+    </div>
+  );
+}
+
+function SimulatedConversionRow({
+  amount,
+  baseCurrency,
+  chartPoints,
+  conversionCurrencyOptions,
+  dataLayoutPrefix,
+  latestRates,
+  onAddPreview,
+  onAmountChange,
+  onReferenceDateChange,
+  onSourceCurrencyChange,
+  onTargetCurrencyChange,
+  onViewHistory,
+  referenceDate,
+  simulationBalanceAmount,
+  sourceCurrency,
+  targetCurrency,
+  title,
+}: {
+  amount: string;
+  baseCurrency: string;
+  chartPoints: { date: string; rate: number }[];
+  conversionCurrencyOptions: string[];
+  dataLayoutPrefix: "forward" | "reverse";
+  latestRates: LatestRateCard[];
+  onAddPreview: (preview: SimulatedConversionPreview) => void;
+  onAmountChange: (amount: string) => void;
+  onReferenceDateChange: (date: string) => void;
+  onSourceCurrencyChange: (currency: string) => void;
+  onTargetCurrencyChange: (currency: string) => void;
+  onViewHistory: () => void;
+  referenceDate: string;
+  simulationBalanceAmount: number;
+  sourceCurrency: string;
+  targetCurrency: string;
+  title: string;
+}) {
+  return (
+    <div className="simulation-conversion-row" data-conversion-direction={dataLayoutPrefix}>
+      <article
+        className="simulation-rate-chart"
+        data-layout-slot={`${dataLayoutPrefix}-chart-left`}
+      >
+        <div className="section-heading">
+          <p className="eyebrow">Source vs target curve</p>
+          <h3>
+            <Code>{sourceCurrency}</Code> / <Code>{targetCurrency}</Code>
+          </h3>
+        </div>
+        {chartPoints.length > 0 ? (
+          <div className="simulation-chart-window">
+            <HistoricalLineChart
+              ariaLabel={`${sourceCurrency} to ${targetCurrency} daily reference line chart`}
+              gradientId={`${dataLayoutPrefix}-simulation-area-grad`}
+              points={chartPoints}
+            />
+          </div>
+        ) : (
+          <p className="empty-state">
+            Daily reference curve will appear after historical rates load.
+          </p>
+        )}
+      </article>
+      <SimulatedConversionPreviewCard
+        amount={amount}
+        baseCurrency={baseCurrency}
+        conversionCurrencyOptions={conversionCurrencyOptions}
+        dataLayoutPrefix={dataLayoutPrefix}
+        latestRates={latestRates}
+        onAddPreview={onAddPreview}
+        onAmountChange={onAmountChange}
+        onReferenceDateChange={onReferenceDateChange}
+        onSourceCurrencyChange={onSourceCurrencyChange}
+        onTargetCurrencyChange={onTargetCurrencyChange}
+        onViewHistory={onViewHistory}
+        referenceDate={referenceDate}
+        simulationBalanceAmount={simulationBalanceAmount}
+        sourceCurrency={sourceCurrency}
+        targetCurrency={targetCurrency}
+        title={title}
+      />
+    </div>
+  );
+}
+
+/* Simulated conversion preview card */
+function SimulatedConversionPreviewCard({
+  baseCurrency,
+  amount,
+  conversionCurrencyOptions,
+  dataLayoutPrefix,
+  latestRates,
+  onAddPreview,
+  onAmountChange,
+  onReferenceDateChange,
+  onSourceCurrencyChange,
+  onTargetCurrencyChange,
+  onViewHistory,
+  referenceDate,
+  simulationBalanceAmount,
+  sourceCurrency,
+  targetCurrency,
+  title,
+}: {
+  amount: string;
+  baseCurrency: string;
+  conversionCurrencyOptions: string[];
+  dataLayoutPrefix: "forward" | "reverse";
+  latestRates: LatestRateCard[];
+  onAddPreview: (preview: SimulatedConversionPreview) => void;
+  onAmountChange: (amount: string) => void;
+  onReferenceDateChange: (date: string) => void;
+  onSourceCurrencyChange: (currency: string) => void;
+  onTargetCurrencyChange: (currency: string) => void;
+  onViewHistory: () => void;
+  referenceDate: string;
+  simulationBalanceAmount: number;
+  sourceCurrency: string;
+  targetCurrency: string;
+  title: string;
+}) {
+  const [preview, setPreview] = useState<SimulatedConversionPreview | null>(null);
+  const [previewError, setPreviewError] = useState<string | null>(null);
+  const [isPreviewing, setIsPreviewing] = useState(false);
+  const [hasAddedToHistory, setHasAddedToHistory] = useState(false);
+  const maxConversionAmount = Math.max(0, simulationBalanceAmount);
+  const minConversionAmount = simulationBalanceAmount > 0 ? 1 : 0;
+  const livePreview = buildLiveConversionPreview({
+    amount: Number(amount.replaceAll(",", "").trim()),
+    baseCurrency,
+    latestRates,
+    sourceCurrency,
+    targetCurrency,
+  });
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -869,7 +1095,7 @@ function SimulatedConversionPreviewCard({
       Math.min(simulationBalanceAmount, 2500),
     );
 
-    setAmount(String(normalizedAmount));
+    onAmountChange(String(normalizedAmount));
 
     try {
       setPreview(
@@ -889,10 +1115,13 @@ function SimulatedConversionPreviewCard({
   };
 
   return (
-    <article className="conversion-preview-card" data-layout-slot="conversion-right">
+    <article
+      className="conversion-preview-card"
+      data-layout-slot={`${dataLayoutPrefix}-preview-right`}
+    >
       <div className="section-heading">
         <p className="eyebrow">Conversion preview</p>
-        <h3>Preview simulated conversion</h3>
+        <h3>{title}</h3>
       </div>
       <form aria-label="Preview simulated conversion form" onSubmit={handleSubmit}>
         <fieldset className="conversion-controls">
@@ -903,7 +1132,7 @@ function SimulatedConversionPreviewCard({
               aria-label="Simulated conversion source currency"
               name="simulated-conversion-source-currency"
               onChange={(event) => {
-                setSourceCurrency(event.target.value);
+                onSourceCurrencyChange(event.target.value);
                 setPreview(null);
                 setHasAddedToHistory(false);
               }}
@@ -922,7 +1151,7 @@ function SimulatedConversionPreviewCard({
               aria-label="Simulated conversion target currency"
               name="simulated-conversion-target-currency"
               onChange={(event) => {
-                setTargetCurrency(event.target.value);
+                onTargetCurrencyChange(event.target.value);
                 setPreview(null);
                 setHasAddedToHistory(false);
               }}
@@ -945,7 +1174,7 @@ function SimulatedConversionPreviewCard({
               min={minConversionAmount}
               name="simulated-conversion-amount"
               onChange={(event) => {
-                setAmount(event.target.value);
+                onAmountChange(event.target.value);
                 setPreview(null);
                 setHasAddedToHistory(false);
               }}
@@ -959,7 +1188,7 @@ function SimulatedConversionPreviewCard({
             <input
               aria-label="Simulated conversion reference date"
               name="simulated-conversion-reference-date"
-              onChange={(event) => setReferenceDate(event.target.value)}
+              onChange={(event) => onReferenceDateChange(event.target.value)}
               type="date"
               value={referenceDate}
             />
@@ -984,12 +1213,8 @@ function SimulatedConversionPreviewCard({
           </button>
         </div>
       </form>
-      {preview ? (
-        <p className="conversion-result">
-          {preview.sourceAmount.toLocaleString("en-US")} {preview.sourceCurrency} ={" "}
-          {preview.convertedAmount.toLocaleString("en-US")}{" "}
-          {preview.targetCurrency} at daily reference rate {preview.rate}.
-        </p>
+      {livePreview ? (
+        <ConversionResult preview={livePreview} />
       ) : null}
       {previewError ? <p className="warning-text">{previewError}</p> : null}
       <p
@@ -1011,6 +1236,28 @@ function SimulatedConversionPreviewCard({
         Available simulation balance only. Preview only. No trades are executed.
       </p>
     </article>
+  );
+}
+
+function ConversionResult({ preview }: { preview: LiveConversionPreview }) {
+  return (
+    <p className="conversion-result" data-live-preview="true">
+      <span className="conversion-result-source">
+        <Num size="s" value={preview.sourceAmount.toLocaleString("en-US")} />{" "}
+        <Code>{preview.sourceCurrency}</Code>
+      </span>{" "}
+      ={" "}
+      <span className="conversion-result-target">
+        <Num
+          size="s"
+          value={preview.convertedAmount.toLocaleString("en-US")}
+        />{" "}
+        <Code>{preview.targetCurrency}</Code>
+      </span>{" "}
+      <span className="conversion-result-rate">
+        Rate <Num size="s" value={formatRate(preview.rate)} />
+      </span>
+    </p>
   );
 }
 
@@ -1317,6 +1564,74 @@ function getDisplayRateCard(
     label: card?.label ?? `1 ${baseCurrency} = ??? ${currency}`,
     value: card ? formatRate(card.rate) : "---",
   };
+}
+
+function buildPairChartPoints({
+  baseCurrency,
+  series,
+  sourceCurrency,
+  targetCurrency,
+}: {
+  baseCurrency: string;
+  series: HistoricalTrendChartSeries[];
+  sourceCurrency: string;
+  targetCurrency: string;
+}): { date: string; rate: number }[] {
+  const normalizedBase = baseCurrency.toUpperCase();
+  const normalizedSource = sourceCurrency.toUpperCase();
+  const normalizedTarget = targetCurrency.toUpperCase();
+  const dates = [
+    ...new Set(
+      series.flatMap((chartSeries) =>
+        chartSeries.points.map((point) => point.date),
+      ),
+    ),
+  ].sort();
+
+  return dates.flatMap((date) => {
+    const sourceRate = readHistoricalRateForCurrency({
+      baseCurrency: normalizedBase,
+      currency: normalizedSource,
+      date,
+      series,
+    });
+    const targetRate = readHistoricalRateForCurrency({
+      baseCurrency: normalizedBase,
+      currency: normalizedTarget,
+      date,
+      series,
+    });
+
+    if (
+      sourceRate === undefined ||
+      targetRate === undefined ||
+      sourceRate === 0
+    ) {
+      return [];
+    }
+
+    return [{ date, rate: targetRate / sourceRate }];
+  });
+}
+
+function readHistoricalRateForCurrency({
+  baseCurrency,
+  currency,
+  date,
+  series,
+}: {
+  baseCurrency: string;
+  currency: string;
+  date: string;
+  series: HistoricalTrendChartSeries[];
+}): number | undefined {
+  if (currency === baseCurrency) {
+    return 1;
+  }
+
+  return series
+    .find((chartSeries) => chartSeries.symbols[0]?.toUpperCase() === currency)
+    ?.points.find((point) => point.date === date)?.rate;
 }
 
 type ConversionExposureSummary = {

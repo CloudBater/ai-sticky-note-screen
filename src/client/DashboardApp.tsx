@@ -20,13 +20,17 @@ import {
   currencyTabTransition,
   numberTransition,
 } from "./motion";
+import {
+  getInitialDashboardTheme,
+  persistDashboardTheme,
+  type DashboardTheme,
+} from "./dashboard-theme";
 
 type DashboardAppProps = {
   viewModel: DashboardViewModel;
 };
 
 type DashboardSection = "overview" | "trend" | "simulation" | "history";
-type DashboardTheme = "light" | "dark";
 type CurrencyTransitionState = "idle" | "exiting" | "entering";
 type CssVars = CSSProperties & Record<`--${string}`, string | number>;
 type TrendDirection = "up" | "down" | "flat";
@@ -34,7 +38,7 @@ type TrendDirection = "up" | "down" | "flat";
 export function DashboardApp({ viewModel }: DashboardAppProps) {
   const [activeSection, setActiveSection] =
     useState<DashboardSection>("overview");
-  const [theme, setTheme] = useState<DashboardTheme>("light");
+  const [theme, setTheme] = useState<DashboardTheme>(getInitialDashboardTheme);
   const watchlistCurrencies = useMemo(
     () => [
       ...viewModel.currencySupport.supported,
@@ -103,6 +107,10 @@ export function DashboardApp({ viewModel }: DashboardAppProps) {
       setSelectedCurrency(selectorCurrencies[0]);
     }
   }, [selectedCurrency, selectorCurrencies]);
+
+  useEffect(() => {
+    persistDashboardTheme(theme);
+  }, [theme]);
 
   return (
     <main className="app-shell" data-theme={theme} style={appMotionStyle}>

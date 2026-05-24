@@ -14,11 +14,22 @@ describe("buildPortfolioCurve", () => {
       { date: "2026-05-21", value: 11111.11, pnl: 1111.11, pnlPercent: 11.11 }
     ]);
   });
+
+  it("skips dates that do not include the selected quote currency", () => {
+    const curve = buildPortfolioCurve({
+      "2026-05-20": { JPY: 150 },
+      "2026-05-21": { EUR: 0.81 }
+    }, "EUR", 10000);
+
+    expect(curve).toEqual([
+      { date: "2026-05-21", value: 10000, pnl: 0, pnlPercent: 0 }
+    ]);
+  });
 });
 
 describe("buildSignal", () => {
   it("labels the signal as historical momentum instead of a prediction", () => {
-    const signal = buildSignal({ changePercent: 1.2, symbol: "EUR" });
+    const signal = buildSignal({ baseSymbol: "USD", changePercent: 1.2, symbol: "EUR" });
 
     expect(signal.label).toBe("USD stronger");
     expect(signal.reason).toContain("historical momentum, not a forecast");

@@ -1,7 +1,9 @@
 export const STARTING_BALANCE = 10000;
 
 export function buildPortfolioCurve(rates, symbol, startingBalance = STARTING_BALANCE) {
-  const entries = Object.entries(rates || {}).sort();
+  const entries = Object.entries(rates || {})
+    .filter(([, dailyRates]) => Number.isFinite(dailyRates[symbol]))
+    .sort();
 
   if (entries.length === 0) {
     return [];
@@ -35,17 +37,17 @@ export function buildSignal(summary) {
 
   if (summary.changePercent > 0.75) {
     return {
-      label: "USD stronger",
+      label: `${summary.baseSymbol || "Base currency"} stronger`,
       tone: "up",
-      reason: `USD bought more ${summary.symbol || "selected currency"} over this window. This is historical momentum, not a forecast.`
+      reason: `${summary.baseSymbol || "The base currency"} bought more ${summary.symbol || "selected currency"} over this window. This is historical momentum, not a forecast.`
     };
   }
 
   if (summary.changePercent < -0.75) {
     return {
-      label: "USD weaker",
+      label: `${summary.baseSymbol || "Base currency"} weaker`,
       tone: "down",
-      reason: `USD bought less ${summary.symbol || "selected currency"} over this window. This is historical momentum, not a forecast.`
+      reason: `${summary.baseSymbol || "The base currency"} bought less ${summary.symbol || "selected currency"} over this window. This is historical momentum, not a forecast.`
     };
   }
 

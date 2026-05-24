@@ -27,12 +27,12 @@ npm test
 
 ## What Is Included
 
-- React/Vite frontend dashboard.
+- React/Vite frontend dashboard with base/quote currency selection.
 - Express backend proxy for Frankfurter.
 - In-memory cache for repeated currency/rate/history requests.
 - Basic local request rate limiting.
 - Tests for rate helper behavior and unsupported currency handling.
-- A $10,000 read-only simulation lab that charts historical P/L.
+- A $10,000 read-only simulation lab that charts historical P/L for the selected pair.
 - Disabled leverage and auto-rebalance controls that document the product boundary.
 
 ## Scope Notes

@@ -4,7 +4,7 @@ Implemented Topic 1, MarketMage, as a small read-only FX dashboard backed by Fra
 
 ## Features shipped
 
-- Daily USD exchange-rate comparison for Frankfurter-supported currencies from Riley's list.
+- Daily exchange-rate comparison for Frankfurter-supported currencies from Riley's list, including cross-rate pairs such as EUR/JPY and CNY/SGD.
 - 30-ish day recent movement chart for the selected currency.
 - $10,000 historical portfolio simulation for the selected currency.
 - Guardrailed signal panel with disabled leverage / YOLO rebalance controls.

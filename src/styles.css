@@ -137,6 +137,24 @@ h2 {
   line-height: 1.5;
 }
 
+.pair-controls {
+  display: flex;
+  gap: 10px;
+  align-items: end;
+}
+
+.pair-controls label {
+  display: grid;
+  gap: 6px;
+}
+
+.pair-controls span {
+  color: #93aa9e;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
 select {
   border: 1px solid rgba(50, 255, 172, 0.38);
   border-radius: 8px;
@@ -144,6 +162,29 @@ select {
   color: #e7fff5;
   padding: 9px 12px;
   box-shadow: 0 0 20px rgba(50, 255, 172, 0.08);
+}
+
+.pair-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.pair-presets button {
+  border: 1px solid rgba(50, 255, 172, 0.24);
+  border-radius: 8px;
+  background: rgba(8, 28, 23, 0.74);
+  color: #c9f7e5;
+  padding: 9px 12px;
+  cursor: pointer;
+}
+
+.pair-presets button.active,
+.pair-presets button:hover {
+  border-color: #32ffac;
+  color: #5dffbd;
+  box-shadow: 0 0 18px rgba(50, 255, 172, 0.14);
 }
 
 .rate-grid {
@@ -347,6 +388,11 @@ select {
 
   .panel-heading,
   .summary {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .pair-controls {
     align-items: stretch;
     flex-direction: column;
   }

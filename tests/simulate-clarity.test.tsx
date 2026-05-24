@@ -96,52 +96,55 @@ describe("Simulate tab — amount clarity", () => {
 });
 
 describe("Simulate tab — reverse conversion direction clarity", () => {
-  it("reverse card shows a sell-direction label", () => {
+  it("reverse row shows a sell-direction label (banner is on the chart side)", () => {
     const html = renderToStaticMarkup(
       <DashboardApp viewModel={baseViewModel} />,
     );
 
-    const reverseCard = html.slice(
-      html.indexOf('data-layout-slot="reverse-preview-right"'),
+    // Banner now lives in the left chart article; slice the full reverse row
+    const reverseRow = html.slice(
+      html.indexOf('data-layout-slot="reverse-chart-left"'),
       html.indexOf('data-layout-slot="amount-bottom"'),
     );
 
     // Should make explicit which currency is being given up
-    expect(reverseCard).toContain("data-conversion-direction-label");
-    expect(reverseCard).toMatch(/Giving|Selling|From/i);
-    expect(reverseCard).toMatch(/Receiving|Getting|To/i);
+    expect(reverseRow).toContain("data-conversion-direction-label");
+    expect(reverseRow).toMatch(/Giving|Selling|From/i);
+    expect(reverseRow).toMatch(/Receiving|Getting|To/i);
   });
 
-  it("reverse card direction label shows currency codes", () => {
+  it("reverse row direction label shows currency codes", () => {
     const html = renderToStaticMarkup(
       <DashboardApp viewModel={baseViewModel} />,
     );
 
-    const reverseCard = html.slice(
-      html.indexOf('data-layout-slot="reverse-preview-right"'),
+    // Banner now lives in the left chart article; slice the full reverse row
+    const reverseRow = html.slice(
+      html.indexOf('data-layout-slot="reverse-chart-left"'),
       html.indexOf('data-layout-slot="amount-bottom"'),
     );
 
     // The direction banner should reference both currencies involved
-    const directionEl = reverseCard.slice(
-      reverseCard.indexOf("data-conversion-direction-label"),
-      reverseCard.indexOf("data-conversion-direction-label") + 600,
+    const directionEl = reverseRow.slice(
+      reverseRow.indexOf("data-conversion-direction-label"),
+      reverseRow.indexOf("data-conversion-direction-label") + 600,
     );
     expect(directionEl).toContain("EUR");
     expect(directionEl).toContain("USD");
   });
 
-  it("forward card also has a direction label", () => {
+  it("forward row also has a direction label (on the chart side)", () => {
     const html = renderToStaticMarkup(
       <DashboardApp viewModel={baseViewModel} />,
     );
 
-    const forwardCard = html.slice(
-      html.indexOf('data-layout-slot="forward-preview-right"'),
+    // Banner lives in the left chart article; slice the full forward row
+    const forwardRow = html.slice(
+      html.indexOf('data-layout-slot="forward-chart-left"'),
       html.indexOf('data-layout-slot="reverse-chart-left"'),
     );
 
-    expect(forwardCard).toContain("data-conversion-direction-label");
+    expect(forwardRow).toContain("data-conversion-direction-label");
   });
 });
 

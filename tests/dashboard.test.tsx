@@ -707,12 +707,21 @@ describe("DashboardApp", () => {
     expect(html).toContain("Historical line chart");
     expect(html).toContain("Historical reference only, not a forecast.");
     expect(html).toContain("Manual allocation historical preview");
+    expect(html).toContain('class="simulation-preview-layout"');
+    expect(html).toContain('data-layout-slot="allocation-left"');
+    expect(html).toContain('data-layout-slot="conversion-right"');
     expect(html).toContain("Choose currencies and allocation");
     expect(html).toContain('aria-label="First allocation currency"');
     expect(html).toContain('aria-label="Second allocation currency"');
     expect(html).toContain('aria-label="First allocation percent"');
     expect(html).toContain('name="first-allocation-percent"');
     expect(html).toContain('type="range"');
+    expect(html).toContain('aria-label="Simulated conversion source currency"');
+    expect(html).toContain('aria-label="Simulated conversion target currency"');
+    expect(html).toContain('aria-label="Simulated conversion amount"');
+    expect(html).toContain('aria-label="Simulated conversion reference date"');
+    expect(html).toContain("Preview simulated conversion");
+    expect(html).toContain("No trades are executed.");
     expect(html).toContain("Manual 50% USD / 50% EUR allocation moved");
     expect(html).toContain("50% USD");
     expect(html).toContain("50% EUR");
@@ -879,5 +888,19 @@ describe("DashboardApp", () => {
       expect(lightThemeBlock).toContain(token);
       expect(darkThemeBlock).toContain(token);
     }
+  });
+
+  it("places allocation and conversion preview side by side on desktop", () => {
+    const styles = readFileSync(
+      resolve(process.cwd(), "src/client/styles.css"),
+      "utf8",
+    );
+
+    expect(styles).toContain(".simulation-preview-layout {\n  display: grid;");
+    expect(styles).toContain(
+      "grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);",
+    );
+    expect(styles).toContain(".allocation-preview-card {\n  grid-column: 1;");
+    expect(styles).toContain(".conversion-preview-card {\n  grid-column: 2;");
   });
 });

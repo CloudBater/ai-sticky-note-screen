@@ -275,7 +275,7 @@ describe("fetchHistoricalReferenceRates", () => {
 
       if (
         url ===
-        "/api/rates/history?base=USD&symbols=EUR&start=2024-08-21&end=2024-08-23"
+        "/api/rates/history?base=USD&symbol=EUR&start=2024-08-21&end=2024-08-23"
       ) {
         return {
           base: "USD",
@@ -313,7 +313,7 @@ describe("fetchHistoricalReferenceRates", () => {
       ],
     });
     expect(requestedUrls).toEqual([
-      "/api/rates/history?base=USD&symbols=EUR&start=2024-08-21&end=2024-08-23",
+      "/api/rates/history?base=USD&symbol=EUR&start=2024-08-21&end=2024-08-23",
     ]);
   });
 });

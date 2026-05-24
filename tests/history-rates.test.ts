@@ -82,6 +82,64 @@ describe("GET /api/rates/history", () => {
     }
   });
 
+  it("accepts the singular symbol query parameter used by the frontend chart", async () => {
+    const upstreamRequests: string[] = [];
+    const fetchFrankfurter: FetchFrankfurter = async (url) => {
+      upstreamRequests.push(String(url));
+
+      return new Response(
+        JSON.stringify({
+          amount: 1,
+          base: "USD",
+          start_date: "2026-04-22",
+          end_date: "2026-05-22",
+          rates: {
+            "2026-04-22": { CNY: 6.8244 },
+            "2026-05-22": { CNY: 6.7953 },
+          },
+        }),
+        {
+          headers: { "Content-Type": "application/json" },
+          status: 200,
+        },
+      );
+    };
+
+    const server = createServer(
+      (createApp as CreateConfiguredApp)({
+        fetchFrankfurter,
+        frankfurterBaseUrl: "https://api.frankfurter.test",
+      }),
+    );
+
+    await new Promise<void>((resolve) => {
+      server.listen(0, "127.0.0.1", resolve);
+    });
+
+    try {
+      const { port } = server.address() as AddressInfo;
+      const response = await fetch(
+        `http://127.0.0.1:${port}/api/rates/history?base=usd&symbol=cny&start=2026-04-22&end=2026-05-22`,
+      );
+
+      expect(response.status).toBe(200);
+      expect(upstreamRequests).toEqual([
+        "https://api.frankfurter.test/2026-04-22..2026-05-22?from=USD&to=CNY",
+      ]);
+    } finally {
+      await new Promise<void>((resolve, reject) => {
+        server.close((error: Error | undefined) => {
+          if (error) {
+            reject(error);
+            return;
+          }
+
+          resolve();
+        });
+      });
+    }
+  });
+
   it("preserves a versioned Frankfurter base URL when building history requests", async () => {
     const upstreamRequests: string[] = [];
     const fetchFrankfurter: FetchFrankfurter = async (url) => {

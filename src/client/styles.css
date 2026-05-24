@@ -944,6 +944,104 @@ select:focus {
   transform: translateY(-1px);
 }
 
+.history-target-dropdown-wrapper {
+  position: relative;
+}
+
+.history-target-dropdown-trigger {
+  min-height: 36px;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-pill);
+  background: var(--surface-2);
+  color: var(--text-primary);
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  transition:
+    background 160ms cubic-bezier(.2, .8, .2, 1),
+    border-color 160ms cubic-bezier(.2, .8, .2, 1),
+    transform 160ms cubic-bezier(.2, .8, .2, 1);
+}
+
+.history-target-dropdown-trigger:hover {
+  border-color: var(--border-strong);
+  transform: translateY(-1px);
+}
+
+.dropdown-arrow {
+  font-size: 10px;
+}
+
+.history-target-dropdown-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: var(--space-2);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  background: var(--surface-0);
+  min-width: 180px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 100;
+}
+
+.history-target-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  padding: var(--space-3) var(--space-4);
+  border: none;
+  background: transparent;
+  color: var(--text-primary);
+  text-align: left;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background 120ms ease-out;
+}
+
+.history-target-dropdown-item:hover {
+  background: var(--surface-1);
+}
+
+.history-target-dropdown-item .checkbox {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border: 1px solid var(--border-default);
+  border-radius: 3px;
+  font-size: 12px;
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.history-target-dropdown-item[data-history-currency-active="true"] .checkbox {
+  background: var(--text-primary);
+  border-color: var(--text-primary);
+  color: var(--surface-0);
+}
+
+.history-selected-currencies {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.selected-currency-badge {
+  padding: 4px 8px;
+  border-radius: 4px;
+  background: var(--surface-1);
+  color: var(--text-primary);
+  font-size: 12px;
+  font-weight: 500;
+  font-family: var(--font-mono);
+}
+
 .history-chart-window {
   height: 320px;
   padding: var(--space-5);

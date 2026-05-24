@@ -736,66 +736,6 @@ export function DashboardApp({
 
         {/* Trend tab */}
         <section className="panel trend-panel" hidden={!showTrend} id="trend">
-          <div className="section-heading">
-            <p className="eyebrow">Historical reference</p>
-            <h2>Reference rates history</h2>
-          </div>
-          {selectedChartSeries.points.length > 0 ? (
-            <>
-              <div className="trend-kpi-row">
-                <div>
-                  <span className="eyebrow">Pair</span>
-                  <strong>
-                    {viewModel.historicalTrend.baseCurrency}/{displayedCurrency}
-                  </strong>
-                </div>
-                <div>
-                  <span className="eyebrow">Window</span>
-                  <strong>
-                    {selectedChartSeries.points.length} daily points
-                  </strong>
-                </div>
-                <div>
-                  <span className="eyebrow">Latest reference</span>
-                  <strong className="latest-reference-value">
-                    {formatRate(
-                      selectedChartSeries.points[
-                        selectedChartSeries.points.length - 1
-                      ]?.rate ?? 0,
-                    )}
-                  </strong>
-                </div>
-              </div>
-              <div className="trend-layout">
-                <div
-                  className="chart-window"
-                  data-chart-currency={displayedCurrency}
-                  data-transition-state={transitionState}
-                >
-                  <HistoricalLineChart
-                    gradientId="trend-area-grad"
-                    points={selectedChartSeries.points}
-                  />
-                </div>
-                <TrendStatsColumn points={selectedChartSeries.points} />
-              </div>
-              <p className="chart-date-range">
-                {selectedChartSeries.points[0]?.date} to{" "}
-                {selectedChartSeries.points[selectedChartSeries.points.length - 1]?.date}
-              </p>
-            </>
-          ) : (
-            <p className="empty-state">
-              Historical chart data will appear after daily reference rates
-              load.
-            </p>
-          )}
-          <p className="trend-summary">
-            Historical movement for {displayedCurrency} is shown as a daily
-            line chart, not candlesticks.
-          </p>
-          <p className="trend-summary">{viewModel.historicalTrend.summary}</p>
-
           <HistoryReferenceRatesPanel
             historyBaseCurrency={historyBaseCurrency}
             historyChartSeries={historyChartSeries}
@@ -934,6 +874,8 @@ function HistoryReferenceRatesPanel({
   onHistoryStartDateChange: (date: string) => void;
   onHistoryVisibleCurrenciesChange: (currencies: string[]) => void;
 }) {
+  const [targetDropdownOpen, setTargetDropdownOpen] = useState(false);
+
   return (
     <div style={{ marginTop: "var(--space-8)" }}>
       <div className="section-heading">
@@ -969,40 +911,60 @@ function HistoryReferenceRatesPanel({
             </select>
           </label>
           <div className="history-currency-selection">
-            <div
-              aria-label="Toggle visible history currencies"
-              className="history-currency-toggles"
-            >
-              {historyTargetOptions.map((currency) => {
-                const active = historyVisibleCurrencies.includes(currency);
-
-                return (
-                  <button
-                    aria-label={`Toggle ${currency} history line`}
-                    data-history-currency={currency}
-                    data-history-currency-active={active}
-                    key={currency}
-                    onClick={() => {
-                      if (historyVisibleCurrencies.includes(currency)) {
-                        onHistoryVisibleCurrenciesChange(
-                          historyVisibleCurrencies.filter(
-                            (c) => c !== currency,
-                          ),
-                        );
-                      } else {
-                        onHistoryVisibleCurrenciesChange([
-                          ...historyVisibleCurrencies,
-                          currency,
-                        ]);
-                      }
-                    }}
-                    type="button"
-                  >
-                    <Code>{currency}</Code>
-                  </button>
-                );
-              })}
+            <div className="history-target-dropdown-wrapper">
+              <button
+                aria-label="Select target currencies"
+                className="history-target-dropdown-trigger"
+                onClick={() => setTargetDropdownOpen(!targetDropdownOpen)}
+                type="button"
+              >
+                <span>Target currencies</span>
+                <span className="dropdown-arrow">▼</span>
+              </button>
+              {targetDropdownOpen && (
+                <div className="history-target-dropdown-menu">
+                  {historyTargetOptions.map((currency) => {
+                    const active = historyVisibleCurrencies.includes(currency);
+                    return (
+                      <button
+                        aria-label={`Toggle ${currency} history line`}
+                        className="history-target-dropdown-item"
+                        data-history-currency={currency}
+                        data-history-currency-active={active}
+                        key={currency}
+                        onClick={() => {
+                          if (active) {
+                            onHistoryVisibleCurrenciesChange(
+                              historyVisibleCurrencies.filter(
+                                (c) => c !== currency,
+                              ),
+                            );
+                          } else {
+                            onHistoryVisibleCurrenciesChange([
+                              ...historyVisibleCurrencies,
+                              currency,
+                            ]);
+                          }
+                        }}
+                        type="button"
+                      >
+                        <span className="checkbox">{active ? '✓' : ''}</span>
+                        <Code>{currency}</Code>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </div>
+            {historyVisibleCurrencies.length > 0 && (
+              <div className="history-selected-currencies">
+                {historyVisibleCurrencies.map((currency) => (
+                  <span key={currency} className="selected-currency-badge">
+                    {currency}
+                  </span>
+                ))}
+              </div>
+            )}
             {historyVisibleCurrencies.length > 0 && (
               <button
                 className="history-clear-button"
@@ -1860,6 +1822,9 @@ function MultiLineHistoryChart({
     "var(--text-tertiary)",
   ];
 
+  const maxY = paddingY + chartHeight - ((maxRate - minRate) / rateRange) * chartHeight;
+  const minY = paddingY + chartHeight;
+
   return (
     <svg
       aria-label={`${baseCurrency} reference rates comparison line chart`}
@@ -1879,6 +1844,40 @@ function MultiLineHistoryChart({
           y2={paddingY + chartHeight * pct}
         />
       ))}
+      <line
+        stroke="var(--text-tertiary)"
+        strokeDasharray="1 3"
+        x1={paddingX}
+        x2={width - paddingX}
+        y1={maxY}
+        y2={maxY}
+      />
+      <text
+        fill="var(--text-tertiary)"
+        fontFamily="var(--font-mono)"
+        fontSize="10"
+        x={paddingX + 4}
+        y={maxY - 4}
+      >
+        High: {formatRate(maxRate)}
+      </text>
+      <line
+        stroke="var(--text-tertiary)"
+        strokeDasharray="1 3"
+        x1={paddingX}
+        x2={width - paddingX}
+        y1={minY}
+        y2={minY}
+      />
+      <text
+        fill="var(--text-tertiary)"
+        fontFamily="var(--font-mono)"
+        fontSize="10"
+        x={paddingX + 4}
+        y={minY + 12}
+      >
+        Low: {formatRate(minRate)}
+      </text>
       {series.map((chartSeries, seriesIndex) => {
         const points = chartSeries.points.map((point, pointIndex) => {
           const x =

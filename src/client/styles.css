@@ -861,6 +861,15 @@ select:focus {
   min-width: 160px;
 }
 
+.history-base-control select {
+  height: 40px;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  cursor: pointer;
+}
+
 .history-target-control {
   display: grid;
   gap: var(--space-2);
@@ -987,11 +996,13 @@ select:focus {
 .history-target-dropdown-wrapper {
   position: relative;
   flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
 }
 
 .history-target-dropdown-trigger {
   min-width: 140px;
-  min-height: 36px;
+  height: 40px;
   padding: var(--space-3);
   border: 1px solid var(--border-default);
   border-radius: var(--radius-sm);
@@ -1109,6 +1120,36 @@ select:focus {
   display: inline-flex;
   align-items: center;
   white-space: nowrap;
+}
+
+.badge-overflow-wrapper {
+  position: relative;
+}
+
+.badge-overflow-trigger {
+  cursor: pointer;
+  opacity: 0.8;
+  transition: opacity 120ms ease-out;
+}
+
+.badge-overflow-trigger:hover {
+  opacity: 1;
+}
+
+.badge-overflow-popup {
+  position: absolute;
+  top: calc(100% + var(--space-2));
+  left: 0;
+  z-index: 200;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  background: var(--surface-0);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
+  max-width: 360px;
 }
 
 .history-chart-window {

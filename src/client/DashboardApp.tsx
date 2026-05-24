@@ -431,7 +431,7 @@ export function DashboardApp({
         </div>
         <div className="header-actions">
           <div className="metric-card simulation-balance-card">
-            <Eyebrow>Simulation balance</Eyebrow>
+            <Eyebrow>Simulation balance </Eyebrow>
             <strong>
               <Num size="m" value={simulationBalanceAmount.toLocaleString("en-US")} />{" "}
               <Code>{viewModel.simulationBalance.currency}</Code>
@@ -738,6 +738,7 @@ export function DashboardApp({
         <section className="panel trend-panel" hidden={!showTrend} id="trend">
           <HistoryReferenceRatesPanel
             dataDate={viewModel.latestRates.dataDate}
+            historyAllCurrencies={historyCurrencyOptions}
             historyBaseCurrency={historyBaseCurrency}
             historyChartSeries={historyChartSeries}
             historyEndDate={historyEndDate}
@@ -845,8 +846,11 @@ export function DashboardApp({
   );
 }
 
+const BADGE_OVERFLOW_THRESHOLD = 10;
+
 function HistoryReferenceRatesPanel({
   dataDate,
+  historyAllCurrencies,
   historyBaseCurrency,
   historyChartSeries,
   historyEndDate,
@@ -861,6 +865,7 @@ function HistoryReferenceRatesPanel({
   onHistoryVisibleCurrenciesChange,
 }: {
   dataDate: string;
+  historyAllCurrencies: string[];
   historyBaseCurrency: string;
   historyChartSeries: Array<{
     currency: string;
@@ -878,6 +883,11 @@ function HistoryReferenceRatesPanel({
   onHistoryVisibleCurrenciesChange: (currencies: string[]) => void;
 }) {
   const [targetDropdownOpen, setTargetDropdownOpen] = useState(false);
+  const [overflowOpen, setOverflowOpen] = useState(false);
+  const overflowed = historyVisibleCurrencies.length > BADGE_OVERFLOW_THRESHOLD;
+  const visibleBadges = overflowed
+    ? historyVisibleCurrencies.slice(0, BADGE_OVERFLOW_THRESHOLD)
+    : historyVisibleCurrencies;
 
   return (
     <div>
@@ -906,7 +916,7 @@ function HistoryReferenceRatesPanel({
               }}
               value={historyBaseCurrency}
             >
-              {historyTargetOptions.map((currency) => (
+              {historyAllCurrencies.map((currency) => (
                 <option key={currency} value={currency}>
                   {currency}
                 </option>

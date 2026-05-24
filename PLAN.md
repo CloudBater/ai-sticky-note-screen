@@ -232,10 +232,37 @@ I will include at least the following tests:
 
 ## How to run locally
 
+**Option 1 — Docker (recommended, no Node.js required)**
+
+```bash
+docker compose up --build
+```
+
+Open `http://localhost:3000`. Requires Docker Desktop to be running.
+
+**Option 2 — Development server (hot reload)**
+
 ```bash
 npm install
-npm test
 npm run dev
+```
+
+Opens the Vite dev server at `http://localhost:5173` (backend proxy on port 3000).
+
+**Option 3 — Production build**
+
+```bash
+npm install
+npm run build
+npm start
+```
+
+Serves the built frontend and API together at `http://localhost:3000`.
+
+**Run tests**
+
+```bash
+npm test
 ```
 
 ## Environment variables

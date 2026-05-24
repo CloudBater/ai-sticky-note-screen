@@ -1,7 +1,6 @@
 import {
   useEffect,
   useMemo,
-  useRef,
   useState,
   type CSSProperties,
   type FormEvent,
@@ -19,7 +18,6 @@ import {
   chartSwitchTransition,
   currencyContentTransition,
   currencyTabTransition,
-  numberTransition,
 } from "./motion";
 import {
   getInitialDashboardTheme,
@@ -46,6 +44,7 @@ type DashboardSection = "overview" | "trend" | "simulation" | "history";
 type CurrencyTransitionState = "idle" | "exiting" | "entering";
 type CssVars = CSSProperties & Record<`--${string}`, string | number>;
 type TrendDirection = "up" | "down" | "flat";
+type TrendWindowDays = 7 | 14 | 30;
 
 export function DashboardApp({ viewModel }: DashboardAppProps) {
   const [activeSection, setActiveSection] =
@@ -77,6 +76,7 @@ export function DashboardApp({ viewModel }: DashboardAppProps) {
   const [selectedCurrency, setSelectedCurrency] = useState(
     selectorCurrencies[0] ?? viewModel.latestRates.baseCurrency,
   );
+  const [trendWindowDays, setTrendWindowDays] = useState<TrendWindowDays>(30);
   const prefersReducedMotion = usePrefersReducedMotion();
   const { displayedCurrency, transitionState } = useDeferredCurrency(
     selectedCurrency,
@@ -99,6 +99,10 @@ export function DashboardApp({ viewModel }: DashboardAppProps) {
         (series) => series.symbol === displayedCurrency,
       ) ?? { symbol: displayedCurrency, points: [] },
     [displayedCurrency, viewModel.historicalTrend.allSeries],
+  );
+  const displayedChartPoints = useMemo(
+    () => selectedChartSeries.points.slice(-trendWindowDays),
+    [selectedChartSeries.points, trendWindowDays],
   );
   const trendDirection = getTrendDirection(
     viewModel.historicalTrend.summary,
@@ -307,17 +311,20 @@ export function DashboardApp({ viewModel }: DashboardAppProps) {
                 className="currency-detail-frame"
                 data-transition-state={transitionState}
               >
-                {displayedRateCard ? (
-                  <CurrencyDetailCard
+                {displayedChartPoints.length > 0 ? (
+                  <OverviewTrendCard
                     baseCurrency={viewModel.latestRates.baseCurrency}
                     card={displayedRateCard}
-                    reducedMotion={prefersReducedMotion}
+                    points={displayedChartPoints}
+                    selectedWindowDays={trendWindowDays}
+                    symbol={displayedCurrency}
                     trendDirection={trendDirection}
+                    onWindowChange={setTrendWindowDays}
                   />
                 ) : (
                   <p className="empty-state">
-                    Select a supported currency to preview the latest daily
-                    reference rate.
+                    Historical chart data will appear after daily reference
+                    rates load.
                   </p>
                 )}
               </div>
@@ -771,55 +778,72 @@ function buildConfiguredAllocationPreview({
   }
 }
 
-function CurrencyDetailCard({
+function OverviewTrendCard({
   baseCurrency,
   card,
-  reducedMotion,
+  onWindowChange,
+  points,
+  selectedWindowDays,
+  symbol,
   trendDirection,
 }: {
   baseCurrency: string;
-  card: LatestRateCard;
-  reducedMotion: boolean;
+  card: LatestRateCard | undefined;
+  onWindowChange: (windowDays: TrendWindowDays) => void;
+  points: { date: string; rate: number }[];
+  selectedWindowDays: TrendWindowDays;
+  symbol: string;
   trendDirection: TrendDirection;
 }) {
+  const firstPoint = points[0];
+  const lastPoint = points[points.length - 1];
+
   return (
-    <article className="currency-detail-card" data-currency-detail={card.currency}>
-      <div>
-        <p className="eyebrow">Selected rate</p>
-        <h3>
-          {baseCurrency} to {card.currency}
-        </h3>
+    <article className="currency-detail-card" data-overview-trend={symbol}>
+      <div className="overview-trend-header">
+        <div>
+          <p className="eyebrow">Selected daily trend</p>
+          <h3>
+            {baseCurrency} to {symbol}
+          </h3>
+        </div>
+        <label className="trend-window-control">
+          <span>Trend window</span>
+          <select
+            aria-label="Historical trend range"
+            onChange={(event) =>
+              onWindowChange(Number(event.target.value) as TrendWindowDays)
+            }
+            value={selectedWindowDays}
+          >
+            <option value="7">Last 7 daily points</option>
+            <option value="14">Last 14 daily points</option>
+            <option value="30">Last 30 daily points</option>
+          </select>
+        </label>
       </div>
-      <AnimatedRate
-        decimals={getRateDecimals(card.rate)}
-        reducedMotion={reducedMotion}
-        value={card.rate}
-      />
-      <p>{card.label}</p>
+      <div
+        className="overview-chart-window"
+        data-chart-currency={symbol}
+        data-chart-window-days={selectedWindowDays}
+      >
+        <HistoricalLineChart
+          ariaLabel="Overview daily rate trend chart"
+          points={points}
+        />
+      </div>
+      <div className="overview-trend-meta">
+        <p>
+          {firstPoint?.date} to {lastPoint?.date}
+        </p>
+        <p>
+          Latest daily reference:{" "}
+          <strong>{formatRate(lastPoint?.rate ?? card?.rate ?? 0)}</strong>
+        </p>
+      </div>
+      {card ? <p>{card.label}</p> : null}
       <MarketStatus direction={trendDirection} />
     </article>
-  );
-}
-
-function AnimatedRate({
-  decimals,
-  reducedMotion,
-  value,
-}: {
-  decimals: number;
-  reducedMotion: boolean;
-  value: number;
-}) {
-  const animatedValue = useAnimatedNumber(
-    value,
-    numberTransition.durationMs,
-    reducedMotion,
-  );
-
-  return (
-    <strong className="animated-rate" data-rate-value={value}>
-      {formatRate(animatedValue, decimals)}
-    </strong>
   );
 }
 
@@ -906,47 +930,6 @@ function useDeferredCurrency(
   return { displayedCurrency, transitionState };
 }
 
-function useAnimatedNumber(
-  value: number,
-  durationMs: number,
-  reducedMotion: boolean,
-): number {
-  const [displayValue, setDisplayValue] = useState(value);
-  const previousValue = useRef(value);
-
-  useEffect(() => {
-    if (reducedMotion || typeof window === "undefined") {
-      previousValue.current = value;
-      setDisplayValue(value);
-      return;
-    }
-
-    const from = previousValue.current;
-    const difference = value - from;
-    const start = window.performance.now();
-    let animationFrame = 0;
-
-    const tick = (now: number) => {
-      const progress = Math.min((now - start) / durationMs, 1);
-      const easedProgress = 1 - Math.pow(1 - progress, 3);
-
-      setDisplayValue(from + difference * easedProgress);
-
-      if (progress < 1) {
-        animationFrame = window.requestAnimationFrame(tick);
-      } else {
-        previousValue.current = value;
-      }
-    };
-
-    animationFrame = window.requestAnimationFrame(tick);
-
-    return () => window.cancelAnimationFrame(animationFrame);
-  }, [durationMs, reducedMotion, value]);
-
-  return displayValue;
-}
-
 function findRateCard(
   cards: LatestRateCard[],
   currency: string,
@@ -985,8 +968,10 @@ function getTrendDirection(summary: string, currency: string): TrendDirection {
 }
 
 function HistoricalLineChart({
+  ariaLabel = "Historical daily rate line chart",
   points,
 }: {
+  ariaLabel?: string;
   points: { date: string; rate: number }[];
 }) {
   if (points.length === 0) {
@@ -1020,7 +1005,7 @@ function HistoricalLineChart({
       data-chart-type="historical-line"
       viewBox={`0 0 ${width} ${height}`}
       className="historical-line-chart"
-      aria-label="Historical daily rate line chart"
+      aria-label={ariaLabel}
     >
       <polyline
         fill="none"

@@ -619,6 +619,70 @@ h3 {
   margin-bottom: 0;
 }
 
+.overview-trend-header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: start;
+  justify-content: space-between;
+}
+
+.trend-window-control {
+  display: grid;
+  gap: 6px;
+  min-width: min(100%, 210px);
+}
+
+.trend-window-control span {
+  color: var(--muted-soft);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.trend-window-control select {
+  min-height: 38px;
+  width: 100%;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--button-bg);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 0.84rem;
+  font-weight: 760;
+}
+
+.trend-window-control select:focus-visible {
+  border-color: var(--line-strong);
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 3px;
+}
+
+.overview-chart-window {
+  height: 190px;
+  padding: 14px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background:
+    linear-gradient(180deg, rgb(15 143 120 / 0.1), transparent),
+    var(--bg-soft);
+  box-shadow: var(--inner-highlight);
+}
+
+.overview-trend-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  justify-content: space-between;
+}
+
+.overview-trend-meta strong {
+  color: var(--accent-strong);
+}
+
 .currency-detail-frame[data-transition-state="exiting"] .currency-detail-card {
   animation: currency-content-exit var(--currency-content-exit) var(--motion-ease) both;
 }

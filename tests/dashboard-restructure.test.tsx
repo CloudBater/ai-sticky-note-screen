@@ -85,13 +85,12 @@ describe("Dashboard Restructure - Trend & History Tabs", () => {
   };
 
   describe("Trend Tab - Reference Rates History Section", () => {
-    it("renders Reference rates history section in Trend tab", () => {
+    it("renders Reference rates trend section in Trend tab", () => {
       const html = renderToStaticMarkup(<DashboardApp viewModel={baseViewModel} />);
 
-      expect(html).toContain("Historical line chart");
       expect(html).toContain("Reference rates history");
+      expect(html).toContain("Reference rates trend");
       expect(html).toContain('data-history-chart="multi-currency"');
-      expect(html).toContain("Historical preview");
     });
 
     it("renders history base currency selector in Trend tab", () => {
@@ -212,7 +211,7 @@ describe("Dashboard Restructure - Trend & History Tabs", () => {
       expect(historySection).not.toContain("history-multi-line-chart");
     });
 
-    it("History tab does not display 'Reference rates history' heading", () => {
+    it("History tab does not display 'Reference rates trend' heading", () => {
       const html = renderToStaticMarkup(<DashboardApp viewModel={baseViewModel} />);
 
       const historyStart = html.indexOf('id="history"');
@@ -226,7 +225,7 @@ describe("Dashboard Restructure - Trend & History Tabs", () => {
       );
 
       expect(betweenStartAndSimulation).not.toContain(
-        "Reference rates history"
+        "Reference rates trend"
       );
       expect(betweenStartAndSimulation).not.toContain('data-history-chart');
     });

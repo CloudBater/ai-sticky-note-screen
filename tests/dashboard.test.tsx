@@ -695,9 +695,9 @@ describe("DashboardApp", () => {
     expect(html).toContain("0.945");
     expect(html).toContain("2024-08-23");
     expect(html).toContain("1 USD = 0.901 EUR");
-    expect(html).toContain("Historical line chart");
-    expect(html).toContain("Historical reference only");
     expect(html).toContain("Reference rates history");
+    expect(html).toContain("Historical reference only");
+    expect(html).toContain("Reference rates trend");
     expect(html).toContain('data-history-chart="multi-currency"');
     expect(html).toContain('aria-label="History base currency"');
     expect(html).toContain('data-history-base-currency="USD"');

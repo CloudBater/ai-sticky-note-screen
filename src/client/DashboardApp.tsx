@@ -12,6 +12,7 @@ import type {
   LatestRateCard,
 } from "./dashboard";
 import marketMageIconUrl from "../resources/MarketMage-icon.jpg";
+import { previewPortfolioAllocation } from "../shared/portfolio-preview";
 import {
   cardHoverMotion,
   chartSwitchTransition,
@@ -357,22 +358,91 @@ function AllocationPreviewCard({
 }: {
   preview: DashboardAllocationPreview;
 }) {
+  const [firstCurrency, setFirstCurrency] = useState(
+    preview.allocations[0]?.currency ?? preview.baseCurrency,
+  );
+  const [secondCurrency, setSecondCurrency] = useState(
+    preview.allocations[1]?.currency ??
+      preview.currencyOptions.find((option) => option.currency !== firstCurrency)
+        ?.currency ??
+      preview.baseCurrency,
+  );
+  const [firstPercent, setFirstPercent] = useState(
+    preview.allocations[0]?.percent ?? 50,
+  );
+  const configuredPreview = buildConfiguredAllocationPreview({
+    firstCurrency,
+    firstPercent,
+    preview,
+    secondCurrency,
+  });
+  const canConfigure =
+    preview.status === "ready" && preview.currencyOptions.length >= 2;
+
   return (
     <article className="allocation-preview-card">
       <div className="section-heading">
         <p className="eyebrow">Manual allocation</p>
         <h3>Manual allocation historical preview</h3>
       </div>
-      <p>{preview.summary}</p>
-      {preview.status === "ready" ? (
+      <p>{configuredPreview.summary}</p>
+      {canConfigure ? (
+        <fieldset className="allocation-controls">
+          <legend>Choose currencies and allocation</legend>
+          <label>
+            <span>First currency</span>
+            <select
+              aria-label="First allocation currency"
+              name="first-allocation-currency"
+              onChange={(event) => setFirstCurrency(event.target.value)}
+              value={firstCurrency}
+            >
+              {preview.currencyOptions.map((option) => (
+                <option key={option.currency} value={option.currency}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            <span>Second currency</span>
+            <select
+              aria-label="Second allocation currency"
+              name="second-allocation-currency"
+              onChange={(event) => setSecondCurrency(event.target.value)}
+              value={secondCurrency}
+            >
+              {preview.currencyOptions.map((option) => (
+                <option key={option.currency} value={option.currency}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="allocation-slider">
+            <span>{firstPercent}% first currency</span>
+            <input
+              aria-label="First allocation percent"
+              max="95"
+              min="5"
+              name="first-allocation-percent"
+              onChange={(event) => setFirstPercent(Number(event.target.value))}
+              step="5"
+              type="range"
+              value={firstPercent}
+            />
+          </label>
+        </fieldset>
+      ) : null}
+      {configuredPreview.status === "ready" ? (
         <>
           <div className="allocation-pills">
-            {preview.allocations.map((allocation) => (
+            {configuredPreview.allocations.map((allocation) => (
               <span key={allocation.currency}>{allocation.label}</span>
             ))}
           </div>
           <div className="allocation-points">
-            {preview.points.map((point) => (
+            {configuredPreview.points.map((point) => (
               <span key={point.date}>
                 <small>{point.date}</small>
                 <strong>{point.label}</strong>
@@ -387,6 +457,76 @@ function AllocationPreviewCard({
       )}
     </article>
   );
+}
+
+function buildConfiguredAllocationPreview({
+  firstCurrency,
+  firstPercent,
+  preview,
+  secondCurrency,
+}: {
+  firstCurrency: string;
+  firstPercent: number;
+  preview: DashboardAllocationPreview;
+  secondCurrency: string;
+}): DashboardAllocationPreview {
+  const secondPercent = 100 - firstPercent;
+
+  if (
+    preview.status !== "ready" ||
+    firstCurrency === secondCurrency ||
+    firstPercent <= 0 ||
+    secondPercent <= 0
+  ) {
+    return preview;
+  }
+
+  try {
+    const configuredPreview = previewPortfolioAllocation({
+      baseCurrency: preview.baseCurrency,
+      startingAmount: preview.startingAmount,
+      allocations: [
+        { currency: firstCurrency, percent: firstPercent },
+        { currency: secondCurrency, percent: secondPercent },
+      ],
+      referenceRatesByDate: preview.referenceRatesByDate,
+    });
+    const points = configuredPreview.points.map((point) => {
+      const value = roundDisplayAmount(point.value);
+
+      return {
+        date: point.date,
+        value,
+        label: formatDisplayAmount(value, preview.baseCurrency),
+      };
+    });
+    const firstPoint = points[0];
+    const lastPoint = points[points.length - 1];
+
+    if (firstPoint === undefined || lastPoint === undefined) {
+      return preview;
+    }
+
+    return {
+      ...preview,
+      summary: `Manual ${firstPercent}% ${firstCurrency} / ${secondPercent}% ${secondCurrency} allocation moved from ${firstPoint.label} to ${lastPoint.label}. Historical reference only.`,
+      allocations: [
+        {
+          currency: firstCurrency,
+          percent: firstPercent,
+          label: `${firstPercent}% ${firstCurrency}`,
+        },
+        {
+          currency: secondCurrency,
+          percent: secondPercent,
+          label: `${secondPercent}% ${secondCurrency}`,
+        },
+      ],
+      points,
+    };
+  } catch {
+    return preview;
+  }
 }
 
 function CurrencyDetailCard({
@@ -611,4 +751,14 @@ function buildChartBars(currency: string): number[] {
   return [38, 62, 48, 72, 58, 82].map(
     (height, index) => 28 + ((height + seed + index * 11) % 56),
   );
+}
+
+function roundDisplayAmount(value: number): number {
+  return Math.round(value * 10) / 10;
+}
+
+function formatDisplayAmount(value: number, currency: string): string {
+  return `${value.toLocaleString("en-US", {
+    maximumFractionDigits: 1,
+  })} ${currency}`;
 }

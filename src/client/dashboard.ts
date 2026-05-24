@@ -52,8 +52,15 @@ export type DashboardAllocationPreview = {
   startingAmount: number;
   status: "pending" | "ready";
   summary: string;
+  currencyOptions: DashboardAllocationPreviewCurrencyOption[];
+  referenceRatesByDate: Record<string, Record<string, number>>;
   allocations: DashboardAllocationPreviewAllocation[];
   points: DashboardAllocationPreviewPoint[];
+};
+
+export type DashboardAllocationPreviewCurrencyOption = {
+  currency: string;
+  label: string;
 };
 
 export type DashboardAllocationPreviewAllocation = {
@@ -415,6 +422,8 @@ function buildPendingAllocationPreview(
     status: "pending",
     summary:
       "Manual allocation historical preview will appear after daily history loads.",
+    currencyOptions: [{ currency: baseCurrency, label: baseCurrency }],
+    referenceRatesByDate: {},
     allocations: [],
     points: [],
   };
@@ -428,6 +437,9 @@ function buildManualAllocationPreview(input: {
 }): DashboardAllocationPreview {
   const baseCurrency = input.baseCurrency.toUpperCase();
   const symbol = input.symbol.toUpperCase();
+  const referenceRatesByDate = Object.fromEntries(
+    input.points.map((point) => [point.date, { [symbol]: point.rate }]),
+  );
   const preview = previewPortfolioAllocation({
     baseCurrency,
     startingAmount: input.startingAmount,
@@ -435,9 +447,7 @@ function buildManualAllocationPreview(input: {
       { currency: baseCurrency, percent: 50 },
       { currency: symbol, percent: 50 },
     ],
-    referenceRatesByDate: Object.fromEntries(
-      input.points.map((point) => [point.date, { [symbol]: point.rate }]),
-    ),
+    referenceRatesByDate,
   });
   const points = preview.points.map((point) => {
     const value = roundDisplayAmount(point.value);
@@ -459,6 +469,11 @@ function buildManualAllocationPreview(input: {
       firstPoint !== undefined && lastPoint !== undefined
         ? `Manual 50% ${baseCurrency} / 50% ${symbol} allocation moved from ${firstPoint.label} to ${lastPoint.label}. Historical reference only.`
         : "Manual allocation historical preview will appear after daily history loads.",
+    currencyOptions: [
+      { currency: baseCurrency, label: baseCurrency },
+      { currency: symbol, label: symbol },
+    ],
+    referenceRatesByDate,
     allocations: [
       { currency: baseCurrency, percent: 50, label: `50% ${baseCurrency}` },
       { currency: symbol, percent: 50, label: `50% ${symbol}` },

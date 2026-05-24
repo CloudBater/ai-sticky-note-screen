@@ -369,6 +369,92 @@ describe("loadDashboardViewModel", () => {
     });
   });
 
+  it("loads dashboard reference data with a user-selected base currency", async () => {
+    const referenceRequests: Array<{
+      baseCurrency: string;
+      symbols: string[];
+    }> = [];
+    const historicalRequests: Array<{
+      baseCurrency: string;
+      symbols: string[];
+      startDate: string;
+      endDate: string;
+    }> = [];
+
+    await expect(
+      loadDashboardViewModel({
+        baseCurrency: "eur",
+        simulationBalance: 10_000,
+        requestedCurrencies: ["usd", "eur", "jpy"],
+        fetchReferenceData: async (request) => {
+          referenceRequests.push(request);
+
+          return {
+            currencies: {
+              USD: "US Dollar",
+              EUR: "Euro",
+              JPY: "Japanese Yen",
+            },
+            latestRates: {
+              base: "EUR",
+              date: "2024-08-23",
+              rates: {
+                USD: 1.08,
+                JPY: 156.3,
+              },
+            },
+          };
+        },
+        fetchHistoricalRates: async (request) => {
+          historicalRequests.push(request);
+
+          return {
+            base: request.baseCurrency,
+            symbol: request.symbols[0],
+            startDate: request.startDate,
+            endDate: request.endDate,
+            points: [
+              { date: "2024-08-21", rate: 1 },
+              { date: "2024-08-23", rate: 1.08 },
+            ],
+          };
+        },
+      }),
+    ).resolves.toMatchObject({
+      latestRates: {
+        baseCurrency: "EUR",
+        cards: [
+          { currency: "JPY", label: "1 EUR = 156.3 JPY" },
+          { currency: "USD", label: "1 EUR = 1.08 USD" },
+        ],
+      },
+      historicalTrend: {
+        baseCurrency: "EUR",
+      },
+    });
+
+    expect(referenceRequests).toEqual([
+      {
+        baseCurrency: "EUR",
+        symbols: ["USD", "JPY"],
+      },
+    ]);
+    expect(historicalRequests).toEqual([
+      {
+        baseCurrency: "EUR",
+        symbols: ["JPY"],
+        startDate: "2024-07-24",
+        endDate: "2024-08-23",
+      },
+      {
+        baseCurrency: "EUR",
+        symbols: ["USD"],
+        startDate: "2024-07-24",
+        endDate: "2024-08-23",
+      },
+    ]);
+  });
+
   it("loads a historical trend summary for the first supported target currency", async () => {
     const historicalRequests: Array<{
       baseCurrency: string;
@@ -825,6 +911,18 @@ describe("DashboardApp", () => {
     expect(html).toContain('Available currencies');
     expect(html).toContain('class="dropdown-list-item"');
     expect(html).toContain('British Pound');
+  });
+
+  it("renders supported selected currencies as global base currency controls", () => {
+    const html = renderToStaticMarkup(<DashboardApp viewModel={loadedViewModel} />);
+    const source = readFileSync(
+      resolve(process.cwd(), "src/client/DashboardApp.tsx"),
+      "utf8",
+    );
+
+    expect(html).toContain('aria-label="Set EUR as base currency"');
+    expect(html).toContain('data-base-currency="USD"');
+    expect(source).toContain("onBaseCurrencyChange?.(entry.currency");
   });
 
   it("wires dropdown currency selections through the watchlist refresh callback", () => {

@@ -839,6 +839,19 @@ describe("DashboardApp", () => {
     expect(source).toContain("setSelectedCurrency(normalizedCurrency);");
   });
 
+  it("keeps simulated conversion source currency user-selectable", () => {
+    const source = readFileSync(
+      resolve(process.cwd(), "src/client/DashboardApp.tsx"),
+      "utf8",
+    );
+
+    expect(source).toContain("const [sourceCurrency, setSourceCurrency]");
+    expect(source).toContain("sourceCurrency,");
+    expect(source).toContain("onChange={(event) => {");
+    expect(source).not.toContain("sourceCurrency: baseCurrency");
+    expect(source).not.toContain("defaultValue={baseCurrency}");
+  });
+
   it("renders an empty state when latest reference rates are unavailable", () => {
     const html = renderToStaticMarkup(
       <DashboardApp

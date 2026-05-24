@@ -167,7 +167,13 @@ export function createApp(options: CreateAppOptions = {}) {
     ) {
       const requestUrl = new URL(request.url, "http://localhost");
       const base = requestUrl.searchParams.get("base")?.toUpperCase() ?? "USD";
-      const symbol = (requestUrl.searchParams.get("symbols") ?? "").trim().toUpperCase();
+      const symbol = (
+        requestUrl.searchParams.get("symbol") ??
+        requestUrl.searchParams.get("symbols") ??
+        ""
+      )
+        .trim()
+        .toUpperCase();
       const start = requestUrl.searchParams.get("start") ?? "";
       const end = requestUrl.searchParams.get("end") ?? "";
 
@@ -192,7 +198,10 @@ export function createApp(options: CreateAppOptions = {}) {
         return;
       }
 
-      const upstreamUrl = new URL(`/${start}..${end}`, frankfurterBaseUrl);
+      const upstreamUrl = buildFrankfurterUrl(
+        `${start}..${end}`,
+        frankfurterBaseUrl,
+      );
       upstreamUrl.searchParams.set("from", base);
       upstreamUrl.searchParams.set("to", symbol);
 
@@ -380,4 +389,12 @@ function isDateOnly(value: string): boolean {
     !Number.isNaN(date.getTime()) &&
     date.toISOString().slice(0, 10) === value
   );
+}
+
+function buildFrankfurterUrl(endpoint: string, frankfurterBaseUrl: string): URL {
+  const normalizedBaseUrl = frankfurterBaseUrl.endsWith("/")
+    ? frankfurterBaseUrl
+    : `${frankfurterBaseUrl}/`;
+
+  return new URL(endpoint, normalizedBaseUrl);
 }

@@ -357,7 +357,7 @@ export async function fetchHistoricalReferenceRates(
   const symbol = (input.symbols[0] ?? "").toUpperCase();
 
   url.searchParams.set("base", input.baseCurrency.toUpperCase());
-  url.searchParams.set("symbols", symbol);
+  url.searchParams.set("symbol", symbol);
   url.searchParams.set("start", input.startDate);
   url.searchParams.set("end", input.endDate);
 

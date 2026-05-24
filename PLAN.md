@@ -27,7 +27,7 @@ Topic 1 — MarketMage (FX dashboard using Frankfurter API)
 - **Auto-rebalance ("YOLO") button**: Constitutes automated investment advice. Regulated. Cut.
 - **Social / friend comparison**: Requires user accounts, auth, persistent storage. Out of scope for v0.
 - **TradingView-style candlestick chart**: Frankfurter only provides one daily reference rate per currency pair — no open/high/low data. Candlesticks are technically impossible with this data source.
-- **CNY in the currency set**: CNY is not in the ECB reference rate set that Frankfurter exposes. Silently passing it to the API returns no data — surfacing this mismatch explicitly is the correct behavior.
+- **TWD in the currency set**: TWD (New Taiwan Dollar) is not in the ECB reference rate set that Frankfurter exposes. Silently passing it to the API returns no data — surfacing this mismatch explicitly (via an `unsupported` field in the response) is the correct behavior. CNY is supported and is included.
 
 ## What I'm pushing back on (and proposing instead)
 

@@ -13,16 +13,16 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-FRANKFURTER_BASE = "https://api.frankfurter.app"
+FRANKFURTER_BASE = "https://api.frankfurter.dev/v1"
 
 # In-memory daily cache: key → (cached_date, data)
 _cache: dict[str, tuple[date, dict]] = {}
 
 SUPPORTED_CURRENCIES = {
-    "EUR", "USD", "JPY", "GBP", "TWD", "SGD", "CHF", "AUD", "CAD",
-    "HKD", "KRW", "SEK", "NOK", "DKK", "NZD", "MXN", "ZAR", "BRL",
-    "INR", "RUB", "PLN", "CZK", "HUF", "RON", "BGN", "HRK", "ISK",
-    "IDR", "MYR", "PHP", "THB", "TRY",
+    "AUD", "BRL", "CAD", "CHF", "CNY", "CZK", "DKK", "EUR", "GBP",
+    "HKD", "HUF", "IDR", "ILS", "INR", "ISK", "JPY", "KRW", "MXN",
+    "MYR", "NOK", "NZD", "PHP", "PLN", "RON", "SEK", "SGD", "THB",
+    "TRY", "USD", "ZAR",
 }
 
 

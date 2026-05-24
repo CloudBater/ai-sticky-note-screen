@@ -6,7 +6,7 @@ import { fetchRates, fetchHistory, RatesResponse, HistoryResponse } from './api'
 import { convert, formatRate } from './calculator'
 import './App.css'
 
-const DEFAULT_CURRENCIES = ['EUR', 'JPY', 'GBP', 'TWD', 'SGD']
+const DEFAULT_CURRENCIES = ['EUR', 'JPY', 'GBP', 'CNY', 'SGD', 'TWD']
 const BASE = 'USD'
 const HISTORY_DAYS = 90
 

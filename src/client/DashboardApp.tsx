@@ -71,14 +71,31 @@ export function DashboardApp({ viewModel, onWatchlistChange }: DashboardAppProps
   const [simulationHistoryEntries, setSimulationHistoryEntries] = useState<
     SimulationHistoryEntry[]
   >(viewModel.simulationHistory.entries);
-  const selectorCurrencies = useMemo(
-    () =>
-      viewModel.latestRates.cards.length > 0
-        ? viewModel.latestRates.cards.map((card) => card.currency)
-        : watchlistCurrencies,
-    [viewModel.latestRates.cards, watchlistCurrencies],
-  );
   const currencyCatalog = viewModel.currencyCatalog ?? {};
+  const selectorCurrencies = useMemo(
+    () => {
+      const baseCurrency = viewModel.latestRates.baseCurrency;
+      const selectableCurrencies = new Set(
+        viewModel.latestRates.cards.map((card) => card.currency),
+      );
+
+      watchlistCurrencies.forEach((currency) => {
+        if (currency !== baseCurrency && currencyCatalog[currency]) {
+          selectableCurrencies.add(currency);
+        }
+      });
+
+      return selectableCurrencies.size > 0
+        ? [...selectableCurrencies]
+        : watchlistCurrencies.filter((currency) => currency !== baseCurrency);
+    },
+    [
+      currencyCatalog,
+      viewModel.latestRates.baseCurrency,
+      viewModel.latestRates.cards,
+      watchlistCurrencies,
+    ],
+  );
   const watchlistEntries = useMemo(
     () => {
       const supportedCurrencyCodes = new Set(
@@ -195,24 +212,36 @@ export function DashboardApp({ viewModel, onWatchlistChange }: DashboardAppProps
     );
   };
 
+  const commitWatchlistCurrency = (currency: string): boolean => {
+    const normalizedCurrency = normalizeCurrencyCodeInput(currency);
+
+    if (normalizedCurrency === null) {
+      return false;
+    }
+
+    const nextCurrencies = addCurrencyToWatchlist(
+      watchlistCurrencies,
+      normalizedCurrency,
+    );
+
+    if (nextCurrencies.length === watchlistCurrencies.length) {
+      return false;
+    }
+
+    setWatchlistCurrencies(nextCurrencies);
+    setSelectedCurrency(normalizedCurrency);
+    onWatchlistChange?.(nextCurrencies);
+
+    return true;
+  };
+
   const handleAddCurrency = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    const normalizedCurrency = normalizeCurrencyCodeInput(
-      watchlistCurrencyInput,
-    );
-
-    if (normalizedCurrency === null) {
+    if (!commitWatchlistCurrency(watchlistCurrencyInput)) {
       return;
     }
 
-    setWatchlistCurrencies((currentCurrencies) => {
-      const nextCurrencies = addCurrencyToWatchlist(currentCurrencies, normalizedCurrency);
-      if (nextCurrencies.length !== currentCurrencies.length && onWatchlistChange) {
-        onWatchlistChange(nextCurrencies);
-      }
-      return nextCurrencies;
-    });
     setWatchlistCurrencyInput("");
   };
 
@@ -354,9 +383,7 @@ export function DashboardApp({ viewModel, onWatchlistChange }: DashboardAppProps
                         <button
                           className="dropdown-list-item"
                           onClick={() => {
-                            setWatchlistCurrencies((current) =>
-                              addCurrencyToWatchlist(current, code),
-                            );
+                            commitWatchlistCurrency(code);
                             setIsDropdownOpen(false);
                             setDropdownFilter("");
                           }}

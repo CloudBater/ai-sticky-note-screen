@@ -1,13 +1,13 @@
 # Working Agreement
 
-This project was built with AI assistance, but the product decisions are mine.
+This project was built with AI assistance, but I made the final scope decisions.
 
 ## How I used AI
 
 - Drafting a small fullstack structure.
-- Checking that the scope matched the grading rubric.
-- Writing first-pass tests for small, named contracts.
-- Reviewing wording in `PLAN.md` so the refusals were clear and not overly dramatic.
+- Checking the scope against the grading rubric.
+- Writing first-pass tests for small helper functions.
+- Reviewing `PLAN.md` wording so the refusals stayed clear.
 
 ## How I kept ownership
 

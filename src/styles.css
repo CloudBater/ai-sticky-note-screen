@@ -20,7 +20,7 @@ body {
 }
 
 button,
-select {
+input {
   font: inherit;
 }
 
@@ -137,31 +137,33 @@ h2 {
   line-height: 1.5;
 }
 
-.pair-controls {
-  display: flex;
-  gap: 10px;
-  align-items: end;
-}
-
-.pair-controls label {
-  display: grid;
-  gap: 6px;
-}
-
-.pair-controls span {
-  color: #93aa9e;
-  font-size: 0.78rem;
-  font-weight: 700;
-  text-transform: uppercase;
-}
-
-select {
+input {
+  width: 100%;
   border: 1px solid rgba(50, 255, 172, 0.38);
   border-radius: 8px;
   background: #06140f;
   color: #e7fff5;
   padding: 9px 12px;
   box-shadow: 0 0 20px rgba(50, 255, 172, 0.08);
+}
+
+.lab-controls {
+  display: grid;
+  grid-template-columns: minmax(180px, 260px);
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.lab-controls label {
+  display: grid;
+  gap: 6px;
+}
+
+.lab-controls span {
+  color: #93aa9e;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
 }
 
 .pair-presets {
@@ -269,6 +271,57 @@ select {
   filter: drop-shadow(0 0 4px rgba(93, 255, 189, 0.75));
 }
 
+.chart circle {
+  fill: #e7fff5;
+  stroke: rgba(5, 8, 7, 0.9);
+  stroke-width: 0.7;
+}
+
+.chart-label {
+  fill: #a5baaf;
+  font-size: 4px;
+  paint-order: stroke;
+  stroke: rgba(1, 10, 8, 0.92);
+  stroke-linejoin: round;
+  stroke-width: 1.8px;
+}
+
+.chart-label-end {
+  text-anchor: end;
+}
+
+.chart-hitbox {
+  cursor: crosshair;
+  fill: transparent;
+  pointer-events: all;
+}
+
+.chart-tooltip line {
+  stroke: rgba(231, 255, 245, 0.45);
+  stroke-dasharray: 1.5 1.5;
+  stroke-width: 0.5;
+}
+
+.chart-tooltip circle {
+  fill: #ffffff;
+  stroke: #32ffac;
+  stroke-width: 0.9;
+}
+
+.chart-tooltip rect {
+  fill: rgba(3, 12, 9, 0.94);
+  stroke: rgba(50, 255, 172, 0.58);
+  stroke-width: 0.4;
+}
+
+.chart-tooltip text {
+  fill: #e7fff5;
+  font-size: 4px;
+  paint-order: stroke;
+  stroke: rgba(3, 12, 9, 0.9);
+  stroke-width: 1px;
+}
+
 .pnl-chart polyline {
   stroke: #ff4fb3;
   filter: drop-shadow(0 0 5px rgba(255, 79, 179, 0.7));
@@ -299,6 +352,63 @@ select {
 .summary strong.down {
   color: #ff5f87;
   text-shadow: 0 0 14px rgba(255, 95, 135, 0.42);
+}
+
+.data-table-wrap {
+  margin-top: 18px;
+  overflow-x: auto;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  border: 1px solid rgba(50, 255, 172, 0.18);
+  border-radius: 8px;
+  color: #cfeee0;
+  font-size: 0.9rem;
+  overflow: hidden;
+}
+
+.data-table caption {
+  margin-bottom: 8px;
+  color: #93aa9e;
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-align: left;
+  text-transform: uppercase;
+}
+
+.data-table th,
+.data-table td {
+  border-bottom: 1px solid rgba(50, 255, 172, 0.11);
+  padding: 9px 10px;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.data-table th:first-child,
+.data-table td:first-child {
+  text-align: left;
+}
+
+.data-table th {
+  background: rgba(50, 255, 172, 0.08);
+  color: #91aa9d;
+  font-size: 0.74rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.data-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.data-table .up {
+  color: #5dffbd;
+}
+
+.data-table .down {
+  color: #ff5f87;
 }
 
 .pnl-pill {
@@ -392,8 +502,7 @@ select {
     flex-direction: column;
   }
 
-  .pair-controls {
-    align-items: stretch;
-    flex-direction: column;
+  .lab-controls {
+    grid-template-columns: 1fr;
   }
 }

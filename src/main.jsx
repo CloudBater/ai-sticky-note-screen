@@ -27,67 +27,179 @@ function formatBaseValue(value, base) {
   return `${value.toLocaleString()} ${base}`;
 }
 
+function buildRateRows(rates, symbol) {
+  return Object.entries(rates || {})
+    .filter(([, dailyRates]) => Number.isFinite(dailyRates[symbol]))
+    .sort()
+    .map(([date, dailyRates], index, entries) => {
+      const rate = dailyRates[symbol];
+      const previousRate = index > 0 ? entries[index - 1][1][symbol] : null;
+      const dailyChange = previousRate ? ((rate - previousRate) / previousRate) * 100 : 0;
+
+      return {
+        date,
+        rate,
+        dailyChange: Number(dailyChange.toFixed(2))
+      };
+    });
+}
+
+function getNearestPoint(event, points) {
+  const bounds = event.currentTarget.getBoundingClientRect();
+  const x = ((event.clientX - bounds.left) / bounds.width) * 100;
+
+  return points.reduce((nearest, point) => (
+    Math.abs(point.x - x) < Math.abs(nearest.x - x) ? point : nearest
+  ), points[0]);
+}
+
 function MiniChart({ rates, symbol }) {
-  const points = useMemo(() => {
-    const entries = Object.entries(rates || {})
-      .filter(([, dailyRates]) => Number.isFinite(dailyRates[symbol]))
-      .sort();
-    if (entries.length === 0) {
-      return "";
+  const [hoveredPoint, setHoveredPoint] = useState(null);
+  const chart = useMemo(() => {
+    const rows = buildRateRows(rates, symbol);
+    if (rows.length === 0) {
+      return null;
     }
 
-    const values = entries.map(([, dailyRates]) => dailyRates[symbol]);
+    const values = rows.map((row) => row.rate);
     const min = Math.min(...values);
     const max = Math.max(...values);
     const spread = max - min || 1;
+    const minIndex = values.indexOf(min);
+    const maxIndex = values.indexOf(max);
+    const xFor = (index) => 8 + (index / Math.max(rows.length - 1, 1)) * 84;
+    const yFor = (value) => 82 - ((value - min) / spread) * 66;
+    const plottedPoints = rows.map((row, index) => ({
+      ...row,
+      x: xFor(index),
+      y: yFor(row.rate)
+    }));
+    const points = plottedPoints.map((point) => `${point.x},${point.y}`).join(" ");
 
-    return values
-      .map((value, index) => {
-        const x = (index / Math.max(values.length - 1, 1)) * 100;
-        const y = 100 - ((value - min) / spread) * 82 - 9;
-        return `${x},${y}`;
-      })
-      .join(" ");
+    return {
+      firstDate: rows[0].date,
+      lastDate: rows[rows.length - 1].date,
+      max,
+      maxPoint: { x: xFor(maxIndex), y: yFor(max) },
+      min,
+      minPoint: { x: xFor(minIndex), y: yFor(min) },
+      plottedPoints,
+      points
+    };
   }, [rates, symbol]);
 
-  if (!points) {
+  if (!chart) {
     return <div className="empty-chart">No history yet</div>;
   }
 
   return (
-    <svg className="chart" viewBox="0 0 100 100" role="img" aria-label={`${symbol} daily trend`}>
-      <polyline points={points} />
+    <svg
+      className="chart"
+      viewBox="0 0 100 100"
+      role="img"
+      aria-label={`${symbol} daily trend`}
+      onMouseLeave={() => setHoveredPoint(null)}
+    >
+      <polyline points={chart.points} />
+      <circle cx={chart.maxPoint.x} cy={chart.maxPoint.y} r="1.4" />
+      <circle cx={chart.minPoint.x} cy={chart.minPoint.y} r="1.4" />
+      <text className="chart-label" x="8" y="8">High {formatRate(chart.max)}</text>
+      <text className="chart-label" x="8" y="94">{chart.firstDate}</text>
+      <text className="chart-label chart-label-end" x="92" y="94">{chart.lastDate}</text>
+      <text className="chart-label chart-label-end" x="92" y="8">Low {formatRate(chart.min)}</text>
+      {hoveredPoint ? (
+        <g className="chart-tooltip">
+          <line x1={hoveredPoint.x} x2={hoveredPoint.x} y1="12" y2="86" />
+          <circle cx={hoveredPoint.x} cy={hoveredPoint.y} r="2" />
+          <rect x={hoveredPoint.x > 62 ? hoveredPoint.x - 42 : hoveredPoint.x + 2} y={hoveredPoint.y > 58 ? hoveredPoint.y - 20 : hoveredPoint.y + 4} width="40" height="15" rx="2" />
+          <text x={hoveredPoint.x > 62 ? hoveredPoint.x - 39 : hoveredPoint.x + 5} y={hoveredPoint.y > 58 ? hoveredPoint.y - 13 : hoveredPoint.y + 11}>{hoveredPoint.date}</text>
+          <text x={hoveredPoint.x > 62 ? hoveredPoint.x - 39 : hoveredPoint.x + 5} y={hoveredPoint.y > 58 ? hoveredPoint.y - 7 : hoveredPoint.y + 17}>{formatRate(hoveredPoint.rate)}</text>
+        </g>
+      ) : null}
+      <rect
+        className="chart-hitbox"
+        x="0"
+        y="0"
+        width="100"
+        height="100"
+        onClick={(event) => setHoveredPoint(getNearestPoint(event, chart.plottedPoints))}
+        onMouseMove={(event) => setHoveredPoint(getNearestPoint(event, chart.plottedPoints))}
+      />
     </svg>
   );
 }
 
-function PortfolioChart({ points }) {
-  const line = useMemo(() => {
+function PortfolioChart({ points, valueFormatter = formatRate }) {
+  const [hoveredPoint, setHoveredPoint] = useState(null);
+  const chart = useMemo(() => {
     if (points.length === 0) {
-      return "";
+      return null;
     }
 
     const values = points.map((point) => point.value);
     const min = Math.min(...values);
     const max = Math.max(...values);
     const spread = max - min || 1;
+    const minIndex = values.indexOf(min);
+    const maxIndex = values.indexOf(max);
+    const xFor = (index) => 8 + (index / Math.max(points.length - 1, 1)) * 84;
+    const yFor = (value) => 82 - ((value - min) / spread) * 66;
+    const plottedPoints = points.map((point, index) => ({
+      ...point,
+      x: xFor(index),
+      y: yFor(point.value)
+    }));
+    const line = plottedPoints.map((point) => `${point.x},${point.y}`).join(" ");
 
-    return points
-      .map((point, index) => {
-        const x = (index / Math.max(points.length - 1, 1)) * 100;
-        const y = 100 - ((point.value - min) / spread) * 82 - 9;
-        return `${x},${y}`;
-      })
-      .join(" ");
+    return {
+      firstDate: points[0].date,
+      lastDate: points[points.length - 1].date,
+      line,
+      max,
+      maxPoint: { x: xFor(maxIndex), y: yFor(max) },
+      min,
+      minPoint: { x: xFor(minIndex), y: yFor(min) },
+      plottedPoints
+    };
   }, [points]);
 
-  if (!line) {
+  if (!chart) {
     return <div className="empty-chart">No portfolio history yet</div>;
   }
 
   return (
-    <svg className="chart pnl-chart" viewBox="0 0 100 100" role="img" aria-label="Simulated portfolio curve">
-      <polyline points={line} />
+    <svg
+      className="chart pnl-chart"
+      viewBox="0 0 100 100"
+      role="img"
+      aria-label="Simulated portfolio curve"
+      onMouseLeave={() => setHoveredPoint(null)}
+    >
+      <polyline points={chart.line} />
+      <circle cx={chart.maxPoint.x} cy={chart.maxPoint.y} r="1.4" />
+      <circle cx={chart.minPoint.x} cy={chart.minPoint.y} r="1.4" />
+      <text className="chart-label" x="8" y="8">High {valueFormatter(chart.max)}</text>
+      <text className="chart-label" x="8" y="94">{chart.firstDate}</text>
+      <text className="chart-label chart-label-end" x="92" y="94">{chart.lastDate}</text>
+      <text className="chart-label chart-label-end" x="92" y="8">Low {valueFormatter(chart.min)}</text>
+      {hoveredPoint ? (
+        <g className="chart-tooltip">
+          <line x1={hoveredPoint.x} x2={hoveredPoint.x} y1="12" y2="86" />
+          <circle cx={hoveredPoint.x} cy={hoveredPoint.y} r="2" />
+          <rect x={hoveredPoint.x > 62 ? hoveredPoint.x - 48 : hoveredPoint.x + 2} y={hoveredPoint.y > 58 ? hoveredPoint.y - 20 : hoveredPoint.y + 4} width="46" height="15" rx="2" />
+          <text x={hoveredPoint.x > 62 ? hoveredPoint.x - 45 : hoveredPoint.x + 5} y={hoveredPoint.y > 58 ? hoveredPoint.y - 13 : hoveredPoint.y + 11}>{hoveredPoint.date}</text>
+          <text x={hoveredPoint.x > 62 ? hoveredPoint.x - 45 : hoveredPoint.x + 5} y={hoveredPoint.y > 58 ? hoveredPoint.y - 7 : hoveredPoint.y + 17}>{valueFormatter(hoveredPoint.value)}</text>
+        </g>
+      ) : null}
+      <rect
+        className="chart-hitbox"
+        x="0"
+        y="0"
+        width="100"
+        height="100"
+        onClick={(event) => setHoveredPoint(getNearestPoint(event, chart.plottedPoints))}
+        onMouseMove={(event) => setHoveredPoint(getNearestPoint(event, chart.plottedPoints))}
+      />
     </svg>
   );
 }
@@ -98,6 +210,7 @@ function App() {
   const [history, setHistory] = useState(null);
   const [base, setBase] = useState("USD");
   const [selected, setSelected] = useState("EUR");
+  const [startingBalance, setStartingBalance] = useState(STARTING_BALANCE);
   const [error, setError] = useState("");
   const requestId = useRef(0);
   const supportedCodes = useMemo(
@@ -155,17 +268,14 @@ function App() {
   const summary = history?.summary;
   const summaryWithSymbol = summary ? { ...summary, baseSymbol: base, symbol: selected } : null;
   const signal = buildSignal(summaryWithSymbol);
-  const portfolioCurve = buildPortfolioCurve(history?.rates, selected);
+  const rateRows = buildRateRows(history?.rates, selected);
+  const recentRateRows = rateRows.slice(-8).reverse();
+  const portfolioCurve = buildPortfolioCurve(history?.rates, selected, startingBalance);
   const portfolioLast = portfolioCurve[portfolioCurve.length - 1];
+  const recentPortfolioRows = portfolioCurve.slice(-8).reverse();
   const selectPair = (nextBase, nextSelected) => {
     setBase(nextBase);
     setSelected(nextSelected);
-  };
-  const changeBase = (nextBase) => {
-    setBase(nextBase);
-    if (nextBase === selected) {
-      setSelected(supportedCodes.find((code) => code !== nextBase) || "USD");
-    }
   };
 
   return (
@@ -193,35 +303,18 @@ function App() {
             <h2>{base} comparison</h2>
             <p>Daily reference rates. These are not sub-second market quotes.</p>
           </div>
-          <div className="pair-controls">
-            <label>
-              <span>Base</span>
-              <select value={base} onChange={(event) => changeBase(event.target.value)}>
-                {supportedCodes.map((code) => (
-                  <option key={code} value={code}>{code}</option>
-                ))}
-              </select>
-            </label>
-            <label>
-              <span>Quote</span>
-              <select value={selected} onChange={(event) => setSelected(event.target.value)}>
-                {comparisonSymbols.map((code) => (
-                  <option key={code} value={code}>{code}</option>
-                ))}
-              </select>
-            </label>
-          </div>
         </div>
 
         <div className="pair-presets" aria-label="Common cross-rate pairs">
           {PAIR_PRESETS.map(([presetBase, presetQuote]) => (
             <button
+              aria-label={`${presetBase} to ${presetQuote}`}
               className={base === presetBase && selected === presetQuote ? "active" : ""}
               key={`${presetBase}-${presetQuote}`}
               onClick={() => selectPair(presetBase, presetQuote)}
               type="button"
             >
-              {presetBase}/{presetQuote}
+              {presetBase}
             </button>
           ))}
         </div>
@@ -259,6 +352,31 @@ function App() {
               <span>{summary.lastDate}: {formatRate(summary.last)}</span>
             </div>
           ) : null}
+          {recentRateRows.length > 0 ? (
+            <div className="data-table-wrap">
+              <table className="data-table">
+                <caption>Recent {base}/{selected} reference rates</caption>
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Rate</th>
+                    <th>Daily move</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {recentRateRows.map((row) => (
+                    <tr key={row.date}>
+                      <td>{row.date}</td>
+                      <td>{formatRate(row.rate)}</td>
+                      <td className={row.dailyChange >= 0 ? "up" : "down"}>
+                        {row.dailyChange >= 0 ? "+" : ""}{row.dailyChange}%
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : null}
         </div>
 
         <div className="panel">
@@ -279,7 +397,7 @@ function App() {
         <div className="panel">
           <div className="panel-heading">
             <div>
-              <h2>$10,000 simulation lab</h2>
+              <h2>Portfolio simulation lab</h2>
               <p>Historical what-if curve for converting {base} into {selected}. It is not managed trading.</p>
             </div>
             <div className="pnl-pill">
@@ -289,14 +407,55 @@ function App() {
               </strong>
             </div>
           </div>
-          <PortfolioChart points={portfolioCurve} />
+          <div className="lab-controls">
+            <label className="amount-field">
+              <span>Total assets</span>
+              <input
+                min="1"
+                step="500"
+                type="number"
+                value={startingBalance}
+                onChange={(event) => setStartingBalance(Math.max(1, Number(event.target.value) || 1))}
+              />
+            </label>
+          </div>
+          <PortfolioChart points={portfolioCurve} valueFormatter={(value) => formatBaseValue(value, base)} />
           {portfolioLast ? (
             <div className="summary">
-              <span>Start: {formatBaseValue(STARTING_BALANCE, base)}</span>
+              <span>Start: {formatBaseValue(startingBalance, base)}</span>
               <strong className={portfolioLast.pnlPercent >= 0 ? "up" : "down"}>
                 {portfolioLast.pnlPercent >= 0 ? "+" : ""}{portfolioLast.pnlPercent}%
               </strong>
               <span>Now: {formatBaseValue(portfolioLast.value, base)}</span>
+            </div>
+          ) : null}
+          {recentPortfolioRows.length > 0 ? (
+            <div className="data-table-wrap">
+              <table className="data-table">
+                <caption>Recent simulation checkpoints</caption>
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Value</th>
+                    <th>P/L</th>
+                    <th>P/L %</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {recentPortfolioRows.map((row) => (
+                    <tr key={row.date}>
+                      <td>{row.date}</td>
+                      <td>{formatBaseValue(row.value, base)}</td>
+                      <td className={row.pnl >= 0 ? "up" : "down"}>
+                        {row.pnl >= 0 ? "+" : "-"}{formatBaseValue(Math.abs(row.pnl), base)}
+                      </td>
+                      <td className={row.pnlPercent >= 0 ? "up" : "down"}>
+                        {row.pnlPercent >= 0 ? "+" : ""}{row.pnlPercent}%
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           ) : null}
         </div>

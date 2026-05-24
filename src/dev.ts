@@ -1,38 +1,42 @@
+import type { AddressInfo } from "node:net";
+
 import react from "@vitejs/plugin-react";
 import { createServer as createViteServer } from "vite";
 
+import { readFullstackDevConfig } from "./dev-config";
 import { startBackendServer } from "./server/start";
 
-const BACKEND_HOST = "127.0.0.1";
-const BACKEND_PORT = "3000";
-const FRONTEND_HOST = "127.0.0.1";
-const FRONTEND_PORT = 5173;
-
 async function startFullstackDevServer(): Promise<void> {
-  const backendServer = startBackendServer({
+  const config = readFullstackDevConfig();
+  const backendServer = await startBackendServer({
     env: {
       ...process.env,
-      PORT: process.env.PORT ?? BACKEND_PORT,
+      PORT: config.backendPort,
     },
-    hostname: BACKEND_HOST,
+    hostname: config.backendHost,
   });
-
-  await backendServer;
+  const address = backendServer.address() as AddressInfo | string | null;
+  const actualBackendPort =
+    typeof address === "object" && address !== null
+      ? String(address.port)
+      : config.backendPort;
 
   const viteServer = await createViteServer({
     plugins: [react()],
     server: {
-      host: FRONTEND_HOST,
-      port: FRONTEND_PORT,
+      host: config.frontendHost,
+      port: config.frontendPort,
       proxy: {
-        "/api": `http://${BACKEND_HOST}:${BACKEND_PORT}`,
+        "/api": `http://${config.backendHost}:${actualBackendPort}`,
       },
     },
   });
 
   await viteServer.listen();
 
-  console.log(`Backend API ready at http://${BACKEND_HOST}:${BACKEND_PORT}`);
+  console.log(
+    `Backend API ready at http://${config.backendHost}:${actualBackendPort}`,
+  );
   viteServer.printUrls();
 }
 

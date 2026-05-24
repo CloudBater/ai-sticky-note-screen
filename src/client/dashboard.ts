@@ -217,6 +217,7 @@ export async function fetchDashboardReferenceData(
 }
 
 export type LoadDashboardViewModelInput = {
+  baseCurrency?: string;
   simulationBalance: number;
   requestedCurrencies: string[];
   fetchReferenceData?: FetchReferenceData;
@@ -235,7 +236,7 @@ type FetchHistoricalRates = (input: HistoricalReferenceRatesInput) => Promise<
 export async function loadDashboardViewModel(
   input: LoadDashboardViewModelInput,
 ): Promise<DashboardViewModel> {
-  const baseCurrency = "USD";
+  const baseCurrency = (input.baseCurrency ?? "USD").toUpperCase();
   const symbols = input.requestedCurrencies
     .map((currency) => currency.toUpperCase())
     .filter((currency) => currency !== baseCurrency);

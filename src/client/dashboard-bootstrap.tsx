@@ -9,15 +9,19 @@ import {
 
 type MountDashboardOptions = {
   render: (node: ReactNode) => void;
-  loadViewModel?: (requestedCurrencies?: string[]) => Promise<DashboardViewModel>;
+  loadViewModel?: (
+    requestedCurrencies?: string[],
+    baseCurrency?: string,
+  ) => Promise<DashboardViewModel>;
 };
 
 const REQUESTED_CURRENCIES = ["USD", "EUR", "JPY", "TWD", "GBP", "CNY", "SGD"];
 
 export async function mountDashboard({
   render,
-  loadViewModel = (requestedCurrencies = REQUESTED_CURRENCIES) =>
+  loadViewModel = (requestedCurrencies = REQUESTED_CURRENCIES, baseCurrency = "USD") =>
     loadDashboardViewModel({
+      baseCurrency,
       simulationBalance: 10_000,
       requestedCurrencies,
     }),
@@ -25,14 +29,32 @@ export async function mountDashboard({
   render(<DashboardApp viewModel={buildFallbackViewModel()} />);
 
   let currentViewModel: DashboardViewModel;
+  let currentBaseCurrency = "USD";
 
   const renderDashboard = (viewModel: DashboardViewModel) => {
     render(
       <DashboardApp
         viewModel={viewModel}
+        onBaseCurrencyChange={async (baseCurrency, currencies) => {
+          currentBaseCurrency = baseCurrency;
+
+          try {
+            const nextViewModel = await loadViewModel(
+              currencies,
+              currentBaseCurrency,
+            );
+            currentViewModel = nextViewModel;
+            renderDashboard(currentViewModel);
+          } catch {
+            // Ignore for now
+          }
+        }}
         onWatchlistChange={async (currencies) => {
           try {
-            const nextViewModel = await loadViewModel(currencies);
+            const nextViewModel = await loadViewModel(
+              currencies,
+              currentBaseCurrency,
+            );
             currentViewModel = nextViewModel;
             renderDashboard(currentViewModel);
           } catch {
@@ -44,7 +66,7 @@ export async function mountDashboard({
   };
 
   try {
-    currentViewModel = await loadViewModel();
+    currentViewModel = await loadViewModel(REQUESTED_CURRENCIES, currentBaseCurrency);
     renderDashboard(currentViewModel);
   } catch {
     render(<p role="alert">Unable to load backend reference data.</p>);

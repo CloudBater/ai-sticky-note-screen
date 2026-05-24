@@ -42,6 +42,7 @@ import type { SimulatedConversionPreview } from "../shared/conversion-preview";
 
 type DashboardAppProps = {
   viewModel: DashboardViewModel;
+  onBaseCurrencyChange?: (baseCurrency: string, currencies: string[]) => void;
   onWatchlistChange?: (currencies: string[]) => void;
 };
 
@@ -50,7 +51,11 @@ type CurrencyTransitionState = "idle" | "exiting" | "entering";
 type TrendDirection = "up" | "down" | "flat";
 type TrendWindowDays = 7 | 14 | 30;
 
-export function DashboardApp({ viewModel, onWatchlistChange }: DashboardAppProps) {
+export function DashboardApp({
+  viewModel,
+  onBaseCurrencyChange,
+  onWatchlistChange,
+}: DashboardAppProps) {
   const [activeSection, setActiveSection] =
     useState<DashboardSection>("overview");
   const [simulationBalanceAmount, setSimulationBalanceAmount] = useState(
@@ -152,6 +157,13 @@ export function DashboardApp({ viewModel, onWatchlistChange }: DashboardAppProps
   const displayedRateCard =
     findRateCard(viewModel.latestRates.cards, displayedCurrency) ??
     selectedRateCard;
+  const rateCardsByCurrency = useMemo(
+    () =>
+      new Map(
+        viewModel.latestRates.cards.map((card) => [card.currency, card]),
+      ),
+    [viewModel.latestRates.cards],
+  );
   const selectedChartSeries = useMemo(() => {
     const originalBase = viewModel.latestRates.baseCurrency;
     
@@ -204,6 +216,15 @@ export function DashboardApp({ viewModel, onWatchlistChange }: DashboardAppProps
       setSelectedCurrency(selectorCurrencies[0]);
     }
   }, [selectedCurrency, selectorCurrencies]);
+
+  useEffect(() => {
+    setSelectedBaseCurrency(viewModel.latestRates.baseCurrency);
+  }, [viewModel.latestRates.baseCurrency]);
+
+  const handleGlobalBaseCurrencyChange = (currency: string) => {
+    setSelectedBaseCurrency(currency);
+    onBaseCurrencyChange?.(currency, watchlistCurrencies);
+  };
 
   const handleSimulationBalanceChange = (input: string) => {
     setSimulationBalanceInput(input);
@@ -325,22 +346,40 @@ export function DashboardApp({ viewModel, onWatchlistChange }: DashboardAppProps
             Enter a 3-letter code or select from available currencies below. Unsupported currencies stay visible but muted.
           </p>
           <div className="currency-pills" style={{ marginBottom: "var(--space-4)" }}>
-            {watchlistEntries.map((entry) => (
-              <span
-                aria-label={
-                  entry.supported ? entry.label : `${entry.currency} unsupported`
-                }
-                className={
-                  entry.supported
-                    ? "currency-pill currency-pill-supported"
-                    : "currency-pill currency-pill-unsupported"
-                }
-                key={entry.currency}
-                title={entry.label}
-              >
-                <Code>{entry.currency}</Code>
-              </span>
-            ))}
+            {watchlistEntries.map((entry) => {
+              if (entry.supported) {
+                const isBaseCurrency =
+                  entry.currency === viewModel.latestRates.baseCurrency;
+
+                return (
+                  <button
+                    aria-label={`Set ${entry.currency} as base currency`}
+                    className="currency-pill currency-pill-supported"
+                    data-base-currency={isBaseCurrency ? entry.currency : undefined}
+                    key={entry.currency}
+                    onClick={() => {
+                      setSelectedBaseCurrency(entry.currency);
+                      onBaseCurrencyChange?.(entry.currency, watchlistCurrencies);
+                    }}
+                    title={entry.label}
+                    type="button"
+                  >
+                    <Code>{entry.currency}</Code>
+                  </button>
+                );
+              }
+
+              return (
+                <span
+                  aria-label={`${entry.currency} unsupported`}
+                  className="currency-pill currency-pill-unsupported"
+                  key={entry.currency}
+                  title={entry.label}
+                >
+                  <Code>{entry.currency}</Code>
+                </span>
+              );
+            })}
           </div>
 
           <div className="available-currencies-dropdown">
@@ -436,28 +475,36 @@ export function DashboardApp({ viewModel, onWatchlistChange }: DashboardAppProps
               <div className="rate-grid marquee-container">
                 <div className="marquee-content">
                   {watchlistCurrencies.map((code) => {
-                    const card = viewModel.latestRates.cards.find(c => c.currency === code);
+                    const card = getDisplayRateCard(
+                      code,
+                      viewModel.latestRates.baseCurrency,
+                      rateCardsByCurrency,
+                    );
                     return (
                       <RateCard
                         code={code}
                         key={code}
-                        label={card?.label ?? `1 ${viewModel.latestRates.baseCurrency} = ??? ${code}`}
+                        label={card.label}
                         onClick={() => setSelectedCurrency(code)}
                         selected={code === selectedCurrency}
-                        value={card ? formatRate(card.rate) : "---"}
+                        value={card.value}
                       />
                     );
                   })}
                   {watchlistCurrencies.map((code) => {
-                    const card = viewModel.latestRates.cards.find(c => c.currency === code);
+                    const card = getDisplayRateCard(
+                      code,
+                      viewModel.latestRates.baseCurrency,
+                      rateCardsByCurrency,
+                    );
                     return (
                       <RateCard
                         code={code}
                         key={`${code}-dup`}
-                        label={card?.label ?? `1 ${viewModel.latestRates.baseCurrency} = ??? ${code}`}
+                        label={card.label}
                         onClick={() => setSelectedCurrency(code)}
                         selected={code === selectedCurrency}
-                        value={card ? formatRate(card.rate) : "---"}
+                        value={card.value}
                       />
                     );
                   })}
@@ -472,7 +519,7 @@ export function DashboardApp({ viewModel, onWatchlistChange }: DashboardAppProps
                       availableCurrencies={watchlistCurrencies}
                       baseCurrency={selectedBaseCurrency}
                       card={displayedRateCard}
-                      onBaseCurrencyChange={setSelectedBaseCurrency}
+                      onBaseCurrencyChange={handleGlobalBaseCurrencyChange}
                       onSymbolChange={setSelectedCurrency}
                       onWindowChange={setTrendWindowDays}
                       points={displayedChartPoints}
@@ -1491,6 +1538,26 @@ function findRateCard(
   currency: string,
 ): LatestRateCard | undefined {
   return cards.find((card) => card.currency === currency);
+}
+
+function getDisplayRateCard(
+  currency: string,
+  baseCurrency: string,
+  cardsByCurrency: Map<string, LatestRateCard>,
+): { label: string; value: string } {
+  if (currency === baseCurrency) {
+    return {
+      label: `1 ${baseCurrency} = 1 ${baseCurrency}`,
+      value: formatRate(1),
+    };
+  }
+
+  const card = cardsByCurrency.get(currency);
+
+  return {
+    label: card?.label ?? `1 ${baseCurrency} = ??? ${currency}`,
+    value: card ? formatRate(card.rate) : "---",
+  };
 }
 
 function formatRate(value: number, decimals = getRateDecimals(value)): string {

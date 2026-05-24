@@ -360,6 +360,24 @@ output {
   background: var(--surface-2);
 }
 
+.currency-pill-supported {
+  transition:
+    border-color 160ms ease-out,
+    background 160ms ease-out,
+    transform 160ms ease-out;
+}
+
+.currency-pill-supported:hover {
+  border-color: var(--border-strong);
+  background: var(--surface-1);
+  transform: translateY(-1px);
+}
+
+.currency-pill-supported[data-base-currency] {
+  border-color: var(--border-strong);
+  background: var(--surface-1);
+}
+
 .currency-pill-unsupported,
 .warning-text {
   border-color: color-mix(in srgb, var(--down) 30%, transparent);

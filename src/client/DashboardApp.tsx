@@ -204,7 +204,7 @@ export function DashboardApp({
       }
     });
 
-    return [...currencies];
+    return Array.from(currencies).sort();
   }, [
     currencyCatalog,
     viewModel.latestRates.baseCurrency,
@@ -737,8 +737,8 @@ export function DashboardApp({
         {/* Trend tab */}
         <section className="panel trend-panel" hidden={!showTrend} id="trend">
           <div className="section-heading">
-            <p className="eyebrow">Historical preview</p>
-            <h2>Historical line chart</h2>
+            <p className="eyebrow">Historical reference</p>
+            <h2>Reference rates history</h2>
           </div>
           {selectedChartSeries.points.length > 0 ? (
             <>
@@ -938,7 +938,7 @@ function HistoryReferenceRatesPanel({
     <div style={{ marginTop: "var(--space-8)" }}>
       <div className="section-heading">
         <p className="eyebrow">Historical reference</p>
-        <h2>Reference rates history</h2>
+        <h2>Reference rates trend</h2>
       </div>
       <div
         className="history-reference-workspace"
@@ -968,39 +968,50 @@ function HistoryReferenceRatesPanel({
               ))}
             </select>
           </label>
-          <div
-            aria-label="Toggle visible history currencies"
-            className="history-currency-toggles"
-          >
-            {historyTargetOptions.map((currency) => {
-              const active = historyVisibleCurrencies.includes(currency);
+          <div className="history-currency-selection">
+            <div
+              aria-label="Toggle visible history currencies"
+              className="history-currency-toggles"
+            >
+              {historyTargetOptions.map((currency) => {
+                const active = historyVisibleCurrencies.includes(currency);
 
-              return (
-                <button
-                  aria-label={`Toggle ${currency} history line`}
-                  data-history-currency={currency}
-                  data-history-currency-active={active}
-                  key={currency}
-                  onClick={() => {
-                    if (historyVisibleCurrencies.includes(currency)) {
-                      onHistoryVisibleCurrenciesChange(
-                        historyVisibleCurrencies.filter(
-                          (c) => c !== currency,
-                        ),
-                      );
-                    } else {
-                      onHistoryVisibleCurrenciesChange([
-                        ...historyVisibleCurrencies,
-                        currency,
-                      ]);
-                    }
-                  }}
-                  type="button"
-                >
-                  <Code>{currency}</Code>
-                </button>
-              );
-            })}
+                return (
+                  <button
+                    aria-label={`Toggle ${currency} history line`}
+                    data-history-currency={currency}
+                    data-history-currency-active={active}
+                    key={currency}
+                    onClick={() => {
+                      if (historyVisibleCurrencies.includes(currency)) {
+                        onHistoryVisibleCurrenciesChange(
+                          historyVisibleCurrencies.filter(
+                            (c) => c !== currency,
+                          ),
+                        );
+                      } else {
+                        onHistoryVisibleCurrenciesChange([
+                          ...historyVisibleCurrencies,
+                          currency,
+                        ]);
+                      }
+                    }}
+                    type="button"
+                  >
+                    <Code>{currency}</Code>
+                  </button>
+                );
+              })}
+            </div>
+            {historyVisibleCurrencies.length > 0 && (
+              <button
+                className="history-clear-button"
+                onClick={() => onHistoryVisibleCurrenciesChange([])}
+                type="button"
+              >
+                Clear
+              </button>
+            )}
           </div>
         </div>
         <div className="history-range-controls">

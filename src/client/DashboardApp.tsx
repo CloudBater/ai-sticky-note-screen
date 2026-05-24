@@ -43,10 +43,13 @@ import {
   buildLiveConversionPreview,
   type LiveConversionPreview,
 } from "./live-conversion-preview";
+import { OnboardingGuide } from "./OnboardingGuide";
+import type { OnboardingStorage } from "./onboarding-visited";
 
 type DashboardAppProps = {
   viewModel: DashboardViewModel;
   onBaseCurrencyChange?: (baseCurrency: string, currencies: string[]) => void;
+  onboardingStorage?: OnboardingStorage;
   onWatchlistChange?: (currencies: string[]) => void;
 };
 
@@ -71,6 +74,7 @@ const historyRangePresets: Array<{
 export function DashboardApp({
   viewModel,
   onBaseCurrencyChange,
+  onboardingStorage,
   onWatchlistChange,
 }: DashboardAppProps) {
   const [activeSection, setActiveSection] =
@@ -436,7 +440,9 @@ export function DashboardApp({
   };
 
   return (
-    <main className="app-shell">
+    <>
+      <OnboardingGuide storage={onboardingStorage} />
+      <main className="app-shell">
       {/* Header */}
       <header className="app-header" id="overview">
         <div className="header-copy-block">
@@ -835,6 +841,7 @@ export function DashboardApp({
         </section>
       </div>
     </main>
+    </>
   );
 }
 

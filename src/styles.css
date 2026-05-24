@@ -1,6 +1,6 @@
 :root {
-  color: #17211c;
-  background: #f5f7f2;
+  color: #e7fff5;
+  background: #050807;
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
@@ -10,6 +10,13 @@
 
 body {
   margin: 0;
+  min-height: 100vh;
+  background:
+    linear-gradient(rgba(55, 255, 176, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(55, 255, 176, 0.04) 1px, transparent 1px),
+    radial-gradient(circle at 78% 12%, rgba(255, 46, 154, 0.18), transparent 28rem),
+    linear-gradient(145deg, #050807 0%, #071510 42%, #11091b 100%);
+  background-size: 44px 44px, 44px 44px, auto, auto;
 }
 
 button,
@@ -20,7 +27,7 @@ select {
 main {
   width: min(1120px, calc(100% - 32px));
   margin: 0 auto;
-  padding: 40px 0;
+  padding: 44px 0;
 }
 
 .hero {
@@ -33,7 +40,7 @@ main {
 
 .eyebrow {
   margin: 0 0 10px;
-  color: #3b6b58;
+  color: #32ffac;
   font-size: 0.82rem;
   font-weight: 800;
   letter-spacing: 0;
@@ -49,10 +56,11 @@ p {
 h1 {
   max-width: 800px;
   margin-bottom: 16px;
-  color: #101713;
+  color: #f1fff8;
   font-size: clamp(2.2rem, 5vw, 4.6rem);
   line-height: 0.98;
   letter-spacing: 0;
+  text-shadow: 0 0 28px rgba(50, 255, 172, 0.18);
 }
 
 h2 {
@@ -63,17 +71,21 @@ h2 {
 .lede {
   max-width: 640px;
   margin-bottom: 0;
-  color: #53635a;
+  color: #9fbfaf;
   font-size: 1.05rem;
   line-height: 1.6;
 }
 
 .status-card,
 .panel {
-  border: 1px solid #dce4db;
+  border: 1px solid rgba(50, 255, 172, 0.26);
   border-radius: 8px;
-  background: #ffffff;
-  box-shadow: 0 16px 36px rgba(28, 45, 36, 0.08);
+  background: rgba(4, 18, 13, 0.78);
+  box-shadow:
+    0 18px 46px rgba(0, 0, 0, 0.34),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 0 34px rgba(50, 255, 172, 0.08);
+  backdrop-filter: blur(14px);
 }
 
 .status-card {
@@ -86,19 +98,21 @@ h2 {
 .status-card small,
 .panel-heading p,
 .notes {
-  color: #65736b;
+  color: #93aa9e;
 }
 
 .status-card strong {
+  color: #32ffac;
   font-size: 1.3rem;
+  text-shadow: 0 0 18px rgba(50, 255, 172, 0.42);
 }
 
 .error {
   margin-bottom: 18px;
-  border: 1px solid #f0c9c9;
+  border: 1px solid rgba(255, 75, 104, 0.55);
   border-radius: 8px;
-  background: #fff1f1;
-  color: #8a2929;
+  background: rgba(77, 12, 28, 0.72);
+  color: #ffd2dc;
   padding: 14px 16px;
 }
 
@@ -120,11 +134,12 @@ h2 {
 }
 
 select {
-  border: 1px solid #c8d4cc;
+  border: 1px solid rgba(50, 255, 172, 0.38);
   border-radius: 8px;
-  background: #f9fbf8;
-  color: #17211c;
+  background: #06140f;
+  color: #e7fff5;
   padding: 9px 12px;
+  box-shadow: 0 0 20px rgba(50, 255, 172, 0.08);
 }
 
 .rate-grid {
@@ -135,29 +150,44 @@ select {
 
 .rate-card {
   min-height: 104px;
-  border: 1px solid #dce4db;
+  border: 1px solid rgba(50, 255, 172, 0.2);
   border-radius: 8px;
-  background: #f8faf7;
-  color: #17211c;
+  background: linear-gradient(180deg, rgba(10, 34, 25, 0.92), rgba(6, 18, 15, 0.92));
+  color: #e7fff5;
   text-align: left;
   padding: 16px;
   cursor: pointer;
+  transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+}
+
+.rate-card:hover {
+  border-color: rgba(50, 255, 172, 0.58);
+  box-shadow: 0 0 24px rgba(50, 255, 172, 0.14);
+  transform: translateY(-1px);
 }
 
 .rate-card.active {
-  border-color: #2e6b54;
-  background: #e8f4ee;
+  border-color: #32ffac;
+  background: linear-gradient(180deg, rgba(17, 60, 43, 0.96), rgba(8, 28, 23, 0.96));
+  box-shadow:
+    0 0 0 1px rgba(50, 255, 172, 0.18),
+    0 0 32px rgba(50, 255, 172, 0.2);
 }
 
 .rate-card span {
   display: block;
   margin-bottom: 16px;
-  color: #647268;
+  color: #91aa9d;
   font-size: 0.88rem;
 }
 
 .rate-card strong {
+  color: #5dffbd;
   font-size: 1.55rem;
+  font-variant-numeric: tabular-nums;
+  text-shadow:
+    0 0 12px rgba(93, 255, 189, 0.64),
+    0 0 26px rgba(93, 255, 189, 0.28);
 }
 
 .detail-layout {
@@ -171,24 +201,27 @@ select {
   width: 100%;
   height: 260px;
   border-radius: 8px;
-  background: linear-gradient(#f7faf7 1px, transparent 1px), linear-gradient(90deg, #f7faf7 1px, transparent 1px);
-  background-color: #fbfcfa;
+  border: 1px solid rgba(50, 255, 172, 0.16);
+  background: linear-gradient(rgba(50, 255, 172, 0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(50, 255, 172, 0.08) 1px, transparent 1px);
+  background-color: rgba(1, 10, 8, 0.78);
   background-size: 24px 24px;
+  box-shadow: inset 0 0 36px rgba(50, 255, 172, 0.08);
 }
 
 .chart polyline {
   fill: none;
-  stroke: #2e6b54;
+  stroke: #5dffbd;
   stroke-linecap: round;
   stroke-linejoin: round;
   stroke-width: 3;
+  filter: drop-shadow(0 0 4px rgba(93, 255, 189, 0.75));
 }
 
 .empty-chart {
   display: grid;
   height: 260px;
   place-items: center;
-  color: #65736b;
+  color: #93aa9e;
 }
 
 .summary {
@@ -197,16 +230,18 @@ select {
   gap: 12px;
   align-items: center;
   margin-top: 14px;
-  color: #65736b;
+  color: #93aa9e;
 }
 
 .summary strong {
-  color: #1e6547;
+  color: #5dffbd;
   font-size: 1.2rem;
+  text-shadow: 0 0 14px rgba(93, 255, 189, 0.5);
 }
 
 .summary strong.down {
-  color: #a0433a;
+  color: #ff5f87;
+  text-shadow: 0 0 14px rgba(255, 95, 135, 0.42);
 }
 
 .notes {

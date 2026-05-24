@@ -3,24 +3,40 @@
   font-family:
     Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
     sans-serif;
-  --bg: #edf3f1;
+  --page-bg: #edf3f1;
+  --card-bg: rgb(255 255 255 / 0.82);
+  --elevated-surface: rgb(255 255 255 / 0.94);
+  --text-primary: #111f1d;
+  --text-secondary: #41534e;
+  --text-muted: #65746f;
+  --text-accent: #086b5b;
+  --border: rgb(38 63 57 / 0.16);
+  --button-bg: rgb(255 255 255 / 0.58);
+  --button-hover-bg: rgb(255 255 255 / 0.86);
+  --active-nav-bg: rgb(15 143 120 / 0.12);
+  --bg: var(--page-bg);
   --bg-soft: #f7fbf9;
-  --panel: rgb(255 255 255 / 0.78);
-  --panel-strong: rgb(255 255 255 / 0.92);
-  --panel-glass: rgb(255 255 255 / 0.52);
-  --text: #111f1d;
-  --muted: #61726d;
-  --muted-soft: #879691;
-  --line: rgb(38 63 57 / 0.15);
-  --line-strong: rgb(15 143 120 / 0.28);
+  --panel: var(--card-bg);
+  --panel-strong: var(--elevated-surface);
+  --panel-glass: rgb(255 255 255 / 0.58);
+  --text: var(--text-primary);
+  --muted: var(--text-secondary);
+  --muted-soft: var(--text-muted);
+  --line: var(--border);
+  --line-strong: rgb(15 143 120 / 0.3);
   --accent: #0f8f78;
-  --accent-strong: #086b5b;
+  --accent-strong: var(--text-accent);
   --accent-soft: rgb(15 143 120 / 0.1);
   --brand-a: #7c5cff;
   --brand-b: #38c6f4;
   --success: #168a5b;
   --danger: #bd4f55;
-  --warning: #946211;
+  --warning: #7d5208;
+  --warning-bg: #fff4d6;
+  --warning-border: rgb(148 98 17 / 0.24);
+  --status-badge-bg: rgb(255 255 255 / 0.46);
+  --status-badge-text: #4a5c56;
+  --focus-ring: rgb(15 143 120 / 0.34);
   --shadow: 0 18px 52px rgb(30 55 50 / 0.12);
   --shadow-soft: 0 10px 28px rgb(30 55 50 / 0.08);
   --inner-highlight: inset 0 1px 0 rgb(255 255 255 / 0.62);
@@ -40,6 +56,22 @@ body {
     linear-gradient(135deg, var(--bg), #f8fbfa 56%, #e6efec);
 }
 
+body:has(.app-shell[data-theme="light"]) {
+  color: #111f1d;
+  background:
+    linear-gradient(135deg, rgb(124 92 255 / 0.1), transparent 32%),
+    linear-gradient(225deg, rgb(56 198 244 / 0.12), transparent 28%),
+    linear-gradient(135deg, #edf3f1, #f8fbfa 56%, #e6efec);
+}
+
+body:has(.app-shell[data-theme="dark"]) {
+  color: #f5fbf8;
+  background:
+    linear-gradient(135deg, rgb(124 92 255 / 0.16), transparent 30%),
+    linear-gradient(225deg, rgb(56 198 244 / 0.12), transparent 26%),
+    linear-gradient(135deg, #0f1614, #121c19 58%, #0c1211);
+}
+
 button,
 a {
   font: inherit;
@@ -54,6 +86,81 @@ button {
   min-height: 100vh;
   margin: 0 auto;
   padding: 44px 0 112px;
+  color: var(--text-primary);
+}
+
+.app-shell[data-theme="light"] {
+  --page-bg: #edf3f1;
+  --card-bg: rgb(255 255 255 / 0.82);
+  --elevated-surface: rgb(255 255 255 / 0.94);
+  --text-primary: #111f1d;
+  --text-secondary: #41534e;
+  --text-muted: #65746f;
+  --text-accent: #086b5b;
+  --border: rgb(38 63 57 / 0.16);
+  --button-bg: rgb(255 255 255 / 0.58);
+  --button-hover-bg: rgb(255 255 255 / 0.86);
+  --active-nav-bg: rgb(15 143 120 / 0.12);
+  --bg: var(--page-bg);
+  --bg-soft: #f7fbf9;
+  --panel: var(--card-bg);
+  --panel-strong: var(--elevated-surface);
+  --panel-glass: rgb(255 255 255 / 0.58);
+  --text: var(--text-primary);
+  --muted: var(--text-secondary);
+  --muted-soft: var(--text-muted);
+  --line: var(--border);
+  --line-strong: rgb(15 143 120 / 0.28);
+  --accent: #0f8f78;
+  --accent-strong: var(--text-accent);
+  --accent-soft: rgb(15 143 120 / 0.1);
+  --warning: #7d5208;
+  --warning-bg: #fff4d6;
+  --warning-border: rgb(148 98 17 / 0.24);
+  --status-badge-bg: rgb(255 255 255 / 0.46);
+  --status-badge-text: #4a5c56;
+  --focus-ring: rgb(15 143 120 / 0.34);
+  --shadow: 0 18px 52px rgb(30 55 50 / 0.12);
+  --shadow-soft: 0 10px 28px rgb(30 55 50 / 0.08);
+  --inner-highlight: inset 0 1px 0 rgb(255 255 255 / 0.62);
+}
+
+.app-shell[data-theme="dark"] {
+  --page-bg: #101614;
+  --card-bg: rgb(23 33 30 / 0.86);
+  --elevated-surface: rgb(30 43 39 / 0.94);
+  --text-primary: #f5fbf8;
+  --text-secondary: #c5d4cf;
+  --text-muted: #a9bab4;
+  --text-accent: #8cebd9;
+  --border: rgb(222 245 238 / 0.16);
+  --button-bg: rgb(255 255 255 / 0.075);
+  --button-hover-bg: rgb(255 255 255 / 0.13);
+  --active-nav-bg: rgb(84 214 189 / 0.16);
+  --bg: var(--page-bg);
+  --bg-soft: #16211e;
+  --panel: var(--card-bg);
+  --panel-strong: var(--elevated-surface);
+  --panel-glass: rgb(23 33 30 / 0.56);
+  --text: var(--text-primary);
+  --muted: var(--text-secondary);
+  --muted-soft: var(--text-muted);
+  --line: var(--border);
+  --line-strong: rgb(84 214 189 / 0.3);
+  --accent: #54d6bd;
+  --accent-strong: var(--text-accent);
+  --accent-soft: rgb(84 214 189 / 0.12);
+  --success: #7be2b3;
+  --danger: #f09aa0;
+  --warning: #f1d38d;
+  --warning-bg: rgb(241 211 141 / 0.13);
+  --warning-border: rgb(241 211 141 / 0.26);
+  --status-badge-bg: rgb(255 255 255 / 0.07);
+  --status-badge-text: #c5d4cf;
+  --focus-ring: rgb(140 235 217 / 0.42);
+  --shadow: 0 16px 44px rgb(0 0 0 / 0.28);
+  --shadow-soft: 0 10px 28px rgb(0 0 0 / 0.2);
+  --inner-highlight: inset 0 1px 0 rgb(255 255 255 / 0.08);
 }
 
 .hero-panel,
@@ -79,7 +186,7 @@ button {
   align-items: start;
   padding: 34px;
   background:
-    linear-gradient(135deg, rgb(255 255 255 / 0.82), rgb(255 255 255 / 0.56)),
+    linear-gradient(135deg, var(--panel), var(--panel-glass)),
     linear-gradient(120deg, rgb(124 92 255 / 0.1), rgb(56 198 244 / 0.08));
   box-shadow: var(--shadow), var(--inner-highlight);
 }
@@ -179,6 +286,36 @@ h3 {
   width: min(100%, 340px);
 }
 
+.hero-side {
+  display: grid;
+  gap: 14px;
+  justify-items: end;
+}
+
+.theme-toggle {
+  min-height: 36px;
+  padding: 0 14px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--button-bg);
+  color: var(--text-primary);
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-weight: 760;
+  box-shadow: var(--inner-highlight), 0 10px 22px rgb(30 55 50 / 0.08);
+  transition:
+    background-color 180ms ease,
+    border-color 180ms ease,
+    color 180ms ease,
+    transform 180ms ease;
+}
+
+.theme-toggle:hover {
+  border-color: var(--line-strong);
+  background: var(--button-hover-bg);
+  transform: translateY(-1px);
+}
+
 .metric-card span,
 .rate-card span,
 .metric-card small,
@@ -212,10 +349,10 @@ h3 {
 
 .trust-list li {
   padding: 7px 10px;
-  border: 1px solid rgb(38 63 57 / 0.11);
+  border: 1px solid var(--border);
   border-radius: 999px;
-  background: rgb(255 255 255 / 0.28);
-  color: var(--muted);
+  background: var(--status-badge-bg);
+  color: var(--status-badge-text);
   font-size: 0.76rem;
   font-weight: 650;
   line-height: 1.25;
@@ -224,7 +361,7 @@ h3 {
 .bottom-nav button:focus-visible,
 .currency-tab:focus-visible,
 .rate-card:focus-visible {
-  outline: 3px solid rgb(15 143 120 / 0.28);
+  outline: 3px solid var(--focus-ring);
   outline-offset: 3px;
 }
 
@@ -283,17 +420,21 @@ h3 {
   border: 1px solid var(--line);
   border-radius: 999px;
   background: var(--bg-soft);
+  color: var(--text-primary);
   font-weight: 700;
 }
 
 .support-list,
 .warning-text {
   padding: 12px;
+  border: 1px solid var(--border);
   border-radius: 8px;
   background: var(--bg-soft);
 }
 
 .warning-text {
+  border-color: var(--warning-border);
+  background: var(--warning-bg);
   color: var(--warning);
 }
 
@@ -304,9 +445,9 @@ h3 {
   margin-bottom: 18px;
   padding: 6px;
   overflow: hidden;
-  border: 1px solid rgb(255 255 255 / 0.38);
+  border: 1px solid var(--border);
   border-radius: 999px;
-  background: rgb(255 255 255 / 0.32);
+  background: var(--button-bg);
   box-shadow:
     var(--inner-highlight),
     0 12px 28px rgb(31 54 50 / 0.08);
@@ -321,10 +462,10 @@ h3 {
   left: 6px;
   z-index: 0;
   width: calc((100% - 12px) / var(--currency-count));
-  border: 1px solid rgb(255 255 255 / 0.52);
+  border: 1px solid var(--line-strong);
   border-radius: 999px;
   background:
-    linear-gradient(135deg, rgb(255 255 255 / 0.68), rgb(255 255 255 / 0.34)),
+    linear-gradient(135deg, var(--button-hover-bg), var(--button-bg)),
     linear-gradient(135deg, rgb(124 92 255 / 0.12), rgb(56 198 244 / 0.1));
   box-shadow:
     0 12px 26px rgb(72 97 150 / 0.14),
@@ -340,7 +481,7 @@ h3 {
   border: 0;
   border-radius: 999px;
   background: transparent;
-  color: var(--muted);
+  color: var(--text-secondary);
   font-size: 0.82rem;
   font-weight: 800;
   cursor: pointer;
@@ -373,7 +514,7 @@ h3 {
   border-radius: 8px;
   background: var(--panel-strong);
   box-shadow: 0 10px 24px rgb(28 52 47 / 0.06);
-  color: var(--text);
+  color: var(--text-primary);
   cursor: pointer;
   text-align: left;
   transition:
@@ -389,7 +530,7 @@ h3 {
 }
 
 .rate-card[data-active="true"] {
-  border-color: rgb(15 143 120 / 0.42);
+  border-color: var(--line-strong);
   box-shadow:
     0 20px 40px rgb(15 143 120 / 0.12),
     inset 0 1px 0 rgb(255 255 255 / 0.62);
@@ -428,14 +569,14 @@ h3 {
   border: 1px solid var(--line);
   border-radius: 8px;
   background:
-    linear-gradient(135deg, rgb(255 255 255 / 0.76), rgb(255 255 255 / 0.46)),
+    linear-gradient(135deg, var(--panel-strong), var(--panel-glass)),
     linear-gradient(135deg, rgb(15 143 120 / 0.08), transparent);
   box-shadow: var(--inner-highlight), 0 16px 34px rgb(30 55 50 / 0.09);
 }
 
 .currency-detail-card h3 {
   margin: 0;
-  color: var(--text);
+  color: var(--text-primary);
   font-size: 1.1rem;
 }
 
@@ -459,8 +600,8 @@ h3 {
   padding: 8px 10px;
   border: 1px solid var(--line);
   border-radius: 999px;
-  background: rgb(255 255 255 / 0.42);
-  color: var(--muted);
+  background: var(--status-badge-bg);
+  color: var(--status-badge-text);
   font-size: 0.82rem;
   font-weight: 720;
 }
@@ -494,7 +635,7 @@ h3 {
   border: 1px solid var(--line);
   border-radius: 8px;
   background:
-    linear-gradient(135deg, rgb(255 255 255 / 0.58), rgb(255 255 255 / 0.34)),
+    linear-gradient(135deg, var(--panel-glass), transparent),
     var(--accent-soft);
   box-shadow: var(--inner-highlight), 0 12px 26px rgb(30 55 50 / 0.07);
 }
@@ -505,7 +646,7 @@ h3 {
 
 .allocation-preview-card h3 {
   margin: 0;
-  color: var(--text);
+  color: var(--text-primary);
   font-size: 1.02rem;
 }
 
@@ -554,7 +695,7 @@ h3 {
   border: 1px solid var(--line);
   border-radius: 8px;
   background: var(--panel-strong);
-  color: var(--text);
+  color: var(--text-primary);
   font: inherit;
   font-weight: 760;
 }
@@ -635,7 +776,7 @@ h3 {
   background:
     linear-gradient(180deg, rgb(15 143 120 / 0.1), transparent),
     var(--bg-soft);
-  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.42);
+  box-shadow: var(--inner-highlight);
 }
 
 .line-chart-preview {
@@ -671,7 +812,7 @@ h3 {
   margin: 0;
   padding: 8px;
   border-radius: 999px;
-  background: rgb(255 255 255 / 0.42);
+  background: var(--button-bg);
   box-shadow:
     0 18px 42px rgb(30 55 50 / 0.15),
     inset 0 1px 0 rgb(255 255 255 / 0.7);
@@ -689,7 +830,7 @@ h3 {
   border: 1px solid transparent;
   border-radius: 999px;
   background: transparent;
-  color: var(--muted);
+  color: var(--text-secondary);
   font-size: 0.78rem;
   font-weight: 760;
   cursor: pointer;
@@ -701,14 +842,14 @@ h3 {
 }
 
 .bottom-nav button:hover {
-  border-color: rgb(15 143 120 / 0.18);
-  background: rgb(255 255 255 / 0.46);
-  color: var(--text);
+  border-color: var(--line-strong);
+  background: var(--button-hover-bg);
+  color: var(--text-primary);
 }
 
 .bottom-nav button[aria-current="page"] {
-  border-color: rgb(15 143 120 / 0.24);
-  background: var(--accent-soft);
+  border-color: var(--line-strong);
+  background: var(--active-nav-bg);
   color: var(--accent-strong);
 }
 
@@ -772,57 +913,6 @@ h3 {
   }
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #101614;
-    --bg-soft: #16211e;
-    --panel: rgb(23 33 30 / 0.82);
-    --panel-strong: rgb(27 39 36 / 0.92);
-    --panel-glass: rgb(23 33 30 / 0.56);
-    --text: #eef8f5;
-    --muted: #9fb0ab;
-    --muted-soft: #7f918c;
-    --line: rgb(222 245 238 / 0.13);
-    --line-strong: rgb(84 214 189 / 0.3);
-    --accent: #54d6bd;
-    --accent-strong: #87ead8;
-    --accent-soft: rgb(84 214 189 / 0.12);
-    --success: #72dfad;
-    --danger: #ef8b92;
-    --warning: #f0c774;
-    --shadow: 0 16px 44px rgb(0 0 0 / 0.28);
-    --shadow-soft: 0 10px 28px rgb(0 0 0 / 0.2);
-    --inner-highlight: inset 0 1px 0 rgb(255 255 255 / 0.08);
-  }
-
-  body {
-    background:
-      linear-gradient(135deg, rgb(124 92 255 / 0.16), transparent 30%),
-      linear-gradient(225deg, rgb(56 198 244 / 0.12), transparent 26%),
-      linear-gradient(135deg, #0f1614, #121c19 58%, #0c1211);
-  }
-
-  .hero-panel,
-  .currency-detail-card {
-    background:
-      linear-gradient(135deg, rgb(24 36 33 / 0.86), rgb(23 33 30 / 0.68)),
-      linear-gradient(120deg, rgb(124 92 255 / 0.12), rgb(56 198 244 / 0.08));
-  }
-
-  .trust-list li,
-  .currency-selector,
-  .market-status,
-  .bottom-nav {
-    background: rgb(255 255 255 / 0.045);
-  }
-
-  .currency-active-indicator {
-    background:
-      linear-gradient(135deg, rgb(255 255 255 / 0.11), rgb(255 255 255 / 0.04)),
-      linear-gradient(135deg, rgb(124 92 255 / 0.18), rgb(56 198 244 / 0.12));
-  }
-}
-
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -859,6 +949,10 @@ h3 {
 
   .hero-balance-card {
     justify-self: stretch;
+  }
+
+  .hero-side {
+    justify-items: stretch;
   }
 
   .brand-lockup {

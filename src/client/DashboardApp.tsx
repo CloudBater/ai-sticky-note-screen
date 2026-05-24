@@ -26,6 +26,7 @@ type DashboardAppProps = {
 };
 
 type DashboardSection = "overview" | "trend" | "simulation" | "history";
+type DashboardTheme = "light" | "dark";
 type CurrencyTransitionState = "idle" | "exiting" | "entering";
 type CssVars = CSSProperties & Record<`--${string}`, string | number>;
 type TrendDirection = "up" | "down" | "flat";
@@ -33,6 +34,7 @@ type TrendDirection = "up" | "down" | "flat";
 export function DashboardApp({ viewModel }: DashboardAppProps) {
   const [activeSection, setActiveSection] =
     useState<DashboardSection>("overview");
+  const [theme, setTheme] = useState<DashboardTheme>("light");
   const watchlistCurrencies = useMemo(
     () => [
       ...viewModel.currencySupport.supported,
@@ -103,7 +105,7 @@ export function DashboardApp({ viewModel }: DashboardAppProps) {
   }, [selectedCurrency, selectorCurrencies]);
 
   return (
-    <main className="app-shell" style={appMotionStyle}>
+    <main className="app-shell" data-theme={theme} style={appMotionStyle}>
       <header className="hero-panel" id="overview">
         <div className="hero-copy-block">
           <div aria-label="MarketMage brand" className="brand-lockup">
@@ -120,13 +122,28 @@ export function DashboardApp({ viewModel }: DashboardAppProps) {
             movement, with no execution path.
           </p>
         </div>
-        <div className="metric-card hero-balance-card">
-          <span>{viewModel.simulationBalanceLabel}</span>
-          <strong>
-            {viewModel.simulationBalance.amount.toLocaleString("en-US")}{" "}
-            {viewModel.simulationBalance.currency}
-          </strong>
-          <small>Simulation balance only</small>
+        <div className="hero-side">
+          <button
+            aria-label="Toggle dashboard theme"
+            aria-pressed={theme === "dark"}
+            className="theme-toggle"
+            onClick={() =>
+              setTheme((currentTheme) =>
+                currentTheme === "light" ? "dark" : "light",
+              )
+            }
+            type="button"
+          >
+            {theme === "light" ? "Dark mode" : "Light mode"}
+          </button>
+          <div className="metric-card hero-balance-card">
+            <span>{viewModel.simulationBalanceLabel}</span>
+            <strong>
+              {viewModel.simulationBalance.amount.toLocaleString("en-US")}{" "}
+              {viewModel.simulationBalance.currency}
+            </strong>
+            <small>Simulation balance only</small>
+          </div>
         </div>
       </header>
 

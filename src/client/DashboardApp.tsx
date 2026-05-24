@@ -541,7 +541,7 @@ export function DashboardApp({
               type="button"
             >
               Available currencies
-              <span className="dropdown-chevron" aria-hidden="true" data-open={isDropdownOpen}>???</span>
+              <span className="dropdown-chevron" aria-hidden="true" data-open={isDropdownOpen}></span>
             </button>
             <div
               className="dropdown-content-wrapper"
@@ -737,6 +737,7 @@ export function DashboardApp({
         {/* Trend tab */}
         <section className="panel trend-panel" hidden={!showTrend} id="trend">
           <HistoryReferenceRatesPanel
+            dataDate={viewModel.latestRates.dataDate}
             historyBaseCurrency={historyBaseCurrency}
             historyChartSeries={historyChartSeries}
             historyEndDate={historyEndDate}
@@ -845,6 +846,7 @@ export function DashboardApp({
 }
 
 function HistoryReferenceRatesPanel({
+  dataDate,
   historyBaseCurrency,
   historyChartSeries,
   historyEndDate,
@@ -858,6 +860,7 @@ function HistoryReferenceRatesPanel({
   onHistoryStartDateChange,
   onHistoryVisibleCurrenciesChange,
 }: {
+  dataDate: string;
   historyBaseCurrency: string;
   historyChartSeries: Array<{
     currency: string;
@@ -877,7 +880,7 @@ function HistoryReferenceRatesPanel({
   const [targetDropdownOpen, setTargetDropdownOpen] = useState(false);
 
   return (
-    <div style={{ marginTop: "var(--space-8)" }}>
+    <div>
       <div className="section-heading">
         <p className="eyebrow">Historical reference</p>
         <h2>Reference rates trend</h2>
@@ -910,7 +913,8 @@ function HistoryReferenceRatesPanel({
               ))}
             </select>
           </label>
-          <div className="history-currency-selection">
+          <div className="history-target-control">
+            <span>Target currencies</span>
             <div className="history-target-dropdown-wrapper">
               <button
                 aria-label="Select target currencies"
@@ -918,8 +922,12 @@ function HistoryReferenceRatesPanel({
                 onClick={() => setTargetDropdownOpen(!targetDropdownOpen)}
                 type="button"
               >
-                <span>Target currencies</span>
-                <span className="dropdown-arrow">▼</span>
+                <span className="dropdown-label">
+                  {historyVisibleCurrencies.length > 0
+                    ? `${historyVisibleCurrencies.length} selected`
+                    : "Target currencies"}
+                </span>
+                <span className="dropdown-arrow" aria-hidden="true" />
               </button>
               {targetDropdownOpen && (
                 <div className="history-target-dropdown-menu">
@@ -948,7 +956,7 @@ function HistoryReferenceRatesPanel({
                         }}
                         type="button"
                       >
-                        <span className="checkbox">{active ? '✓' : ''}</span>
+                        <span className="dropdown-check" aria-hidden="true" data-checked={active} />
                         <Code>{currency}</Code>
                       </button>
                     );
@@ -956,25 +964,24 @@ function HistoryReferenceRatesPanel({
                 </div>
               )}
             </div>
-            {historyVisibleCurrencies.length > 0 && (
-              <div className="history-selected-currencies">
-                {historyVisibleCurrencies.map((currency) => (
-                  <span key={currency} className="selected-currency-badge">
-                    {currency}
-                  </span>
-                ))}
-              </div>
-            )}
-            {historyVisibleCurrencies.length > 0 && (
-              <button
-                className="history-clear-button"
-                onClick={() => onHistoryVisibleCurrenciesChange([])}
-                type="button"
-              >
-                Clear
-              </button>
-            )}
           </div>
+          {historyVisibleCurrencies.length > 0 && (
+            <div className="history-selected-currencies">
+              {historyVisibleCurrencies.map((currency) => (
+                <span key={currency} className="selected-currency-badge">
+                  {currency}
+                </span>
+              ))}
+            </div>
+          )}
+          {historyVisibleCurrencies.length > 0 && (
+            <button
+              aria-label="Clear selected currencies"
+              className="history-clear-button"
+              onClick={() => onHistoryVisibleCurrenciesChange([])}
+              type="button"
+            />
+          )}
         </div>
         <div className="history-range-controls">
           <div className="history-range-presets">
@@ -1013,6 +1020,7 @@ function HistoryReferenceRatesPanel({
             <span>End</span>
             <input
               aria-label="History end date"
+              max={dataDate}
               onChange={(event) => {
                 onHistoryRangePresetChange("1Y");
                 onHistoryEndDateChange(event.target.value);
@@ -2020,7 +2028,7 @@ function getDisplayRateCard(
   const card = cardsByCurrency.get(currency);
 
   return {
-    label: card?.label ?? `1 ${baseCurrency} = ??? ${currency}`,
+    label: card?.label ?? `1 ${baseCurrency} = ${currency}`,
     value: card ? formatRate(card.rate) : "---",
   };
 }

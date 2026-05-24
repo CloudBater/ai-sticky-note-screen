@@ -839,7 +839,13 @@ select:focus {
   margin-bottom: var(--space-6);
 }
 
-.history-currency-row,
+.history-currency-row {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
 .history-range-controls {
   display: flex;
   flex-wrap: wrap;
@@ -848,14 +854,26 @@ select:focus {
   justify-content: space-between;
 }
 
-.history-currency-row {
-  flex-wrap: nowrap;
-}
-
 .history-base-control {
   display: grid;
   gap: var(--space-2);
   flex: 0 0 auto;
+  min-width: 160px;
+}
+
+.history-target-control {
+  display: grid;
+  gap: var(--space-2);
+  flex: 0 0 auto;
+}
+
+.history-target-control > span {
+  color: var(--text-tertiary);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  line-height: 16px;
+  text-transform: uppercase;
 }
 
 .history-range-controls label {
@@ -873,12 +891,9 @@ select:focus {
   text-transform: uppercase;
 }
 
-.history-currency-selection {
-  display: flex;
-  align-items: center;
+.history-target-selection-wrapper {
+  display: grid;
   gap: var(--space-3);
-  flex: 1;
-  justify-content: flex-end;
 }
 
 .history-currency-toggles,
@@ -921,44 +936,72 @@ select:focus {
 }
 
 .history-clear-button {
+  position: relative;
+  align-self: flex-end;
+  margin-left: auto;
+  min-width: 32px;
   min-height: 36px;
-  padding: 0 var(--space-3);
+  padding: 0;
   border: 1px solid var(--border-default);
-  border-radius: var(--radius-pill);
+  border-radius: 6px;
   background: var(--surface-2);
-  color: var(--text-secondary);
-  font-size: 13px;
   cursor: pointer;
-  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   transition:
     background 160ms cubic-bezier(.2, .8, .2, 1),
     border-color 160ms cubic-bezier(.2, .8, .2, 1),
-    color 160ms cubic-bezier(.2, .8, .2, 1),
     transform 160ms cubic-bezier(.2, .8, .2, 1);
+}
+
+.history-clear-button::before,
+.history-clear-button::after {
+  content: "";
+  position: absolute;
+  width: 10px;
+  height: 1.5px;
+  background: var(--text-tertiary);
+  border-radius: 1px;
+  transition: background 160ms ease-out;
+}
+
+.history-clear-button::before {
+  transform: rotate(45deg);
+}
+
+.history-clear-button::after {
+  transform: rotate(-45deg);
 }
 
 .history-clear-button:hover {
   border-color: var(--border-strong);
   background: var(--surface-1);
-  color: var(--text-primary);
-  transform: translateY(-1px);
+}
+
+.history-clear-button:hover::before,
+.history-clear-button:hover::after {
+  background: var(--text-secondary);
 }
 
 .history-target-dropdown-wrapper {
   position: relative;
+  flex: 0 0 auto;
 }
 
 .history-target-dropdown-trigger {
+  min-width: 140px;
   min-height: 36px;
-  padding: 0 var(--space-3);
+  padding: var(--space-3);
   border: 1px solid var(--border-default);
-  border-radius: var(--radius-pill);
+  border-radius: var(--radius-sm);
   background: var(--surface-2);
   color: var(--text-primary);
   font-size: 14px;
   cursor: pointer;
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: var(--space-2);
   transition:
     background 160ms cubic-bezier(.2, .8, .2, 1),
@@ -968,11 +1011,21 @@ select:focus {
 
 .history-target-dropdown-trigger:hover {
   border-color: var(--border-strong);
-  transform: translateY(-1px);
+  background: var(--surface-1);
+}
+
+.dropdown-label {
+  text-align: left;
 }
 
 .dropdown-arrow {
-  font-size: 10px;
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-right: 1.5px solid var(--text-tertiary);
+  border-bottom: 1.5px solid var(--text-tertiary);
+  transform: rotate(45deg) translateY(-2px);
+  flex-shrink: 0;
 }
 
 .history-target-dropdown-menu {
@@ -1007,39 +1060,55 @@ select:focus {
   background: var(--surface-1);
 }
 
-.history-target-dropdown-item .checkbox {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.history-target-dropdown-item .dropdown-check {
+  position: relative;
+  flex-shrink: 0;
   width: 16px;
   height: 16px;
   border: 1px solid var(--border-default);
   border-radius: 3px;
-  font-size: 12px;
-  color: var(--text-primary);
-  font-weight: 600;
+  background: transparent;
+  transition: background 120ms ease-out, border-color 120ms ease-out;
 }
 
-.history-target-dropdown-item[data-history-currency-active="true"] .checkbox {
+.history-target-dropdown-item .dropdown-check[data-checked="true"] {
   background: var(--text-primary);
   border-color: var(--text-primary);
-  color: var(--surface-0);
+}
+
+.history-target-dropdown-item .dropdown-check[data-checked="true"]::after {
+  content: "";
+  position: absolute;
+  left: 4px;
+  top: 1px;
+  width: 4px;
+  height: 8px;
+  border-right: 1.5px solid var(--surface-0);
+  border-bottom: 1.5px solid var(--surface-0);
+  transform: rotate(45deg);
 }
 
 .history-selected-currencies {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-2);
+  align-items: center;
+  align-self: flex-end;
+  flex: 0 1 auto;
 }
 
 .selected-currency-badge {
-  padding: 4px 8px;
-  border-radius: 4px;
-  background: var(--surface-1);
-  color: var(--text-primary);
+  padding: 5px 10px;
+  border-radius: 6px;
+  background: var(--accent-dim);
+  color: var(--accent);
   font-size: 12px;
   font-weight: 500;
   font-family: var(--font-mono);
+  border: 1px solid var(--accent);
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
 }
 
 .history-chart-window {
@@ -1405,4 +1474,17 @@ select:focus {
 .percentage-flat {
   color: var(--text-secondary);
   background: var(--surface-2);
+}
+
+/* 針對該 nav 元素 */
+nav[aria-label="Dashboard sections"] {
+  overflow: hidden;
+  /* 或是隱藏但保留捲動功能 */
+  overflow-x: auto;
+  scrollbar-width: none;        /* Firefox */
+  -ms-overflow-style: none;     /* IE/Edge */
+}
+
+nav[aria-label="Dashboard sections"]::-webkit-scrollbar {
+  display: none;                /* Chrome/Safari */
 }

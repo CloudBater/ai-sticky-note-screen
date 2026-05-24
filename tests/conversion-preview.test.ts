@@ -61,6 +61,17 @@ function postConversionPreview(
   });
 }
 
+function postRawConversionPreview(
+  server: Server,
+  body: string,
+): Promise<Response> {
+  return fetch(conversionPreviewUrl(server), {
+    body,
+    headers: { "Content-Type": "application/json" },
+    method: "POST",
+  });
+}
+
 describe("previewSimulatedConversion", () => {
   it("calculates a non-executing simulated conversion from a daily reference rate", () => {
     expect(
@@ -214,6 +225,32 @@ describe("POST /api/simulations/conversion-preview", () => {
         amount: 2500,
         date: "",
       });
+
+      expect(response.status).toBe(400);
+      await expect(response.json()).resolves.toEqual({
+        error: "Invalid conversion preview request",
+      });
+      expect(upstreamRequests).toEqual([]);
+    } finally {
+      await closeServer(server);
+    }
+  });
+
+  it("rejects malformed JSON request bodies before calling Frankfurter", async () => {
+    const upstreamRequests: string[] = [];
+    const fetchFrankfurter: FetchFrankfurter = async (url) => {
+      upstreamRequests.push(String(url));
+
+      return new Response(JSON.stringify({}), {
+        headers: { "Content-Type": "application/json" },
+        status: 200,
+      });
+    };
+
+    const server = await startConversionPreviewServer(fetchFrankfurter);
+
+    try {
+      const response = await postRawConversionPreview(server, "{not-json");
 
       expect(response.status).toBe(400);
       await expect(response.json()).resolves.toEqual({

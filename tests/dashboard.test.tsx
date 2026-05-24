@@ -559,15 +559,13 @@ describe("mountDashboard", () => {
       },
     });
 
+    // Bootstrap now renders DashboardApp with loadingState="error"
+    // instead of a bare <p> element
     const errorNode = renderedNodes[1] as {
-      props: {
-        children: string;
-      };
+      props: { loadingState: string };
     };
 
-    expect(errorNode.props.children).toBe(
-      "Unable to load backend reference data.",
-    );
+    expect(errorNode.props.loadingState).toBe("error");
   });
 });
 

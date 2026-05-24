@@ -89,6 +89,8 @@ describe("buildDashboardViewModel", () => {
         status: "pending",
         summary:
           "Manual allocation historical preview will appear after daily history loads.",
+        currencyOptions: [{ currency: "USD", label: "USD" }],
+        referenceRatesByDate: {},
         allocations: [],
         points: [],
       },
@@ -134,6 +136,14 @@ describe("buildDashboardViewModel", () => {
         status: "ready",
         summary:
           "Manual 50% USD / 50% EUR allocation moved from 10,000 USD to 9,761.9 USD. Historical reference only.",
+        currencyOptions: [
+          { currency: "USD", label: "USD" },
+          { currency: "EUR", label: "EUR" },
+        ],
+        referenceRatesByDate: {
+          "2024-08-21": { EUR: 0.9 },
+          "2024-08-23": { EUR: 0.945 },
+        },
         allocations: [
           { currency: "USD", percent: 50, label: "50% USD" },
           { currency: "EUR", percent: 50, label: "50% EUR" },
@@ -454,6 +464,8 @@ const fallbackViewModel: DashboardViewModel = {
     status: "pending",
     summary:
       "Manual allocation historical preview will appear after daily history loads.",
+    currencyOptions: [{ currency: "USD", label: "USD" }],
+    referenceRatesByDate: {},
     allocations: [],
     points: [],
   },
@@ -567,6 +579,14 @@ describe("DashboardApp", () => {
             status: "ready",
             summary:
               "Manual 50% USD / 50% EUR allocation moved from 10,000 USD to 9,761.9 USD. Historical reference only.",
+            currencyOptions: [
+              { currency: "USD", label: "USD" },
+              { currency: "EUR", label: "EUR" },
+            ],
+            referenceRatesByDate: {
+              "2024-08-21": { EUR: 0.9 },
+              "2024-08-23": { EUR: 0.945 },
+            },
             allocations: [
               { currency: "USD", percent: 50, label: "50% USD" },
               { currency: "EUR", percent: 50, label: "50% EUR" },
@@ -616,6 +636,12 @@ describe("DashboardApp", () => {
     expect(html).toContain("Historical line chart");
     expect(html).toContain("Historical reference only, not a forecast.");
     expect(html).toContain("Manual allocation historical preview");
+    expect(html).toContain("Choose currencies and allocation");
+    expect(html).toContain('aria-label="First allocation currency"');
+    expect(html).toContain('aria-label="Second allocation currency"');
+    expect(html).toContain('aria-label="First allocation percent"');
+    expect(html).toContain('name="first-allocation-percent"');
+    expect(html).toContain('type="range"');
     expect(html).toContain("Manual 50% USD / 50% EUR allocation moved");
     expect(html).toContain("50% USD");
     expect(html).toContain("50% EUR");
@@ -661,6 +687,8 @@ describe("DashboardApp", () => {
             status: "pending",
             summary:
               "Manual allocation historical preview will appear after daily history loads.",
+            currencyOptions: [{ currency: "USD", label: "USD" }],
+            referenceRatesByDate: {},
             allocations: [],
             points: [],
           },
@@ -712,6 +740,8 @@ describe("DashboardApp", () => {
             status: "pending",
             summary:
               "Manual allocation historical preview will appear after daily history loads.",
+            currencyOptions: [{ currency: "USD", label: "USD" }],
+            referenceRatesByDate: {},
             allocations: [],
             points: [],
           },

@@ -73,6 +73,7 @@ describe("historical chart data pipeline", () => {
       fetchReferenceData: async () => ({
         currencies: {
           USD: "US Dollar",
+          CNY: "Chinese Yuan",
           EUR: "Euro",
           JPY: "Japanese Yen",
         },
@@ -91,7 +92,12 @@ describe("historical chart data pipeline", () => {
         startDate: request.startDate,
         endDate: request.endDate,
         points:
-          request.symbols[0] === "EUR"
+          request.symbols[0] === "CNY"
+            ? [
+                { date: "2024-08-21", rate: 7.01 },
+                { date: "2024-08-23", rate: 7.12 },
+              ]
+            : request.symbols[0] === "EUR"
             ? [
                 { date: "2024-08-21", rate: 0.9 },
                 { date: "2024-08-23", rate: 0.945 },
@@ -105,6 +111,13 @@ describe("historical chart data pipeline", () => {
 
     expect(viewModel.historicalTrend.allSeries).toEqual([
       {
+        symbols: ["CNY"],
+        points: [
+          { date: "2024-08-21", rate: 7.01 },
+          { date: "2024-08-23", rate: 7.12 },
+        ],
+      },
+      {
         symbols: ["EUR"],
         points: [
           { date: "2024-08-21", rate: 0.9 },
@@ -117,6 +130,52 @@ describe("historical chart data pipeline", () => {
           { date: "2024-08-21", rate: 140 },
           { date: "2024-08-23", rate: 144.9 },
         ],
+      },
+    ]);
+  });
+
+  it("loads up to one year of historical points for supported currency charts", async () => {
+    const requestedWindows: Array<{ startDate: string; endDate: string }> = [];
+
+    await loadDashboardViewModel({
+      simulationBalance: 10_000,
+      requestedCurrencies: ["usd", "cny"],
+      fetchReferenceData: async () => ({
+        currencies: {
+          USD: "US Dollar",
+          CNY: "Chinese Yuan",
+        },
+        latestRates: {
+          base: "USD",
+          date: "2024-08-23",
+          rates: {
+            CNY: 7.12,
+          },
+        },
+      }),
+      fetchHistoricalRates: async (request) => {
+        requestedWindows.push({
+          startDate: request.startDate,
+          endDate: request.endDate,
+        });
+
+        return {
+          base: request.baseCurrency,
+          symbol: request.symbols[0],
+          startDate: request.startDate,
+          endDate: request.endDate,
+          points: [
+            { date: request.startDate, rate: 7.01 },
+            { date: request.endDate, rate: 7.12 },
+          ],
+        };
+      },
+    });
+
+    expect(requestedWindows).toEqual([
+      {
+        startDate: "2023-08-24",
+        endDate: "2024-08-23",
       },
     ]);
   });

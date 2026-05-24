@@ -376,13 +376,13 @@ describe("loadDashboardViewModel", () => {
       {
         baseCurrency: "EUR",
         symbols: ["JPY"],
-        startDate: "2024-07-24",
+        startDate: "2023-08-24",
         endDate: "2024-08-23",
       },
       {
         baseCurrency: "EUR",
         symbols: ["USD"],
-        startDate: "2024-07-24",
+        startDate: "2023-08-24",
         endDate: "2024-08-23",
       },
     ]);
@@ -440,13 +440,13 @@ describe("loadDashboardViewModel", () => {
       {
         baseCurrency: "USD",
         symbols: ["EUR"],
-        startDate: "2024-07-24",
+        startDate: "2023-08-24",
         endDate: "2024-08-23",
       },
       {
         baseCurrency: "USD",
         symbols: ["JPY"],
-        startDate: "2024-07-24",
+        startDate: "2023-08-24",
         endDate: "2024-08-23",
       },
     ]);
@@ -596,7 +596,7 @@ describe("DashboardApp", () => {
             { id: "history", label: "History" },
           ],
           currencySupport: {
-            supported: ["USD", "EUR", "JPY"],
+            supported: ["USD", "EUR", "JPY", "CNY"],
             unsupported: ["TWD"],
           },
           latestRates: {
@@ -604,6 +604,7 @@ describe("DashboardApp", () => {
             dataDate: "2024-08-23",
             cards: [
               { currency: "EUR", label: "1 USD = 0.901 EUR", rate: 0.901 },
+              { currency: "CNY", label: "1 USD = 7.12 CNY", rate: 7.12 },
             ],
           },
           historicalTrend: {
@@ -616,6 +617,14 @@ describe("DashboardApp", () => {
               { date: "2024-08-23", rate: 0.945 },
             ],
             allSeries: [
+              {
+                symbols: ["CNY"],
+                points: [
+                  { date: "2024-08-21", rate: 7.01 },
+                  { date: "2024-08-22", rate: 7.08 },
+                  { date: "2024-08-23", rate: 7.12 },
+                ],
+              },
               {
                 symbols: ["EUR"],
                 points: [
@@ -688,6 +697,24 @@ describe("DashboardApp", () => {
     expect(html).toContain("1 USD = 0.901 EUR");
     expect(html).toContain("Historical line chart");
     expect(html).toContain("Historical reference only");
+    expect(html).toContain("Reference rates history");
+    expect(html).toContain('data-history-chart="multi-currency"');
+    expect(html).toContain('aria-label="History base currency"');
+    expect(html).toContain('data-history-base-currency="USD"');
+    expect(html).toContain('aria-label="Toggle CNY history line"');
+    expect(html).toContain('data-history-currency="CNY"');
+    expect(html).toContain('data-history-currency-active="true"');
+    expect(html).toContain("1Y");
+    expect(html).toContain("6M");
+    expect(html).toContain("3M");
+    expect(html).toContain("1M");
+    expect(html).toContain("2W");
+    expect(html).toContain("1W");
+    expect(html).toContain('aria-label="History start date"');
+    expect(html).toContain('aria-label="History end date"');
+    expect(html).toContain("Range movement");
+    expect(html).toContain("+1.57%");
+    expect(html).toContain("USD/CNY");
     expect(html).not.toContain("Allocation history preview");
     expect(html).toContain('class="simulation-stack"');
     expect(html).toContain('data-conversion-direction="forward"');

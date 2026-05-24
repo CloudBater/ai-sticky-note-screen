@@ -83,8 +83,65 @@ describe("buildDashboardViewModel", () => {
         summary:
           "Historical movement summary will appear after daily reference rates load.",
       },
+      allocationPreview: {
+        baseCurrency: "USD",
+        startingAmount: 10_000,
+        status: "pending",
+        summary:
+          "Manual allocation historical preview will appear after daily history loads.",
+        allocations: [],
+        points: [],
+      },
       simulationHistory: {
         entries: [],
+      },
+    });
+  });
+
+  it("loads a manual allocation historical preview from historical rates", async () => {
+    await expect(
+      loadDashboardViewModel({
+        simulationBalance: 10_000,
+        requestedCurrencies: ["usd", "eur"],
+        fetchReferenceData: async () => ({
+          currencies: {
+            USD: "US Dollar",
+            EUR: "Euro",
+          },
+          latestRates: {
+            base: "USD",
+            date: "2024-08-23",
+            rates: {
+              EUR: 0.945,
+            },
+          },
+        }),
+        fetchHistoricalRates: async (request) => ({
+          base: request.baseCurrency,
+          symbol: request.symbol,
+          startDate: request.startDate,
+          endDate: request.endDate,
+          points: [
+            { date: "2024-08-21", rate: 0.9 },
+            { date: "2024-08-23", rate: 0.945 },
+          ],
+        }),
+      }),
+    ).resolves.toMatchObject({
+      allocationPreview: {
+        baseCurrency: "USD",
+        startingAmount: 10_000,
+        status: "ready",
+        summary:
+          "Manual 50% USD / 50% EUR allocation moved from 10,000 USD to 9,761.9 USD. Historical reference only.",
+        allocations: [
+          { currency: "USD", percent: 50, label: "50% USD" },
+          { currency: "EUR", percent: 50, label: "50% EUR" },
+        ],
+        points: [
+          { date: "2024-08-21", value: 10_000, label: "10,000 USD" },
+          { date: "2024-08-23", value: 9_761.9, label: "9,761.9 USD" },
+        ],
       },
     });
   });
@@ -391,6 +448,15 @@ const fallbackViewModel: DashboardViewModel = {
     summary:
       "Historical movement summary will appear after daily reference rates load.",
   },
+  allocationPreview: {
+    baseCurrency: "USD",
+    startingAmount: 10_000,
+    status: "pending",
+    summary:
+      "Manual allocation historical preview will appear after daily history loads.",
+    allocations: [],
+    points: [],
+  },
   simulationHistory: {
     entries: [],
   },
@@ -495,6 +561,21 @@ describe("DashboardApp", () => {
             summary:
               "EUR moved up 5% against USD from 2024-08-21 to 2024-08-23. Historical reference only, not a forecast.",
           },
+          allocationPreview: {
+            baseCurrency: "USD",
+            startingAmount: 10_000,
+            status: "ready",
+            summary:
+              "Manual 50% USD / 50% EUR allocation moved from 10,000 USD to 9,761.9 USD. Historical reference only.",
+            allocations: [
+              { currency: "USD", percent: 50, label: "50% USD" },
+              { currency: "EUR", percent: 50, label: "50% EUR" },
+            ],
+            points: [
+              { date: "2024-08-21", value: 10_000, label: "10,000 USD" },
+              { date: "2024-08-23", value: 9_761.9, label: "9,761.9 USD" },
+            ],
+          },
           simulationHistory: {
             entries: [
               {
@@ -534,6 +615,11 @@ describe("DashboardApp", () => {
     expect(html).toContain("1 USD = 0.901 EUR");
     expect(html).toContain("Historical line chart");
     expect(html).toContain("Historical reference only, not a forecast.");
+    expect(html).toContain("Manual allocation historical preview");
+    expect(html).toContain("Manual 50% USD / 50% EUR allocation moved");
+    expect(html).toContain("50% USD");
+    expect(html).toContain("50% EUR");
+    expect(html).toContain("9,761.9 USD");
     expect(html).toContain("2,500 USD");
     expect(html).toContain("2,252.5 EUR");
     expect(html).not.toContain("Trade");
@@ -568,6 +654,15 @@ describe("DashboardApp", () => {
           historicalTrend: {
             summary:
               "Historical movement summary will appear after daily reference rates load.",
+          },
+          allocationPreview: {
+            baseCurrency: "USD",
+            startingAmount: 10_000,
+            status: "pending",
+            summary:
+              "Manual allocation historical preview will appear after daily history loads.",
+            allocations: [],
+            points: [],
           },
           simulationHistory: {
             entries: [],
@@ -610,6 +705,15 @@ describe("DashboardApp", () => {
           historicalTrend: {
             summary:
               "Historical movement summary will appear after daily reference rates load.",
+          },
+          allocationPreview: {
+            baseCurrency: "USD",
+            startingAmount: 10_000,
+            status: "pending",
+            summary:
+              "Manual allocation historical preview will appear after daily history loads.",
+            allocations: [],
+            points: [],
           },
           simulationHistory: {
             entries: [],

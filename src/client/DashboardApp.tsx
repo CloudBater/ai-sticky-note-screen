@@ -960,7 +960,7 @@ function SimulatedConversionPreviewCard({
                 setPreview(null);
                 setHasAddedToHistory(false);
               }}
-              step="100"
+              step="1"
               type="number"
               value={amount}
             />

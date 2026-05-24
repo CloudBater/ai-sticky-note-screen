@@ -58,13 +58,13 @@ export function previewSimulatedConversion(
     sourceCurrency,
     targetCurrency,
     sourceAmount: input.amount,
-    convertedAmount: roundCurrencyAmount(input.amount * input.dailyReferenceRate),
+    convertedAmount: floorTargetUnits(input.amount * input.dailyReferenceRate),
     rate: input.dailyReferenceRate,
     date: input.date,
     kind: "simulation-preview",
   };
 }
 
-function roundCurrencyAmount(value: number): number {
-  return Math.round((value + Number.EPSILON) * 100) / 100;
+function floorTargetUnits(value: number): number {
+  return Math.floor(value + Number.EPSILON);
 }

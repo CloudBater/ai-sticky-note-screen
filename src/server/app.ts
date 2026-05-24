@@ -78,7 +78,16 @@ export function createApp(options: CreateAppOptions = {}) {
       request.method === "POST" &&
       request.url === "/api/simulations/conversion-preview"
     ) {
-      const requestBody = await readJsonBody(request);
+      let requestBody: unknown;
+
+      try {
+        requestBody = await readJsonBody(request);
+      } catch {
+        sendJson(response, 400, {
+          error: "Invalid conversion preview request",
+        });
+        return;
+      }
 
       if (!isConversionPreviewRequest(requestBody)) {
         sendJson(response, 400, {

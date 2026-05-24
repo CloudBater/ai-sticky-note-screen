@@ -22,8 +22,10 @@ import {
 import { previewPortfolioAllocation } from "../shared/portfolio-preview";
 import { currencyContentTransition } from "./motion";
 import {
+  applySimulatedConversionToBalance,
   MAX_SIMULATION_BALANCE,
   MIN_SIMULATION_BALANCE,
+  normalizeSimulatedConversionAmountInput,
   normalizeSimulationBalanceInput,
 } from "./simulation-balance";
 import { previewSimulatedConversionViaBackend } from "./simulated-conversion-client";
@@ -377,14 +379,23 @@ export function DashboardApp({ viewModel }: DashboardAppProps) {
               baseCurrency={viewModel.latestRates.baseCurrency}
               dataDate={viewModel.latestRates.dataDate}
               latestRates={viewModel.latestRates.cards}
-              onAddPreview={(preview) =>
+              onAddPreview={(preview) => {
                 setSimulationHistoryEntries((existingEntries) =>
                   addSimulatedConversionToHistory({
                     existingEntries,
                     preview,
                   }),
-                )
-              }
+                );
+                setSimulationBalanceAmount((currentAmount) => {
+                  const nextAmount = applySimulatedConversionToBalance(
+                    currentAmount,
+                    preview.sourceAmount,
+                  );
+
+                  setSimulationBalanceInput(String(nextAmount));
+                  return nextAmount;
+                });
+              }}
               onViewHistory={() => setActiveSection("history")}
               simulationBalanceAmount={simulationBalanceAmount}
             />
@@ -492,17 +503,40 @@ function SimulatedConversionPreviewCard({
   const [previewError, setPreviewError] = useState<string | null>(null);
   const [isPreviewing, setIsPreviewing] = useState(false);
   const [hasAddedToHistory, setHasAddedToHistory] = useState(false);
+  const maxConversionAmount = Math.max(0, simulationBalanceAmount);
+  const minConversionAmount = simulationBalanceAmount > 0 ? 1 : 0;
+
+  useEffect(() => {
+    setAmount((currentAmount) =>
+      String(
+        normalizeSimulatedConversionAmountInput(
+          currentAmount,
+          simulationBalanceAmount,
+          Math.min(simulationBalanceAmount, 2500),
+        ),
+      ),
+    );
+  }, [simulationBalanceAmount]);
+
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setPreviewError(null);
     setIsPreviewing(true);
+
+    const normalizedAmount = normalizeSimulatedConversionAmountInput(
+      amount,
+      simulationBalanceAmount,
+      Math.min(simulationBalanceAmount, 2500),
+    );
+
+    setAmount(String(normalizedAmount));
 
     try {
       setPreview(
         await previewSimulatedConversionViaBackend({
           sourceCurrency: baseCurrency,
           targetCurrency,
-          amount: Number(amount),
+          amount: normalizedAmount,
           date: referenceDate,
         }),
       );
@@ -554,9 +588,14 @@ function SimulatedConversionPreviewCard({
             <span>Amount</span>
             <input
               aria-label="Simulated conversion amount"
-              min="1"
+              max={maxConversionAmount}
+              min={minConversionAmount}
               name="simulated-conversion-amount"
-              onChange={(event) => setAmount(event.target.value)}
+              onChange={(event) => {
+                setAmount(event.target.value);
+                setPreview(null);
+                setHasAddedToHistory(false);
+              }}
               step="100"
               type="number"
               value={amount}
@@ -574,7 +613,7 @@ function SimulatedConversionPreviewCard({
           </label>
         </fieldset>
         <div className="conversion-actions">
-          <button disabled={isPreviewing} type="submit">
+          <button disabled={isPreviewing || simulationBalanceAmount <= 0} type="submit">
             {isPreviewing ? "Previewing..." : "Preview simulated conversion"}
           </button>
           <button
@@ -582,6 +621,7 @@ function SimulatedConversionPreviewCard({
             onClick={() => {
               if (preview) {
                 onAddPreview(preview);
+                setPreview(null);
                 setHasAddedToHistory(true);
               }
             }}
@@ -615,7 +655,7 @@ function SimulatedConversionPreviewCard({
         </button>
       </p>
       <p className="empty-state">
-        Preview only. No trades are executed.
+        Available simulation balance only. Preview only. No trades are executed.
       </p>
     </article>
   );

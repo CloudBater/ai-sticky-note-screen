@@ -1,122 +1,137 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
+import { useEffect, useState } from 'react'
+import {
+  LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
+} from 'recharts'
+import { fetchRates, fetchHistory, RatesResponse, HistoryResponse } from './api'
+import { convert, formatRate } from './calculator'
 import './App.css'
 
-function App() {
-  const [count, setCount] = useState(0)
+const DEFAULT_CURRENCIES = ['EUR', 'JPY', 'GBP', 'TWD', 'SGD']
+const BASE = 'USD'
+const HISTORY_DAYS = 90
+
+export default function App() {
+  const [rates, setRates] = useState<RatesResponse | null>(null)
+  const [history, setHistory] = useState<HistoryResponse | null>(null)
+  const [selectedTarget, setSelectedTarget] = useState('EUR')
+  const [amount, setAmount] = useState('100')
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    fetchRates(BASE, DEFAULT_CURRENCIES)
+      .then(setRates)
+      .catch(() => setError('Failed to load rates. Please try again later.'))
+  }, [])
+
+  useEffect(() => {
+    setHistory(null)
+    fetchHistory(BASE, selectedTarget, HISTORY_DAYS)
+      .then(setHistory)
+      .catch(() => setError('Failed to load history.'))
+  }, [selectedTarget])
+
+  const rate = rates?.rates[selectedTarget] ?? 0
+  const converted = convert(Number(amount) || 0, rate)
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
+    <div className="app">
+      <header className="header">
+        <h1>MarketMage</h1>
+        <p className="disclaimer">
+          Rates are ECB reference rates updated once per business day. Not financial advice.
+        </p>
+      </header>
+
+      {error && <div className="error-banner">{error}</div>}
+
+      {rates && (
+        <section className="rates-section">
+          <div className="section-header">
+            <h2>Today's Rates</h2>
+            <span className="last-updated">Last updated: {rates.date}</span>
+          </div>
+          {rates.unsupported && rates.unsupported.length > 0 && (
+            <p className="unsupported-note">
+              Note: {rates.unsupported.join(', ')} not available from ECB reference rates.
+            </p>
+          )}
+          <div className="rate-cards">
+            {Object.entries(rates.rates).map(([currency, r]) => (
+              <button
+                key={currency}
+                className={`rate-card ${selectedTarget === currency ? 'active' : ''}`}
+                onClick={() => setSelectedTarget(currency)}
+              >
+                <span className="currency-pair">{BASE} → {currency}</span>
+                <span className="rate-value">{formatRate(r)}</span>
+              </button>
+            ))}
+          </div>
+        </section>
+      )}
+
+      <section className="calculator-section">
+        <h2>Converter</h2>
+        <div className="calculator">
+          <div className="calc-input-group">
+            <label htmlFor="amount">{BASE}</label>
+            <input
+              id="amount"
+              type="number"
+              min="0"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+            />
+          </div>
+          <span className="calc-arrow">→</span>
+          <div className="calc-result-group">
+            <label>{selectedTarget}</label>
+            <span className="calc-result">{rate > 0 ? converted.toFixed(2) : '—'}</span>
+          </div>
         </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
+        {rate > 0 && (
+          <p className="calc-note">
+            1 {BASE} = {formatRate(rate)} {selectedTarget}
           </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
+        )}
       </section>
 
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
+      <section className="chart-section">
+        <h2>90-Day Trend: {BASE} → {selectedTarget}</h2>
+        {history ? (
+          <ResponsiveContainer width="100%" height={280}>
+            <LineChart data={history.points} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#2a2a3a" />
+              <XAxis
+                dataKey="date"
+                tick={{ fontSize: 11, fill: '#888' }}
+                tickFormatter={(d: string) => d.slice(5)}
+                interval="preserveStartEnd"
+              />
+              <YAxis
+                tick={{ fontSize: 11, fill: '#888' }}
+                domain={['auto', 'auto']}
+                tickFormatter={(v: number) => v.toFixed(3)}
+                width={60}
+              />
+              <Tooltip
+                contentStyle={{ background: '#1a1a2e', border: '1px solid #333', borderRadius: 6 }}
+                labelStyle={{ color: '#aaa' }}
+                formatter={(v: number) => [formatRate(v), selectedTarget]}
+              />
+              <Line
+                type="monotone"
+                dataKey="rate"
+                stroke="#4ade80"
+                strokeWidth={2}
+                dot={false}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        ) : (
+          <div className="chart-loading">Loading chart…</div>
+        )}
       </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
+    </div>
   )
 }
-
-export default App

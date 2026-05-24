@@ -810,6 +810,7 @@ describe("DashboardApp", () => {
             EUR: "Euro",
             JPY: "Japanese Yen",
             TWD: "New Taiwan Dollar",
+            GBP: "British Pound",
           },
         }}
       />,
@@ -821,6 +822,9 @@ describe("DashboardApp", () => {
     expect(html).toContain('class="currency-pill currency-pill-supported"');
     expect(html).toContain('class="currency-pill currency-pill-unsupported"');
     expect(html).toContain('aria-label="TWD unsupported"');
+    expect(html).toContain('Available currencies');
+    expect(html).toContain('class="dropdown-list-item"');
+    expect(html).toContain('British Pound');
   });
 
   it("renders an empty state when latest reference rates are unavailable", () => {

@@ -1,6 +1,7 @@
 import {
   useEffect,
   useMemo,
+  useRef,
   useState,
   type CSSProperties,
   type FormEvent,
@@ -59,6 +60,7 @@ export function DashboardApp({ viewModel }: DashboardAppProps) {
   const [simulationHistoryEntries, setSimulationHistoryEntries] = useState<
     SimulationHistoryEntry[]
   >(viewModel.simulationHistory.entries);
+  const simulationAmountInputRef = useRef<HTMLInputElement>(null);
   const watchlistCurrencies = useMemo(
     () => [
       ...viewModel.currencySupport.supported,
@@ -149,8 +151,8 @@ export function DashboardApp({ viewModel }: DashboardAppProps) {
 
   return (
     <main className="app-shell" data-theme={theme} style={appMotionStyle}>
-      <header className="hero-panel" id="overview">
-        <div className="hero-copy-block">
+      <header className="app-header" id="overview">
+        <div className="header-copy-block">
           <div aria-label="MarketMage brand" className="brand-lockup">
             <img
               alt=""
@@ -161,11 +163,10 @@ export function DashboardApp({ viewModel }: DashboardAppProps) {
             <h1>{viewModel.title}</h1>
           </div>
           <p className="hero-copy">
-            Daily reference rates and simulations for understanding currency
-            movement, with no execution path.
+            Daily FX reference rates and non-executing simulations.
           </p>
         </div>
-        <div className="hero-side">
+        <div className="header-actions">
           <button
             aria-label="Toggle dashboard theme"
             aria-pressed={theme === "dark"}
@@ -179,15 +180,14 @@ export function DashboardApp({ viewModel }: DashboardAppProps) {
           >
             {theme === "light" ? "Dark mode" : "Light mode"}
           </button>
-          <div className="metric-card hero-balance-card">
-            <span>{viewModel.simulationBalanceLabel}</span>
+          <div className="metric-card simulation-balance-card">
+            <span>Simulation balance</span>
             <strong>
               {simulationBalanceAmount.toLocaleString("en-US")}{" "}
               {viewModel.simulationBalance.currency}
             </strong>
-            <small>Simulation balance only</small>
             <label className="simulation-amount-control">
-              <span>Adjust simulation amount</span>
+              <span>Adjust amount</span>
               <input
                 aria-label="Adjust simulation amount"
                 max={MAX_SIMULATION_BALANCE}
@@ -196,6 +196,7 @@ export function DashboardApp({ viewModel }: DashboardAppProps) {
                 onChange={(event) =>
                   handleSimulationBalanceChange(event.target.value)
                 }
+                ref={simulationAmountInputRef}
                 step="100"
                 type="number"
                 value={simulationBalanceInput}
@@ -206,12 +207,30 @@ export function DashboardApp({ viewModel }: DashboardAppProps) {
         </div>
       </header>
 
-      <section aria-label="Trust notes" className="trust-banner">
+      <section aria-label="Trust notes" className="trust-strip">
         <ul className="trust-list">
           {viewModel.trustMessages.map((message) => (
             <li key={message}>{message}</li>
           ))}
         </ul>
+      </section>
+
+      <section aria-label="Quick actions" className="quick-action-strip">
+        <button onClick={() => setActiveSection("trend")} type="button">
+          View trend
+        </button>
+        <button
+          onClick={() => simulationAmountInputRef.current?.focus()}
+          type="button"
+        >
+          Adjust amount
+        </button>
+        <button onClick={() => setActiveSection("simulation")} type="button">
+          Preview conversion
+        </button>
+        <button onClick={() => setActiveSection("history")} type="button">
+          Review history
+        </button>
       </section>
 
       <div className="dashboard-grid">
@@ -341,6 +360,35 @@ export function DashboardApp({ viewModel }: DashboardAppProps) {
           </div>
           {selectedChartSeries.points.length > 0 ? (
             <>
+              <div className="trend-kpi-row">
+                <div>
+                  <span>Pair</span>
+                  <strong>
+                    {viewModel.historicalTrend.baseCurrency}/{displayedCurrency}
+                  </strong>
+                </div>
+                <div>
+                  <span>Date range</span>
+                  <strong>
+                    {selectedChartSeries.points[0]?.date} to{" "}
+                    {
+                      selectedChartSeries.points[
+                        selectedChartSeries.points.length - 1
+                      ]?.date
+                    }
+                  </strong>
+                </div>
+                <div>
+                  <span>Latest rate</span>
+                  <strong>
+                    {formatRate(
+                      selectedChartSeries.points[
+                        selectedChartSeries.points.length - 1
+                      ]?.rate ?? 0,
+                    )}
+                  </strong>
+                </div>
+              </div>
               <div
                 className="chart-window"
                 data-chart-currency={displayedCurrency}

@@ -140,6 +140,7 @@ export function Slider({
   className = "",
   max = 100,
   min = 0,
+  readOnly,
   value,
   ...props
 }: Omit<InputHTMLAttributes<HTMLInputElement>, "type"> & {
@@ -149,6 +150,9 @@ export function Slider({
   const numericMin = Number(min);
   const numericMax = Number(max);
   const numericValue = Number(value);
+  const isReadOnly =
+    Boolean(readOnly) ||
+    (props.onChange === undefined && props.onInput === undefined);
   const filled =
     ((numericValue - numericMin) / Math.max(numericMax - numericMin, 1)) * 100;
 
@@ -158,6 +162,7 @@ export function Slider({
       className={joinClassNames("slider", className)}
       max={max}
       min={min}
+      readOnly={isReadOnly}
       style={{ backgroundSize: `${filled}% 100%` }}
       type="range"
       value={value}

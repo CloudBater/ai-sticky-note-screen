@@ -19,6 +19,11 @@ import {
   Slider,
   Tab,
 } from "./components";
+import {
+  addCurrencyToWatchlist,
+  buildCurrencyWatchlistEntries,
+  normalizeCurrencyCodeInput,
+} from "./currency-watchlist";
 import { previewPortfolioAllocation } from "../shared/portfolio-preview";
 import { currencyContentTransition } from "./motion";
 import {
@@ -53,22 +58,60 @@ export function DashboardApp({ viewModel }: DashboardAppProps) {
   const [simulationBalanceInput, setSimulationBalanceInput] = useState(
     String(viewModel.simulationBalance.amount),
   );
-  const [simulationHistoryEntries, setSimulationHistoryEntries] = useState<
-    SimulationHistoryEntry[]
-  >(viewModel.simulationHistory.entries);
-  const watchlistCurrencies = useMemo(
+  const [watchlistCurrencies, setWatchlistCurrencies] = useState<string[]>(
     () => [
       ...viewModel.currencySupport.supported,
       ...viewModel.currencySupport.unsupported,
     ],
-    [viewModel.currencySupport.supported, viewModel.currencySupport.unsupported],
   );
+  const [watchlistCurrencyInput, setWatchlistCurrencyInput] = useState("");
+  const [simulationHistoryEntries, setSimulationHistoryEntries] = useState<
+    SimulationHistoryEntry[]
+  >(viewModel.simulationHistory.entries);
   const selectorCurrencies = useMemo(
     () =>
       viewModel.latestRates.cards.length > 0
         ? viewModel.latestRates.cards.map((card) => card.currency)
         : watchlistCurrencies,
     [viewModel.latestRates.cards, watchlistCurrencies],
+  );
+  const currencyCatalog = viewModel.currencyCatalog ?? {};
+  const watchlistEntries = useMemo(
+    () => {
+      const supportedCurrencyCodes = new Set(
+        viewModel.currencySupport.supported,
+      );
+      const unsupportedCurrencyCodes = new Set(
+        viewModel.currencySupport.unsupported,
+      );
+
+      return buildCurrencyWatchlistEntries(
+        watchlistCurrencies,
+        currencyCatalog,
+      ).map((entry) => {
+        if (supportedCurrencyCodes.has(entry.currency)) {
+          return {
+            ...entry,
+            supported: true,
+          };
+        }
+
+        if (unsupportedCurrencyCodes.has(entry.currency)) {
+          return {
+            ...entry,
+            supported: false,
+          };
+        }
+
+        return entry;
+      });
+    },
+    [
+      currencyCatalog,
+      viewModel.currencySupport.supported,
+      viewModel.currencySupport.unsupported,
+      watchlistCurrencies,
+    ],
   );
   const [selectedCurrency, setSelectedCurrency] = useState(
     selectorCurrencies[0] ?? viewModel.latestRates.baseCurrency,
@@ -119,6 +162,23 @@ export function DashboardApp({ viewModel }: DashboardAppProps) {
     setSimulationBalanceAmount((currentAmount) =>
       normalizeSimulationBalanceInput(input, currentAmount),
     );
+  };
+
+  const handleAddCurrency = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    const normalizedCurrency = normalizeCurrencyCodeInput(
+      watchlistCurrencyInput,
+    );
+
+    if (normalizedCurrency === null) {
+      return;
+    }
+
+    setWatchlistCurrencies((currentCurrencies) =>
+      addCurrencyToWatchlist(currentCurrencies, normalizedCurrency),
+    );
+    setWatchlistCurrencyInput("");
   };
 
   return (
@@ -179,22 +239,42 @@ export function DashboardApp({ viewModel }: DashboardAppProps) {
             <p className="eyebrow">Watchlist</p>
             <h2 id="watchlist-heading">Selected currencies</h2>
           </div>
+          <form className="currency-watchlist-form" onSubmit={handleAddCurrency}>
+            <label>
+              <span>Add currency code</span>
+              <input
+                aria-label="Add currency to selected currencies"
+                autoCapitalize="characters"
+                autoComplete="off"
+                maxLength={3}
+                name="watchlist-currency"
+                onChange={(event) => setWatchlistCurrencyInput(event.target.value)}
+                placeholder="e.g. CAD"
+                spellCheck={false}
+                type="text"
+                value={watchlistCurrencyInput}
+              />
+            </label>
+            <button type="submit">Add currency</button>
+          </form>
+          <p className="meta-dim watchlist-note">
+            Enter a 3-letter code. Unsupported currencies stay visible but muted.
+          </p>
           <div className="currency-pills">
-            {viewModel.currencySupport.supported.map((currency) => (
+            {watchlistEntries.map((entry) => (
               <span
-                className="currency-pill currency-pill-supported"
-                key={currency}
+                aria-label={
+                  entry.supported ? entry.label : `${entry.currency} unsupported`
+                }
+                className={
+                  entry.supported
+                    ? "currency-pill currency-pill-supported"
+                    : "currency-pill currency-pill-unsupported"
+                }
+                key={entry.currency}
+                title={entry.label}
               >
-                <Code>{currency}</Code>
-              </span>
-            ))}
-            {viewModel.currencySupport.unsupported.map((currency) => (
-              <span
-                aria-label={`${currency} unsupported`}
-                className="currency-pill currency-pill-unsupported"
-                key={currency}
-              >
-                <Code>{currency}</Code>
+                <Code>{entry.currency}</Code>
               </span>
             ))}
           </div>
@@ -966,13 +1046,13 @@ function MarketStatus({ direction }: { direction: TrendDirection }) {
     );
   }
 
-  const arrow = direction === "up" ? "â†‘" : "â†“";
+  const arrow = direction === "up" ? "¡ô" : "¡õ";
 
   return (
     <p className={`market-status market-status-${direction}`}>
       <span aria-hidden="true" className="market-pct">{arrow}</span>
       {direction === "up" ? "Moved up" : "Moved down"}
-      <span aria-hidden="true" className="market-status-note"> Â· </span>
+      <span aria-hidden="true" className="market-status-note"> ¡P </span>
       <span className="market-status-note">Historical reference only.</span>
     </p>
   );

@@ -31,6 +31,7 @@ export type DashboardViewModel = {
     amount: number;
     currency: string;
   };
+  currencyCatalog?: Record<string, string>;
   trustMessages: string[];
   navigationItems: NavigationItem[];
   currencySupport: {
@@ -254,6 +255,7 @@ export async function loadDashboardViewModel(
     supportedCurrencies: referenceData.currencies,
     latestRates: referenceData.latestRates.rates,
   });
+  viewModel.currencyCatalog = referenceData.currencies;
   const historicalSymbols = Object.keys(referenceData.latestRates.rates).sort();
   const historicalSymbol = historicalSymbols[0];
   const historicalWindow = getHistoricalWindow(referenceData.latestRates.date);

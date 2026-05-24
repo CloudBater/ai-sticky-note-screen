@@ -385,6 +385,7 @@ export function DashboardApp({ viewModel }: DashboardAppProps) {
                   }),
                 )
               }
+              onViewHistory={() => setActiveSection("history")}
               simulationBalanceAmount={simulationBalanceAmount}
             />
           </div>
@@ -469,12 +470,14 @@ function SimulatedConversionPreviewCard({
   dataDate,
   latestRates,
   onAddPreview,
+  onViewHistory,
   simulationBalanceAmount,
 }: {
   baseCurrency: string;
   dataDate: string;
   latestRates: LatestRateCard[];
   onAddPreview: (preview: SimulatedConversionPreview) => void;
+  onViewHistory: () => void;
   simulationBalanceAmount: number;
 }) {
   const defaultTargetCurrency = latestRates[0]?.currency ?? baseCurrency;
@@ -602,7 +605,14 @@ function SimulatedConversionPreviewCard({
         hidden={!hasAddedToHistory}
       >
         Added to simulation history.{" "}
-        <span>View simulation history in the History tab.</span>
+        <button
+          className="history-link-button"
+          data-section-target="history"
+          onClick={onViewHistory}
+          type="button"
+        >
+          View simulation history
+        </button>
       </p>
       <p className="empty-state">
         Preview only. No trades are executed.

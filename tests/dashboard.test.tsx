@@ -1000,4 +1000,23 @@ describe("DashboardApp", () => {
     expect(styles).toContain(".allocation-preview-card {\n  grid-column: 1 / -1;");
     expect(styles).toContain(".allocation-chart-tooltip");
   });
+
+  it("uses full-width layout for the history panel", () => {
+    const styles = readFileSync(
+      resolve(process.cwd(), "src/client/styles.css"),
+      "utf8",
+    );
+
+    expect(styles).toContain(".history-panel {\n  grid-column: span 6;");
+  });
+
+  it("shows add-to-history button and reserves confirmation slot on initial render", () => {
+    const html = renderToStaticMarkup(
+      <DashboardApp viewModel={loadedViewModel} />,
+    );
+
+    expect(html).toContain("Add to simulation history");
+    expect(html).toContain('class="conversion-added-confirm"');
+    expect(html).toContain("View simulation history");
+  });
 });

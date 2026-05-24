@@ -2,7 +2,6 @@ import {
   useEffect,
   useMemo,
   useState,
-  type CSSProperties,
   type FormEvent,
 } from "react";
 
@@ -11,19 +10,17 @@ import type {
   DashboardViewModel,
   LatestRateCard,
 } from "./dashboard";
-import marketMageIconUrl from "../resources/MarketMage-icon.jpg";
+import {
+  Code,
+  DisclaimerPanel,
+  Eyebrow,
+  Num,
+  RateCard,
+  Slider,
+  Tab,
+} from "./components";
 import { previewPortfolioAllocation } from "../shared/portfolio-preview";
-import {
-  cardHoverMotion,
-  chartSwitchTransition,
-  currencyContentTransition,
-  currencyTabTransition,
-} from "./motion";
-import {
-  getInitialDashboardTheme,
-  persistDashboardTheme,
-  type DashboardTheme,
-} from "./dashboard-theme";
+import { currencyContentTransition } from "./motion";
 import {
   MAX_SIMULATION_BALANCE,
   MIN_SIMULATION_BALANCE,
@@ -42,14 +39,12 @@ type DashboardAppProps = {
 
 type DashboardSection = "overview" | "trend" | "simulation" | "history";
 type CurrencyTransitionState = "idle" | "exiting" | "entering";
-type CssVars = CSSProperties & Record<`--${string}`, string | number>;
 type TrendDirection = "up" | "down" | "flat";
 type TrendWindowDays = 7 | 14 | 30;
 
 export function DashboardApp({ viewModel }: DashboardAppProps) {
   const [activeSection, setActiveSection] =
     useState<DashboardSection>("overview");
-  const [theme, setTheme] = useState<DashboardTheme>(getInitialDashboardTheme);
   const [simulationBalanceAmount, setSimulationBalanceAmount] = useState(
     viewModel.simulationBalance.amount,
   );
@@ -82,10 +77,6 @@ export function DashboardApp({ viewModel }: DashboardAppProps) {
     selectedCurrency,
     prefersReducedMotion,
   );
-  const selectedCurrencyIndex = Math.max(
-    selectorCurrencies.indexOf(selectedCurrency),
-    0,
-  );
   const selectedRateCard = findRateCard(
     viewModel.latestRates.cards,
     selectedCurrency,
@@ -112,21 +103,6 @@ export function DashboardApp({ viewModel }: DashboardAppProps) {
   const showTrend = activeSection === "trend";
   const showSimulation = activeSection === "simulation";
   const showHistory = activeSection === "history";
-  const appMotionStyle: CssVars = {
-    "--currency-tab-duration": `${currencyTabTransition.durationMs}ms`,
-    "--currency-content-exit": `${currencyContentTransition.exitMs}ms`,
-    "--currency-content-enter": `${currencyContentTransition.enterMs}ms`,
-    "--chart-switch-duration": `${chartSwitchTransition.durationMs}ms`,
-    "--card-hover-duration": `${cardHoverMotion.durationMs}ms`,
-    "--card-hover-y": `${cardHoverMotion.translateY}px`,
-    "--card-hover-scale": cardHoverMotion.scale,
-    "--motion-ease": currencyTabTransition.easing,
-  };
-  const selectorStyle: CssVars = {
-    "--currency-count": Math.max(selectorCurrencies.length, 1),
-    "--active-currency-index": selectedCurrencyIndex,
-  };
-
   useEffect(() => {
     if (
       selectorCurrencies.length > 0 &&
@@ -136,10 +112,6 @@ export function DashboardApp({ viewModel }: DashboardAppProps) {
     }
   }, [selectedCurrency, selectorCurrencies]);
 
-  useEffect(() => {
-    persistDashboardTheme(theme);
-  }, [theme]);
-
   const handleSimulationBalanceChange = (input: string) => {
     setSimulationBalanceInput(input);
     setSimulationBalanceAmount((currentAmount) =>
@@ -148,16 +120,12 @@ export function DashboardApp({ viewModel }: DashboardAppProps) {
   };
 
   return (
-    <main className="app-shell" data-theme={theme} style={appMotionStyle}>
+    <main className="app-shell">
+      {/* Header */}
       <header className="app-header" id="overview">
         <div className="header-copy-block">
           <div aria-label="MarketMage brand" className="brand-lockup">
-            <img
-              alt=""
-              aria-hidden="true"
-              className="brand-icon"
-              src={marketMageIconUrl}
-            />
+            <span aria-hidden="true" className="brand-mark">M</span>
             <h1>{viewModel.title}</h1>
           </div>
           <p className="hero-copy">
@@ -165,60 +133,41 @@ export function DashboardApp({ viewModel }: DashboardAppProps) {
           </p>
         </div>
         <div className="header-actions">
-          <button
-            aria-label="Toggle dashboard theme"
-            aria-pressed={theme === "dark"}
-            className="theme-toggle"
-            onClick={() =>
-              setTheme((currentTheme) =>
-                currentTheme === "light" ? "dark" : "light",
-              )
-            }
-            type="button"
-          >
-            {theme === "light" ? "Dark mode" : "Light mode"}
-          </button>
           <div className="metric-card simulation-balance-card">
-            <span>Simulation balance</span>
+            <Eyebrow>Simulation balance</Eyebrow>
             <strong>
-              {simulationBalanceAmount.toLocaleString("en-US")}{" "}
-              {viewModel.simulationBalance.currency}
+              <Num size="m" value={simulationBalanceAmount.toLocaleString("en-US")} />{" "}
+              <Code>{viewModel.simulationBalance.currency}</Code>
             </strong>
           </div>
         </div>
       </header>
 
+      {/* Top nav */}
       <nav
         aria-label="Dashboard sections"
-        className="top-nav"
+        className="tabs"
         data-top-nav-shell="true"
       >
-        <div className="top-nav-inner">
-          {viewModel.navigationItems.map((item) => (
-            <button
-              aria-current={activeSection === item.id ? "page" : undefined}
-              data-section-target={item.id}
-              key={item.id}
-              onClick={() => setActiveSection(item.id)}
-              type="button"
-            >
-              {item.label}
-            </button>
-          ))}
-        </div>
+        {viewModel.navigationItems.map((item) => (
+          <Tab
+            active={activeSection === item.id}
+            data-section-target={item.id}
+            key={item.id}
+            onClick={() => setActiveSection(item.id)}
+          >
+            {item.label}
+          </Tab>
+        ))}
       </nav>
 
-      <section aria-label="Reference and safety notes" className="trust-strip">
-        <p className="eyebrow">Reference &amp; Safety</p>
-        <p className="disclaimer-title">What this product is, and isn't.</p>
-        <ul className="trust-list">
-          {viewModel.trustMessages.map((message) => (
-            <li key={message}>{message}</li>
-          ))}
-        </ul>
-      </section>
+      {/* Disclaimer is always visible on every tab. */}
+      <DisclaimerPanel />
 
+      {/* Dashboard grid */}
       <div className="dashboard-grid">
+
+        {/* Overview tab */}
         <section
           className="panel watchlist-panel"
           aria-labelledby="watchlist-heading"
@@ -229,27 +178,43 @@ export function DashboardApp({ viewModel }: DashboardAppProps) {
             <h2 id="watchlist-heading">Selected currencies</h2>
           </div>
           <div className="currency-pills">
-            {watchlistCurrencies.map((currency) => (
-              <span key={currency}>{currency}</span>
+            {viewModel.currencySupport.supported.map((currency) => (
+              <span
+                className="currency-pill currency-pill-supported"
+                key={currency}
+              >
+                <Code>{currency}</Code>
+              </span>
+            ))}
+            {viewModel.currencySupport.unsupported.map((currency) => (
+              <span
+                aria-label={`${currency} unsupported`}
+                className="currency-pill currency-pill-unsupported"
+                key={currency}
+              >
+                <Code>{currency}</Code>
+              </span>
             ))}
           </div>
         </section>
 
         <section
-          className="panel support-panel"
-          aria-labelledby="currency-support-heading"
+          className="panel data-coverage-panel"
+          aria-labelledby="data-coverage-heading"
           hidden={!showOverview}
         >
           <div className="section-heading">
-            <p className="eyebrow">Reference coverage</p>
-            <h2 id="currency-support-heading">Supported currencies</h2>
+            <p className="eyebrow">Upstream data</p>
+            <h2 id="data-coverage-heading">Frankfurter ECB reference</h2>
           </div>
-          <p className="support-list">
-            {viewModel.currencySupport.supported.join(", ") || "Loading..."}
+          <p className="meta">
+            Daily reference rates, updated once per business day.
           </p>
-          <h3>Unsupported requested currencies</h3>
-          <p className="warning-text">
-            {viewModel.currencySupport.unsupported.join(", ") || "None"}
+          <p className="meta-dim">
+            Not suitable for transactions.
+          </p>
+          <p className="data-date">
+            Data date: <Num size="s" value={viewModel.latestRates.dataDate} />
           </p>
         </section>
 
@@ -262,53 +227,20 @@ export function DashboardApp({ viewModel }: DashboardAppProps) {
           <div className="section-heading">
             <p className="eyebrow">Daily reference</p>
             <h2 id="latest-rates-heading">Latest daily reference rates</h2>
-            <p className="data-date">
-              Data date: {viewModel.latestRates.dataDate}
-            </p>
           </div>
-
-          {selectorCurrencies.length > 0 ? (
-            <div
-              className="currency-selector"
-              data-currency-selector="true"
-              style={selectorStyle}
-            >
-              <span
-                aria-hidden="true"
-                className="currency-active-indicator"
-                data-motion-role="active-currency-indicator"
-              />
-              {selectorCurrencies.map((currency) => (
-                <button
-                  aria-pressed={selectedCurrency === currency}
-                  className="currency-tab"
-                  key={currency}
-                  onClick={() => setSelectedCurrency(currency)}
-                  type="button"
-                >
-                  {currency}
-                </button>
-              ))}
-            </div>
-          ) : null}
 
           {viewModel.latestRates.cards.length > 0 ? (
             <>
               <div className="rate-grid">
                 {viewModel.latestRates.cards.map((card) => (
-                  <button
-                    className="rate-card"
-                    data-active={
-                      card.currency === selectedCurrency ? "true" : undefined
-                    }
+                  <RateCard
+                    code={card.currency}
                     key={card.currency}
+                    label={card.label}
                     onClick={() => setSelectedCurrency(card.currency)}
-                    type="button"
-                  >
-                    <span>{card.currency}</span>
-                    <strong>{formatRate(card.rate)}</strong>
-                    <small>{card.label}</small>
-                  </button>
+                    selected={card.currency === selectedCurrency}
+                    value={formatRate(card.rate)}
+                  />
                 ))}
               </div>
               <div
@@ -338,6 +270,7 @@ export function DashboardApp({ viewModel }: DashboardAppProps) {
           )}
         </section>
 
+        {/* Trend tab */}
         <section className="panel trend-panel" hidden={!showTrend} id="trend">
           <div className="section-heading">
             <p className="eyebrow">Historical preview</p>
@@ -347,25 +280,20 @@ export function DashboardApp({ viewModel }: DashboardAppProps) {
             <>
               <div className="trend-kpi-row">
                 <div>
-                  <span>Pair</span>
+                  <span className="eyebrow">Pair</span>
                   <strong>
                     {viewModel.historicalTrend.baseCurrency}/{displayedCurrency}
                   </strong>
                 </div>
                 <div>
-                  <span>Date range</span>
+                  <span className="eyebrow">Window</span>
                   <strong>
-                    {selectedChartSeries.points[0]?.date} to{" "}
-                    {
-                      selectedChartSeries.points[
-                        selectedChartSeries.points.length - 1
-                      ]?.date
-                    }
+                    {selectedChartSeries.points.length} daily points
                   </strong>
                 </div>
                 <div>
-                  <span>Latest rate</span>
-                  <strong>
+                  <span className="eyebrow">Latest reference</span>
+                  <strong className="latest-reference-value">
                     {formatRate(
                       selectedChartSeries.points[
                         selectedChartSeries.points.length - 1
@@ -374,12 +302,18 @@ export function DashboardApp({ viewModel }: DashboardAppProps) {
                   </strong>
                 </div>
               </div>
-              <div
-                className="chart-window"
-                data-chart-currency={displayedCurrency}
-                data-transition-state={transitionState}
-              >
-                <HistoricalLineChart points={selectedChartSeries.points} />
+              <div className="trend-layout">
+                <div
+                  className="chart-window"
+                  data-chart-currency={displayedCurrency}
+                  data-transition-state={transitionState}
+                >
+                  <HistoricalLineChart
+                    gradientId="trend-area-grad"
+                    points={selectedChartSeries.points}
+                  />
+                </div>
+                <TrendStatsColumn points={selectedChartSeries.points} />
               </div>
               <p className="chart-date-range">
                 {selectedChartSeries.points[0]?.date} to{" "}
@@ -392,13 +326,14 @@ export function DashboardApp({ viewModel }: DashboardAppProps) {
               load.
             </p>
           )}
-          <p>
+          <p className="trend-summary">
             Historical movement for {displayedCurrency} is shown as a daily
             line chart, not candlesticks.
           </p>
           <p className="trend-summary">{viewModel.historicalTrend.summary}</p>
         </section>
 
+        {/* Simulation tab */}
         <section
           className="panel simulation-panel"
           hidden={!showSimulation}
@@ -414,9 +349,11 @@ export function DashboardApp({ viewModel }: DashboardAppProps) {
                 <p className="eyebrow">Simulation balance</p>
                 <h3>Adjust simulation amount</h3>
               </div>
-              <strong>
-                {simulationBalanceAmount.toLocaleString("en-US")}{" "}
-                {viewModel.simulationBalance.currency}
+              <strong className="display-num">
+                {simulationBalanceAmount.toLocaleString("en-US")}
+                <span className="display-num-unit">
+                  {viewModel.simulationBalance.currency}
+                </span>
               </strong>
               <label>
                 <span>Amount</span>
@@ -458,6 +395,7 @@ export function DashboardApp({ viewModel }: DashboardAppProps) {
           />
         </section>
 
+        {/* History tab */}
         <section className="panel history-panel" hidden={!showHistory} id="history">
           <div className="section-heading">
             <p className="eyebrow">Review</p>
@@ -489,11 +427,43 @@ export function DashboardApp({ viewModel }: DashboardAppProps) {
           )}
         </section>
       </div>
-
     </main>
   );
 }
 
+/* Trend stats column */
+function TrendStatsColumn({
+  points,
+}: {
+  points: { date: string; rate: number }[];
+}) {
+  if (points.length === 0) return null;
+
+  const highPoint = points.reduce((max, p) => (p.rate > max.rate ? p : max));
+  const lowPoint = points.reduce((min, p) => (p.rate < min.rate ? p : min));
+  const avg = points.reduce((sum, p) => sum + p.rate, 0) / points.length;
+
+  return (
+    <div className="trend-stats">
+      <div className="trend-stat-item">
+        <p className="stat-label eyebrow">High</p>
+        <p className="stat-value">{formatRate(highPoint.rate)}</p>
+        <p className="stat-date">{highPoint.date}</p>
+      </div>
+      <div className="trend-stat-item">
+        <p className="stat-label eyebrow">Low</p>
+        <p className="stat-value">{formatRate(lowPoint.rate)}</p>
+        <p className="stat-date">{lowPoint.date}</p>
+      </div>
+      <div className="trend-stat-item">
+        <p className="stat-label eyebrow">Average</p>
+        <p className="stat-value">{formatRate(avg)}</p>
+      </div>
+    </div>
+  );
+}
+
+/* Simulated conversion preview card */
 function SimulatedConversionPreviewCard({
   baseCurrency,
   dataDate,
@@ -620,8 +590,7 @@ function SimulatedConversionPreviewCard({
       </form>
       {preview ? (
         <p className="conversion-result">
-          {preview.sourceAmount.toLocaleString("en-US")} {preview.sourceCurrency} =
-          {" "}
+          {preview.sourceAmount.toLocaleString("en-US")} {preview.sourceCurrency} ={" "}
           {preview.convertedAmount.toLocaleString("en-US")}{" "}
           {preview.targetCurrency} at daily reference rate {preview.rate}.
         </p>
@@ -642,6 +611,7 @@ function SimulatedConversionPreviewCard({
   );
 }
 
+/* Allocation preview card */
 function AllocationPreviewCard({
   preview,
   startingAmount,
@@ -677,7 +647,9 @@ function AllocationPreviewCard({
         <p className="eyebrow">Allocation history</p>
         <h3>Allocation history preview</h3>
       </div>
-      <p>{configuredPreview.summary}</p>
+      <p className="meta">
+        {configuredPreview.summary}
+      </p>
       {canConfigure ? (
         <fieldset className="allocation-controls">
           <legend>Choose currencies and allocation</legend>
@@ -713,14 +685,14 @@ function AllocationPreviewCard({
           </label>
           <label className="allocation-slider">
             <span>{firstPercent}% first currency</span>
-            <input
+            <Slider
               aria-label="First allocation percent"
+              ariaLabel="First allocation percent"
               max="95"
               min="5"
               name="first-allocation-percent"
               onChange={(event) => setFirstPercent(Number(event.target.value))}
               step="5"
-              type="range"
               value={firstPercent}
             />
           </label>
@@ -767,6 +739,7 @@ function AllocationPreviewCard({
   );
 }
 
+/* Allocation history line chart */
 function AllocationHistoryLineChart({
   points,
   summary,
@@ -780,8 +753,8 @@ function AllocationHistoryLineChart({
 
   const width = 720;
   const height = 220;
-  const paddingX = 18;
-  const paddingY = 18;
+  const paddingX = 0;
+  const paddingY = 16;
   const chartWidth = width - paddingX * 2;
   const chartHeight = height - paddingY * 2;
   const values = points.map((point) => point.value);
@@ -801,6 +774,12 @@ function AllocationHistoryLineChart({
   const polylinePoints = coordinates
     .map((point) => `${point.x},${point.y}`)
     .join(" ");
+  const areaD =
+    `M${coordinates.map((c) => `${c.x},${c.y}`).join(" L")} ` +
+    `L${width},${height} L0,${height} Z`;
+  const gridYs = [0.25, 0.5, 0.75].map(
+    (pct) => paddingY + chartHeight * pct,
+  );
 
   return (
     <svg
@@ -808,14 +787,26 @@ function AllocationHistoryLineChart({
       className="allocation-history-chart"
       data-chart-type="allocation-history-line"
       viewBox={`0 0 ${width} ${height}`}
+      preserveAspectRatio="none"
     >
-      <line
-        className="allocation-chart-grid"
-        x1={paddingX}
-        x2={width - paddingX}
-        y1={height - paddingY}
-        y2={height - paddingY}
-      />
+      <defs>
+        <linearGradient id="alloc-area-grad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="var(--accent-glow)" />
+          <stop offset="100%" stopColor="transparent" />
+        </linearGradient>
+      </defs>
+      {gridYs.map((y, i) => (
+        <line
+          key={i}
+          className="allocation-chart-grid"
+          x1={paddingX}
+          x2={width - paddingX}
+          y1={y}
+          y2={y}
+          strokeDasharray="2 4"
+        />
+      ))}
+      <path d={areaD} fill="url(#alloc-area-grad)" />
       <polyline
         className="allocation-chart-line"
         fill="none"
@@ -839,6 +830,197 @@ function AllocationHistoryLineChart({
     </svg>
   );
 }
+
+/* Overview trend card */
+function OverviewTrendCard({
+  baseCurrency,
+  card,
+  onWindowChange,
+  points,
+  selectedWindowDays,
+  symbol,
+  trendDirection,
+}: {
+  baseCurrency: string;
+  card: LatestRateCard | undefined;
+  onWindowChange: (windowDays: TrendWindowDays) => void;
+  points: { date: string; rate: number }[];
+  selectedWindowDays: TrendWindowDays;
+  symbol: string;
+  trendDirection: TrendDirection;
+}) {
+  const firstPoint = points[0];
+  const lastPoint = points[points.length - 1];
+
+  return (
+    <article className="currency-detail-card" data-overview-trend={symbol}>
+      <div className="overview-trend-header">
+        <div>
+          <p className="eyebrow">Selected daily trend</p>
+          <h3>
+            {baseCurrency} to {symbol}
+          </h3>
+        </div>
+        <label className="trend-window-control">
+          <span>Trend window</span>
+          <select
+            aria-label="Historical trend range"
+            onChange={(event) =>
+              onWindowChange(Number(event.target.value) as TrendWindowDays)
+            }
+            value={selectedWindowDays}
+          >
+            <option value="7">Last 7 daily points</option>
+            <option value="14">Last 14 daily points</option>
+            <option value="30">Last 30 daily points</option>
+          </select>
+        </label>
+      </div>
+      <div
+        className="overview-chart-window"
+        data-chart-currency={symbol}
+        data-chart-window-days={selectedWindowDays}
+      >
+        <HistoricalLineChart
+          ariaLabel="Overview daily rate trend chart"
+          gradientId="overview-area-grad"
+          points={points}
+        />
+      </div>
+      <div className="overview-trend-meta">
+        <p>
+          {firstPoint?.date} to {lastPoint?.date}
+        </p>
+        <p>
+          Latest daily reference:{" "}
+          <strong>{formatRate(lastPoint?.rate ?? card?.rate ?? 0)}</strong>
+        </p>
+      </div>
+      {card ? (
+        <p className="meta-dim">
+          {card.label}
+        </p>
+      ) : null}
+      <MarketStatus direction={trendDirection} />
+    </article>
+  );
+}
+
+/* Market status */
+function MarketStatus({ direction }: { direction: TrendDirection }) {
+  if (direction === "flat") {
+    return (
+      <p className="market-status market-status-flat">
+        <span className="market-status-note">Historical reference only.</span>
+      </p>
+    );
+  }
+
+  const arrow = direction === "up" ? "↑" : "↓";
+
+  return (
+    <p className={`market-status market-status-${direction}`}>
+      <span aria-hidden="true" className="market-pct">{arrow}</span>
+      {direction === "up" ? "Moved up" : "Moved down"}
+      <span aria-hidden="true" className="market-status-note"> · </span>
+      <span className="market-status-note">Historical reference only.</span>
+    </p>
+  );
+}
+
+/* Historical line chart with area fill, grid lines, and high/low marks */
+function HistoricalLineChart({
+  ariaLabel = "Historical daily rate line chart",
+  gradientId = "hist-area-grad",
+  points,
+}: {
+  ariaLabel?: string;
+  gradientId?: string;
+  points: { date: string; rate: number }[];
+}) {
+  if (points.length === 0) {
+    return null;
+  }
+
+  const width = 800;
+  const height = 280;
+  const paddingX = 0;
+  const paddingY = 16;
+  const chartWidth = width - paddingX * 2;
+  const chartHeight = height - paddingY * 2;
+  const rates = points.map((point) => point.rate);
+  const minRate = Math.min(...rates);
+  const maxRate = Math.max(...rates);
+  const rateRange = maxRate - minRate || 1;
+
+  const coords = points.map((point, index) => {
+    const x =
+      paddingX + (index / Math.max(points.length - 1, 1)) * chartWidth;
+    const y =
+      paddingY +
+      chartHeight -
+      ((point.rate - minRate) / rateRange) * chartHeight;
+    return { ...point, x, y };
+  });
+
+  const polylinePoints = coords.map((c) => `${c.x},${c.y}`).join(" ");
+  const areaD =
+    `M${coords.map((c) => `${c.x},${c.y}`).join(" L")} ` +
+    `L${width},${height} L0,${height} Z`;
+
+  const gridYs = [0.25, 0.5, 0.75].map(
+    (pct) => paddingY + chartHeight * pct,
+  );
+
+  const highPoint = coords.reduce((max, p) =>
+    p.rate > max.rate ? p : max,
+  );
+  const lowPoint = coords.reduce((min, p) =>
+    p.rate < min.rate ? p : min,
+  );
+
+  return (
+    <svg
+      data-chart-type="historical-line"
+      viewBox={`0 0 ${width} ${height}`}
+      className="historical-line-chart"
+      aria-label={ariaLabel}
+      preserveAspectRatio="none"
+    >
+      <defs>
+        <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="var(--accent-glow)" />
+          <stop offset="100%" stopColor="transparent" />
+        </linearGradient>
+      </defs>
+      {gridYs.map((y, i) => (
+        <line
+          key={i}
+          x1="0"
+          y1={y}
+          x2={width}
+          y2={y}
+          stroke="var(--border-subtle)"
+          strokeDasharray="2 4"
+        />
+      ))}
+      <path d={areaD} fill={`url(#${gradientId})`} />
+      <polyline
+        className="chart-line"
+        fill="none"
+        points={polylinePoints}
+        stroke="var(--accent-dim)"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="1.5"
+      />
+      <circle cx={highPoint.x} cy={highPoint.y} r="3.5" fill="var(--accent)" />
+      <circle cx={lowPoint.x} cy={lowPoint.y} r="3.5" fill="var(--accent)" />
+    </svg>
+  );
+}
+
+/* Utility helpers */
 
 function buildConfiguredAllocationPreview({
   firstCurrency,
@@ -910,96 +1092,6 @@ function buildConfiguredAllocationPreview({
   } catch {
     return preview;
   }
-}
-
-function OverviewTrendCard({
-  baseCurrency,
-  card,
-  onWindowChange,
-  points,
-  selectedWindowDays,
-  symbol,
-  trendDirection,
-}: {
-  baseCurrency: string;
-  card: LatestRateCard | undefined;
-  onWindowChange: (windowDays: TrendWindowDays) => void;
-  points: { date: string; rate: number }[];
-  selectedWindowDays: TrendWindowDays;
-  symbol: string;
-  trendDirection: TrendDirection;
-}) {
-  const firstPoint = points[0];
-  const lastPoint = points[points.length - 1];
-
-  return (
-    <article className="currency-detail-card" data-overview-trend={symbol}>
-      <div className="overview-trend-header">
-        <div>
-          <p className="eyebrow">Selected daily trend</p>
-          <h3>
-            {baseCurrency} to {symbol}
-          </h3>
-        </div>
-        <label className="trend-window-control">
-          <span>Trend window</span>
-          <select
-            aria-label="Historical trend range"
-            onChange={(event) =>
-              onWindowChange(Number(event.target.value) as TrendWindowDays)
-            }
-            value={selectedWindowDays}
-          >
-            <option value="7">Last 7 daily points</option>
-            <option value="14">Last 14 daily points</option>
-            <option value="30">Last 30 daily points</option>
-          </select>
-        </label>
-      </div>
-      <div
-        className="overview-chart-window"
-        data-chart-currency={symbol}
-        data-chart-window-days={selectedWindowDays}
-      >
-        <HistoricalLineChart
-          ariaLabel="Overview daily rate trend chart"
-          points={points}
-        />
-      </div>
-      <div className="overview-trend-meta">
-        <p>
-          {firstPoint?.date} to {lastPoint?.date}
-        </p>
-        <p>
-          Latest daily reference:{" "}
-          <strong>{formatRate(lastPoint?.rate ?? card?.rate ?? 0)}</strong>
-        </p>
-      </div>
-      {card ? <p>{card.label}</p> : null}
-      <MarketStatus direction={trendDirection} />
-    </article>
-  );
-}
-
-function MarketStatus({ direction }: { direction: TrendDirection }) {
-  if (direction === "flat") {
-    return (
-      <p className="market-status market-status-flat">
-        <span className="market-status-note">Historical reference only.</span>
-      </p>
-    );
-  }
-
-  const arrow = direction === "up" ? "↑" : "↓";
-
-  return (
-    <p className={`market-status market-status-${direction}`}>
-      <span aria-hidden="true" className="market-pct">{arrow}</span>
-      {direction === "up" ? "Moved up" : "Moved down"}
-      <span aria-hidden="true" className="market-status-note"> · </span>
-      <span className="market-status-note">Historical reference only.</span>
-    </p>
-  );
 }
 
 function usePrefersReducedMotion(): boolean {
@@ -1103,58 +1195,6 @@ function getTrendDirection(summary: string, currency: string): TrendDirection {
   }
 
   return "flat";
-}
-
-function HistoricalLineChart({
-  ariaLabel = "Historical daily rate line chart",
-  points,
-}: {
-  ariaLabel?: string;
-  points: { date: string; rate: number }[];
-}) {
-  if (points.length === 0) {
-    return null;
-  }
-
-  const width = 600;
-  const height = 200;
-  const paddingX = 0;
-  const paddingY = 16;
-  const chartWidth = width - paddingX * 2;
-  const chartHeight = height - paddingY * 2;
-  const rates = points.map((point) => point.rate);
-  const minRate = Math.min(...rates);
-  const maxRate = Math.max(...rates);
-  const rateRange = maxRate - minRate || 1;
-  const polylinePoints = points
-    .map((point, index) => {
-      const x = paddingX + (index / Math.max(points.length - 1, 1)) * chartWidth;
-      const y =
-        paddingY +
-        chartHeight -
-        ((point.rate - minRate) / rateRange) * chartHeight;
-
-      return `${x},${y}`;
-    })
-    .join(" ");
-
-  return (
-    <svg
-      data-chart-type="historical-line"
-      viewBox={`0 0 ${width} ${height}`}
-      className="historical-line-chart"
-      aria-label={ariaLabel}
-    >
-      <polyline
-        fill="none"
-        points={polylinePoints}
-        stroke="var(--accent)"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth="2.5"
-      />
-    </svg>
-  );
 }
 
 function roundDisplayAmount(value: number): number {

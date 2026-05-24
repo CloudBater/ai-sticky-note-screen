@@ -1,0 +1,55 @@
+/* =========================================================
+   DESIGN TOKENS - single source of truth (FRONTEND.md 2-5)
+   ========================================================= */
+:root {
+  /* Surface */
+  --surface-0: #0A0B0D;
+  --surface-1: #101216;
+  --surface-2: #16191F;
+  --surface-3: #1D2128;
+  --surface-inset: #08090B;
+
+  /* Text */
+  --text-primary: #E8E9EC;
+  --text-secondary: #9BA0A8;
+  --text-tertiary: #5E6470;
+  --text-inverse: #0A0B0D;
+
+  /* Border */
+  --border-subtle: rgba(255, 255, 255, 0.06);
+  --border-default: rgba(255, 255, 255, 0.10);
+  --border-strong: rgba(255, 255, 255, 0.18);
+
+  /* Accent - use sparingly (max 3 per screen) */
+  --accent: #7DD3C0;
+  --accent-hover: #8FDDCB;
+  --accent-dim: #3F6A62;
+  --accent-glow: rgba(125, 211, 192, 0.08);
+
+  /* Semantic */
+  --up: #86C99C;
+  --down: #D69590;
+  --info-bg: #15171C;
+  --info-bar: #3F6A62;
+
+  /* Typography */
+  --font-serif: 'Fraunces', 'Source Serif Pro', Georgia, serif;
+  --font-sans: 'Geist', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'JetBrains Mono', 'IBM Plex Mono', ui-monospace, monospace;
+
+  /* Spacing - 8px grid */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+
+  /* Radius */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-pill: 999px;
+}

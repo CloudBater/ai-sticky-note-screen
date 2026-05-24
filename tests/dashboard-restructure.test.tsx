@@ -88,9 +88,10 @@ describe("Dashboard Restructure - Trend & History Tabs", () => {
     it("renders Reference rates trend section in Trend tab", () => {
       const html = renderToStaticMarkup(<DashboardApp viewModel={baseViewModel} />);
 
-      expect(html).toContain("Reference rates history");
       expect(html).toContain("Reference rates trend");
       expect(html).toContain('data-history-chart="multi-currency"');
+      expect(html).toContain("High:");
+      expect(html).toContain("Low:");
     });
 
     it("renders history base currency selector in Trend tab", () => {
@@ -103,13 +104,13 @@ describe("Dashboard Restructure - Trend & History Tabs", () => {
       expect(html).toContain("EUR");
     });
 
-    it("renders currency toggle buttons in Trend tab", () => {
+    it("renders target currency dropdown in Trend tab", () => {
       const html = renderToStaticMarkup(<DashboardApp viewModel={baseViewModel} />);
 
-      expect(html).toContain('aria-label="Toggle CNY history line"');
-      expect(html).toContain('data-history-currency="CNY"');
-      expect(html).toContain('data-history-currency-active="true"');
-      expect(html).toContain("Toggle visible history currencies");
+      expect(html).toContain('aria-label="Select target currencies"');
+      expect(html).toContain("Target currencies");
+      expect(html).toContain("selected-currency-badge");
+      expect(html).toContain("CNY");
     });
 
     it("renders date range preset buttons in Trend tab", () => {

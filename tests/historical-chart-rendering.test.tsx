@@ -64,14 +64,13 @@ describe("historical chart rendering", () => {
     expect(html).toContain('data-chart-type="historical-line"');
   });
 
-  it("shows the chart date range from the historical points", () => {
+  it("shows high and low values in the multi-currency chart", () => {
     const html = renderToStaticMarkup(
       <DashboardApp viewModel={viewModelWithChartData} />,
     );
 
-    expect(html).toContain(
-      '<p class="chart-date-range">2024-08-21 to 2024-08-23</p>',
-    );
+    expect(html).toContain("High:");
+    expect(html).toContain("Low:");
   });
 
   it("renders an empty chart state when no historical points exist", () => {

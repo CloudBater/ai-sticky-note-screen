@@ -296,6 +296,32 @@ describe("POST /api/simulations/conversion-preview", () => {
     }
   });
 
+  it("returns a clear error response when Frankfurter conversion JSON is malformed", async () => {
+    const fetchFrankfurter: FetchFrankfurter = async () =>
+      new Response("{bad-json", {
+        headers: { "Content-Type": "application/json" },
+        status: 200,
+      });
+
+    const server = await startConversionPreviewServer(fetchFrankfurter);
+
+    try {
+      const response = await postConversionPreview(server, {
+        sourceCurrency: "usd",
+        targetCurrency: "eur",
+        amount: 2500,
+        date: "2024-08-23",
+      });
+
+      expect(response.status).toBe(502);
+      await expect(response.json()).resolves.toEqual({
+        error: "Unable to fetch conversion reference rate",
+      });
+    } finally {
+      await closeServer(server);
+    }
+  });
+
   it("caches identical conversion reference rate lookups during the app lifetime", async () => {
     const upstreamRequests: string[] = [];
     const fetchFrankfurter: FetchFrankfurter = async (url) => {

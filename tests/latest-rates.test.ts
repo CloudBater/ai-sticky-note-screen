@@ -121,6 +121,48 @@ describe("GET /api/rates/latest", () => {
     }
   });
 
+  it("returns a clear error response when Frankfurter latest rates JSON is malformed", async () => {
+    const fetchFrankfurter: FetchFrankfurter = async () =>
+      new Response("{bad-json", {
+        headers: { "Content-Type": "application/json" },
+        status: 200,
+      });
+
+    const server = createServer(
+      (createApp as CreateConfiguredApp)({
+        fetchFrankfurter,
+        frankfurterBaseUrl: "https://api.frankfurter.test",
+      }),
+    );
+
+    await new Promise<void>((resolve) => {
+      server.listen(0, "127.0.0.1", resolve);
+    });
+
+    try {
+      const { port } = server.address() as AddressInfo;
+      const response = await fetch(
+        `http://127.0.0.1:${port}/api/rates/latest?base=usd&symbols=eur`,
+      );
+
+      expect(response.status).toBe(502);
+      await expect(response.json()).resolves.toEqual({
+        error: "Unable to fetch latest reference rates",
+      });
+    } finally {
+      await new Promise<void>((resolve, reject) => {
+        server.close((error: Error | undefined) => {
+          if (error) {
+            reject(error);
+            return;
+          }
+
+          resolve();
+        });
+      });
+    }
+  });
+
   it("rejects invalid latest rate query parameters before calling Frankfurter", async () => {
     const upstreamRequests: string[] = [];
     const fetchFrankfurter: FetchFrankfurter = async (url) => {

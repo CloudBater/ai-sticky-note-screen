@@ -804,8 +804,9 @@ describe("DashboardApp", () => {
 
     expect(html).toContain("MarketMage");
     expect(html).toContain('aria-label="MarketMage brand"');
-    expect(html).toContain('class="brand-mark"');
-    expect(html).not.toContain('class="brand-icon"');
+    expect(html).toContain('class="brand-icon-frame"');
+    expect(html).toContain('class="brand-icon"');
+    expect(html).toContain('src="/src/resources/MarketMage-icon.jpg"');
     expect(html).not.toContain('aria-label="Toggle dashboard theme"');
     expect(html).toContain('class="app-header"');
     expect(html).toContain("Simulation balance");
@@ -825,6 +826,9 @@ describe("DashboardApp", () => {
     expect(html).not.toContain("View trend");
     expect(html).not.toContain("Preview conversion</button>");
     expect(html).not.toContain("Review history");
+    expect(html).not.toContain("Frankfurter ECB reference");
+    expect(html).toContain("Simulated conversion exposure");
+    expect(html).toContain("Reference P/L");
     expect(html).toContain('class="currency-pill currency-pill-supported"');
     expect(html).toContain('class="currency-pill currency-pill-unsupported"');
     expect(html).toContain('aria-label="TWD unsupported"');
@@ -923,6 +927,59 @@ describe("DashboardApp", () => {
     expect(html).toContain('aria-label="Set EUR as base currency"');
     expect(html).toContain('data-base-currency="USD"');
     expect(source).toContain("onBaseCurrencyChange?.(entry.currency");
+  });
+
+  it("summarizes simulated conversion exposure from history in the overview grid", () => {
+    const html = renderToStaticMarkup(
+      <DashboardApp
+        viewModel={{
+          ...loadedViewModel,
+          latestRates: {
+            ...loadedViewModel.latestRates,
+            cards: [
+              { currency: "EUR", label: "1 USD = 0.9000 EUR", rate: 0.9 },
+            ],
+          },
+          simulationHistory: {
+            entries: [
+              {
+                id: "sim-1",
+                sourceCurrency: "USD",
+                targetCurrency: "EUR",
+                sourceAmount: 1800,
+                convertedAmount: 1800,
+                rate: 1,
+                date: "2024-08-21",
+                kind: "simulation-history-entry",
+              },
+              {
+                id: "sim-2",
+                sourceCurrency: "USD",
+                targetCurrency: "EUR",
+                sourceAmount: 900,
+                convertedAmount: 900,
+                rate: 1,
+                date: "2024-08-22",
+                kind: "simulation-history-entry",
+              },
+            ],
+          },
+        }}
+      />,
+    );
+
+    expect(html).toContain('aria-labelledby="conversion-exposure-heading"');
+    expect(html).toContain("Simulated conversion exposure");
+    expect(html).toContain("2 simulated entries");
+    expect(html).toContain("Amount");
+    expect(html).toContain("2,700");
+    expect(html).toContain("Avg cost");
+    expect(html).toContain("1.0000");
+    expect(html).toContain("Reference P/L");
+    expect(html).toContain("+300");
+    expect(html).toContain('class="code"');
+    expect(html).toContain('class="num num-s"');
+    expect(html).not.toContain("Currently purchased");
   });
 
   it("wires dropdown currency selections through the watchlist refresh callback", () => {

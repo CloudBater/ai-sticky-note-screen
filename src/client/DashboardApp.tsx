@@ -44,10 +44,14 @@ import {
   type LiveConversionPreview,
 } from "./live-conversion-preview";
 import { OnboardingGuide } from "./OnboardingGuide";
+import { LoadingScreen } from "./LoadingScreen";
 import type { OnboardingStorage } from "./onboarding-visited";
+
+type LoadingState = "loading" | "error" | "ready";
 
 type DashboardAppProps = {
   viewModel: DashboardViewModel;
+  loadingState?: LoadingState;
   onBaseCurrencyChange?: (baseCurrency: string, currencies: string[]) => void;
   onboardingStorage?: OnboardingStorage;
   onWatchlistChange?: (currencies: string[]) => void;
@@ -73,6 +77,7 @@ const historyRangePresets: Array<{
 
 export function DashboardApp({
   viewModel,
+  loadingState,
   onBaseCurrencyChange,
   onboardingStorage,
   onWatchlistChange,
@@ -441,6 +446,9 @@ export function DashboardApp({
 
   return (
     <>
+      {(loadingState === "loading" || loadingState === "error") && (
+        <LoadingScreen variant={loadingState} />
+      )}
       <OnboardingGuide storage={onboardingStorage} />
       <main className="app-shell">
       {/* Header */}

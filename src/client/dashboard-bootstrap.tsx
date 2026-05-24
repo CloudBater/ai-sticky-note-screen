@@ -26,7 +26,13 @@ export async function mountDashboard({
       requestedCurrencies,
     }),
 }: MountDashboardOptions): Promise<void> {
-  render(<DashboardApp viewModel={buildFallbackViewModel()} />);
+  // Show loading screen immediately while the initial API fetch is in-flight
+  render(
+    <DashboardApp
+      viewModel={buildFallbackViewModel()}
+      loadingState="loading"
+    />,
+  );
 
   let currentViewModel: DashboardViewModel;
   let currentBaseCurrency = "USD";
@@ -35,6 +41,7 @@ export async function mountDashboard({
     render(
       <DashboardApp
         viewModel={viewModel}
+        loadingState="ready"
         onBaseCurrencyChange={async (baseCurrency, currencies) => {
           currentBaseCurrency = baseCurrency;
 
@@ -46,7 +53,7 @@ export async function mountDashboard({
             currentViewModel = nextViewModel;
             renderDashboard(currentViewModel);
           } catch {
-            // Ignore for now
+            // Keep current view on secondary-load failure
           }
         }}
         onWatchlistChange={async (currencies) => {
@@ -58,10 +65,10 @@ export async function mountDashboard({
             currentViewModel = nextViewModel;
             renderDashboard(currentViewModel);
           } catch {
-            // Ignore for now
+            // Keep current view on secondary-load failure
           }
         }}
-      />
+      />,
     );
   };
 
@@ -69,7 +76,12 @@ export async function mountDashboard({
     currentViewModel = await loadViewModel(REQUESTED_CURRENCIES, currentBaseCurrency);
     renderDashboard(currentViewModel);
   } catch {
-    render(<p role="alert">Unable to load backend reference data.</p>);
+    render(
+      <DashboardApp
+        viewModel={buildFallbackViewModel()}
+        loadingState="error"
+      />,
+    );
   }
 }
 

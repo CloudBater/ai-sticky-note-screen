@@ -108,7 +108,7 @@ describe("Dashboard Restructure - Trend & History Tabs", () => {
       const html = renderToStaticMarkup(<DashboardApp viewModel={baseViewModel} />);
 
       expect(html).toContain('aria-label="Select target currencies"');
-      expect(html).toContain("Target currencies");
+      expect(html).toContain("1 selected");
       expect(html).toContain("selected-currency-badge");
       expect(html).toContain("CNY");
     });

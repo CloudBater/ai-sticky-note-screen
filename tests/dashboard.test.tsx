@@ -703,7 +703,7 @@ describe("DashboardApp", () => {
     expect(html).toContain("High:");
     expect(html).toContain("Low:");
     expect(html).toContain('aria-label="Select target currencies"');
-    expect(html).toContain("Target currencies");
+    expect(html).toContain("1 selected");
     expect(html).toContain("1Y");
     expect(html).toContain("6M");
     expect(html).toContain("3M");

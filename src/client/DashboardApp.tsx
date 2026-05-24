@@ -713,6 +713,13 @@ function SimulatedConversionPreviewCard({
   simulationBalanceAmount: number;
 }) {
   const defaultTargetCurrency = latestRates[0]?.currency ?? baseCurrency;
+  const conversionCurrencyOptions = useMemo(
+    () => [
+      ...new Set([baseCurrency, ...latestRates.map((rate) => rate.currency)]),
+    ],
+    [baseCurrency, latestRates],
+  );
+  const [sourceCurrency, setSourceCurrency] = useState(baseCurrency);
   const [targetCurrency, setTargetCurrency] = useState(defaultTargetCurrency);
   const [amount, setAmount] = useState(
     String(Math.min(simulationBalanceAmount, 2500)),
@@ -739,6 +746,18 @@ function SimulatedConversionPreviewCard({
     );
   }, [simulationBalanceAmount]);
 
+  useEffect(() => {
+    if (sourceCurrency !== targetCurrency) {
+      return;
+    }
+
+    const nextTargetCurrency =
+      conversionCurrencyOptions.find((currency) => currency !== sourceCurrency) ??
+      sourceCurrency;
+
+    setTargetCurrency(nextTargetCurrency);
+  }, [conversionCurrencyOptions, sourceCurrency, targetCurrency]);
+
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setPreviewError(null);
@@ -755,7 +774,7 @@ function SimulatedConversionPreviewCard({
     try {
       setPreview(
         await previewSimulatedConversionViaBackend({
-          sourceCurrency: baseCurrency,
+          sourceCurrency,
           targetCurrency,
           amount: normalizedAmount,
           date: referenceDate,
@@ -783,9 +802,18 @@ function SimulatedConversionPreviewCard({
             <select
               aria-label="Simulated conversion source currency"
               name="simulated-conversion-source-currency"
-              defaultValue={baseCurrency}
+              onChange={(event) => {
+                setSourceCurrency(event.target.value);
+                setPreview(null);
+                setHasAddedToHistory(false);
+              }}
+              value={sourceCurrency}
             >
-              <option value={baseCurrency}>{baseCurrency}</option>
+              {conversionCurrencyOptions.map((currency) => (
+                <option key={currency} value={currency}>
+                  {currency}
+                </option>
+              ))}
             </select>
           </label>
           <label>
@@ -793,16 +821,20 @@ function SimulatedConversionPreviewCard({
             <select
               aria-label="Simulated conversion target currency"
               name="simulated-conversion-target-currency"
-              onChange={(event) => setTargetCurrency(event.target.value)}
+              onChange={(event) => {
+                setTargetCurrency(event.target.value);
+                setPreview(null);
+                setHasAddedToHistory(false);
+              }}
               value={targetCurrency}
             >
-              {[baseCurrency, ...latestRates.map((rate) => rate.currency)].map(
-                (currency) => (
+              {conversionCurrencyOptions
+                .filter((currency) => currency !== sourceCurrency)
+                .map((currency) => (
                   <option key={currency} value={currency}>
                     {currency}
                   </option>
-                ),
-              )}
+                ))}
             </select>
           </label>
           <label>

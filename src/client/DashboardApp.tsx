@@ -360,7 +360,7 @@ export function DashboardApp({ viewModel }: DashboardAppProps) {
                 <HistoricalLineChart points={selectedChartSeries.points} />
               </div>
               <p className="chart-date-range">
-                {selectedChartSeries.points[0]?.date} –{" "}
+                {selectedChartSeries.points[0]?.date} to{" "}
                 {selectedChartSeries.points[selectedChartSeries.points.length - 1]?.date}
               </p>
             </>

@@ -852,7 +852,7 @@ describe("DashboardApp", () => {
     expect(html).toContain("TWD");
   });
 
-  it("renders bottom navigation without duplicate quick actions", () => {
+  it("renders tab navigation without duplicate quick actions", () => {
     const html = renderToStaticMarkup(
       <DashboardApp
         viewModel={{
@@ -910,23 +910,24 @@ describe("DashboardApp", () => {
     expect(html).toContain('data-section-target="trend"');
     expect(html).toContain('data-section-target="simulation"');
     expect(html).toContain('data-section-target="history"');
-    expect(html).toContain('data-bottom-nav-shell="true"');
+    expect(html).toContain('data-top-nav-shell="true"');
+    expect(html).not.toContain('data-bottom-nav-shell');
     expect(html).toContain(">Simulate</button>");
     expect(html).toContain(">Trend</button>");
     expect(html).toContain('aria-current="page"');
     expect(html).not.toContain(String.fromCharCode(0xfffd));
   });
 
-  it("keeps bottom navigation fixed to the viewport bottom", () => {
+  it("keeps tab navigation sticky at the top of the content area", () => {
     const styles = readFileSync(
       resolve(process.cwd(), "src/client/styles.css"),
       "utf8",
     );
 
-    expect(styles).toContain(".bottom-nav {\n  position: fixed;");
-    expect(styles).toContain("left: 50%;");
-    expect(styles).toContain("transform: translateX(-50%);");
-    expect(styles).not.toContain(".bottom-nav {\n  position: sticky;");
+    expect(styles).toContain(".top-nav {\n  position: sticky;");
+    expect(styles).toContain("top: 0;");
+    expect(styles).not.toContain(".top-nav {\n  position: fixed;");
+    expect(styles).not.toContain(".bottom-nav {\n  position: fixed;");
   });
 
   it("uses compact dashboard layout rules instead of landing-page scale", () => {
@@ -1018,5 +1019,28 @@ describe("DashboardApp", () => {
     expect(html).toContain("Add to simulation history");
     expect(html).toContain('class="conversion-added-confirm"');
     expect(html).toContain("View simulation history");
+  });
+
+  it("renders disclaimer panel with eyebrow and structured safety title", () => {
+    const html = renderToStaticMarkup(
+      <DashboardApp viewModel={loadedViewModel} />,
+    );
+
+    expect(html).toContain('aria-label="Reference and safety notes"');
+    expect(html).toContain("Reference &amp; Safety");
+    expect(html).toContain("What this product is");
+    expect(html).toContain("Daily reference rates, not real-time quotes.");
+  });
+
+  it("defines monospace and serif font family tokens in the stylesheet", () => {
+    const styles = readFileSync(
+      resolve(process.cwd(), "src/client/styles.css"),
+      "utf8",
+    );
+
+    expect(styles).toContain("--font-mono:");
+    expect(styles).toContain("--font-serif:");
+    expect(styles).toContain("font-family: var(--font-mono);");
+    expect(styles).toContain("font-family: var(--font-serif);");
   });
 });

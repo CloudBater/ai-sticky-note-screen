@@ -119,40 +119,23 @@ export function DashboardApp({
   );
   const watchlistEntries = useMemo(
     () => {
-      const supportedCurrencyCodes = new Set(
-        viewModel.currencySupport.supported,
-      );
-      const unsupportedCurrencyCodes = new Set(
-        viewModel.currencySupport.unsupported,
-      );
+      const supportedSet = new Set(viewModel.currencySupport.supported);
+      const unsupportedSet = new Set(viewModel.currencySupport.unsupported);
 
       return buildCurrencyWatchlistEntries(
         watchlistCurrencies,
         currencyCatalog,
       ).map((entry) => {
-        if (supportedCurrencyCodes.has(entry.currency)) {
-          return {
-            ...entry,
-            supported: true,
-          };
+        if (supportedSet.has(entry.currency)) {
+          return { ...entry, supported: true };
         }
-
-        if (unsupportedCurrencyCodes.has(entry.currency)) {
-          return {
-            ...entry,
-            supported: false,
-          };
+        if (unsupportedSet.has(entry.currency)) {
+          return { ...entry, supported: false };
         }
-
         return entry;
       });
     },
-    [
-      currencyCatalog,
-      viewModel.currencySupport.supported,
-      viewModel.currencySupport.unsupported,
-      watchlistCurrencies,
-    ],
+    [watchlistCurrencies, currencyCatalog],
   );
   const [selectedBaseCurrency, setSelectedBaseCurrency] = useState(
     viewModel.latestRates.baseCurrency,
@@ -558,7 +541,7 @@ export function DashboardApp({
               type="button"
             >
               Available currencies
-              <span className="dropdown-chevron" aria-hidden="true" data-open={isDropdownOpen}>▼</span>
+              <span className="dropdown-chevron" aria-hidden="true" data-open={isDropdownOpen}>???</span>
             </button>
             <div
               className="dropdown-content-wrapper"

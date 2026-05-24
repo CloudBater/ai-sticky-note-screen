@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react'
 import {
   LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
 } from 'recharts'
-import { fetchRates, fetchHistory, RatesResponse, HistoryResponse } from './api'
+import { fetchRates, fetchHistory } from './api'
+import type { RatesResponse, HistoryResponse } from './api'
 import { convert, formatRate } from './calculator'
 import './App.css'
 

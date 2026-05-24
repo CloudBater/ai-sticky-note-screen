@@ -1327,6 +1327,18 @@ function SimulatedConversionRow({
             <Code>{sourceCurrency}</Code> / <Code>{targetCurrency}</Code>
           </h3>
         </div>
+        {/* Direction banner — lives on the chart side for visual pairing with the curve */}
+        <div className="conversion-direction-banner" data-conversion-direction-label>
+          <span className="conversion-direction-giving">
+            <span className="eyebrow">Giving</span>
+            <strong><Code>{sourceCurrency}</Code></strong>
+          </span>
+          <span className="conversion-direction-arrow" aria-hidden="true" />
+          <span className="conversion-direction-receiving">
+            <span className="eyebrow">Receiving</span>
+            <strong><Code>{targetCurrency}</Code></strong>
+          </span>
+        </div>
         {chartPoints.length > 0 ? (
           <div className="simulation-chart-window">
             <HistoricalLineChart
@@ -1340,6 +1352,9 @@ function SimulatedConversionRow({
             Daily reference curve will appear after historical rates load.
           </p>
         )}
+        <p className="sim-disclaimer">
+          Available simulation balance only. Preview only. No trades are executed.
+        </p>
       </article>
       <SimulatedConversionPreviewCard
         amount={amount}
@@ -1468,18 +1483,6 @@ function SimulatedConversionPreviewCard({
         <p className="eyebrow">Conversion preview</p>
         <h3>{title}</h3>
       </div>
-      {/* Direction banner — makes clear what is being given vs received */}
-      <div className="conversion-direction-banner" data-conversion-direction-label>
-        <span className="conversion-direction-giving">
-          <span className="eyebrow">Giving</span>
-          <strong><Code>{sourceCurrency}</Code></strong>
-        </span>
-        <span className="conversion-direction-arrow" aria-hidden="true" />
-        <span className="conversion-direction-receiving">
-          <span className="eyebrow">Receiving</span>
-          <strong><Code>{targetCurrency}</Code></strong>
-        </span>
-      </div>
       <form aria-label="Preview simulated conversion form" onSubmit={handleSubmit}>
         <fieldset className="conversion-controls">
           <legend>No trades are executed.</legend>
@@ -1557,7 +1560,17 @@ function SimulatedConversionPreviewCard({
               at the daily reference rate. Hypothetical only.
             </p>
           )}
-          <label>
+        </fieldset>
+        {/* Submit button (left) + reference date (right) share one row */}
+        <div className="conversion-submit-row">
+          <button
+            className="conversion-submit-btn"
+            disabled={isPreviewing || simulationBalanceAmount <= 0}
+            type="submit"
+          >
+            {isPreviewing ? "Previewing..." : "Preview simulated conversion"}
+          </button>
+          <label className="conversion-date-label">
             <span>Reference date</span>
             <input
               aria-label="Simulated conversion reference date"
@@ -1567,11 +1580,6 @@ function SimulatedConversionPreviewCard({
               value={referenceDate}
             />
           </label>
-        </fieldset>
-        <div className="conversion-actions">
-          <button disabled={isPreviewing || simulationBalanceAmount <= 0} type="submit">
-            {isPreviewing ? "Previewing..." : "Preview simulated conversion"}
-          </button>
         </div>
       </form>
       {livePreview ? (
@@ -1608,9 +1616,6 @@ function SimulatedConversionPreviewCard({
         >
           View simulation history
         </button>
-      </p>
-      <p className="empty-state">
-        Available simulation balance only. Preview only. No trades are executed.
       </p>
     </article>
   );

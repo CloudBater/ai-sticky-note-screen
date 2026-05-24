@@ -724,13 +724,20 @@ describe("DashboardApp", () => {
     expect(html).toContain('aria-label="Toggle dashboard theme"');
     expect(html).toContain('aria-pressed="false"');
     expect(html).toContain("Dark mode");
-    expect(html).toContain("Hypothetical starting balance");
+    expect(html).toContain('class="app-header"');
+    expect(html).toContain("Simulation balance");
     expect(html).toContain("10,000 USD");
+    expect(html).toContain("Adjust amount");
     expect(html).toContain('aria-label="Adjust simulation amount"');
     expect(html).toContain('name="simulation-balance-amount"');
     expect(html).toContain("Hypothetical amount only");
+    expect(html).toContain('class="trust-strip"');
     expect(html).toContain("Daily reference rates, not real-time quotes.");
     expect(html).toContain("No deposits, withdrawals, or trades.");
+    expect(html).toContain('aria-label="Quick actions"');
+    expect(html).toContain("View trend");
+    expect(html).toContain("Preview conversion");
+    expect(html).toContain("Review history");
     expect(html).toContain("Supported currencies");
     expect(html).toContain("USD");
     expect(html).toContain("Unsupported requested currencies");
@@ -779,6 +786,8 @@ describe("DashboardApp", () => {
     expect(html).not.toContain("Sell");
     expect(html).not.toContain("Deposit");
     expect(html).not.toContain("Withdraw");
+    expect(html).not.toContain("account balance");
+    expect(html).not.toContain("Account balance");
     expect(html).not.toContain("Rebalance Now");
   });
 
@@ -834,7 +843,7 @@ describe("DashboardApp", () => {
     expect(html).toContain("TWD");
   });
 
-  it("renders bottom navigation as the only section navigation", () => {
+  it("renders quick actions separately from bottom navigation", () => {
     const html = renderToStaticMarkup(
       <DashboardApp
         viewModel={{
@@ -886,8 +895,9 @@ describe("DashboardApp", () => {
       />,
     );
 
+    expect(html).toContain('aria-label="Quick actions"');
+    expect(html).toContain('class="quick-action-strip"');
     expect(html).not.toContain('aria-label="Main actions"');
-    expect(html).not.toContain('class="action-strip"');
     expect(html).toContain('data-section-target="trend"');
     expect(html).toContain('data-section-target="simulation"');
     expect(html).toContain('data-section-target="history"');
@@ -908,6 +918,24 @@ describe("DashboardApp", () => {
     expect(styles).toContain("left: 50%;");
     expect(styles).toContain("transform: translateX(-50%);");
     expect(styles).not.toContain(".bottom-nav {\n  position: sticky;");
+  });
+
+  it("uses compact dashboard layout rules instead of landing-page scale", () => {
+    const styles = readFileSync(
+      resolve(process.cwd(), "src/client/styles.css"),
+      "utf8",
+    );
+
+    expect(styles).toContain(".app-header {\n  display: grid;");
+    expect(styles).toContain("grid-template-columns: minmax(0, 1fr) auto;");
+    expect(styles).toContain("padding: 18px 20px;");
+    expect(styles).toContain(".brand-lockup h1 {");
+    expect(styles).toContain("font-size: clamp(1.45rem, 2.4vw, 2.1rem);");
+    expect(styles).toContain(".trust-strip {");
+    expect(styles).toContain("box-shadow: none;");
+    expect(styles).toContain(".watchlist-panel,\n.support-panel {");
+    expect(styles).toContain("padding: 18px;");
+    expect(styles).not.toContain("font-size: clamp(3rem, 7.5vw, 5.6rem);");
   });
 
   it("defines readable light and dark theme tokens", () => {

@@ -86,14 +86,14 @@ describe("previewSimulatedConversion", () => {
       sourceCurrency: "USD",
       targetCurrency: "EUR",
       sourceAmount: 2500,
-      convertedAmount: 2252.5,
+      convertedAmount: 2252,
       rate: 0.901,
       date: "2024-08-23",
       kind: "simulation-preview",
     });
   });
 
-  it("rounds simulated converted amounts to cents", () => {
+  it("floors simulated converted target units to a whole number", () => {
     expect(
       previewSimulatedConversion({
         sourceCurrency: "usd",
@@ -102,7 +102,7 @@ describe("previewSimulatedConversion", () => {
         date: "2024-08-23",
         dailyReferenceRate: 0.901,
       }).convertedAmount,
-    ).toBe(90.1);
+    ).toBe(90);
   });
 
   it("rejects non-positive simulated conversion amounts", () => {
@@ -181,7 +181,7 @@ describe("POST /api/simulations/conversion-preview", () => {
           sourceCurrency: "USD",
           targetCurrency: "EUR",
           sourceAmount: 2500,
-          convertedAmount: 2252.5,
+          convertedAmount: 2252,
           rate: 0.901,
           date: "2024-08-23",
           kind: "simulation-preview",
@@ -366,7 +366,7 @@ describe("POST /api/simulations/conversion-preview", () => {
           sourceCurrency: "USD",
           targetCurrency: "EUR",
           sourceAmount: 2500,
-          convertedAmount: 2252.5,
+          convertedAmount: 2252,
           rate: 0.901,
           date: "2024-08-23",
           kind: "simulation-preview",
@@ -377,7 +377,7 @@ describe("POST /api/simulations/conversion-preview", () => {
           sourceCurrency: "USD",
           targetCurrency: "EUR",
           sourceAmount: 100,
-          convertedAmount: 90.1,
+          convertedAmount: 90,
           rate: 0.901,
           date: "2024-08-23",
           kind: "simulation-preview",

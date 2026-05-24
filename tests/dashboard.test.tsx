@@ -791,7 +791,7 @@ describe("DashboardApp", () => {
                 sourceCurrency: "USD",
                 targetCurrency: "EUR",
                 sourceAmount: 2500,
-                convertedAmount: 2252.5,
+                convertedAmount: 2252,
                 rate: 0.901,
                 date: "2024-08-23",
                 kind: "simulation-history-entry",
@@ -862,6 +862,7 @@ describe("DashboardApp", () => {
     expect(html).toContain('aria-label="Simulated conversion target currency"');
     expect(html).toContain('aria-label="Simulated conversion amount"');
     expect(html).toContain('max="10000"');
+    expect(html).toContain('step="1"');
     expect(html).toContain('aria-label="Simulated conversion reference date"');
     expect(html).toContain('aria-label="Preview simulated conversion form"');
     expect(html).toContain('type="submit"');
@@ -878,7 +879,7 @@ describe("DashboardApp", () => {
     expect(html).toContain("Latest simulated value");
     expect(html).toContain("9,761.9 USD");
     expect(html).toContain("2,500 USD");
-    expect(html).toContain("2,252.5 EUR");
+    expect(html).toContain("2,252 EUR");
     expect(html).not.toContain('class="allocation-points"');
     expect(html).not.toContain("Trade");
     expect(html).not.toContain("Buy");

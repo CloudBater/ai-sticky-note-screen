@@ -728,7 +728,7 @@ describe("DashboardApp", () => {
     expect(html).toContain("Simulation balance");
     expect(html).toContain("10,000 USD");
     expect(html).toContain('class="simulation-balance-editor"');
-    expect(html).toContain("Adjust amount");
+    expect(html).toContain("Adjust simulation amount");
     expect(html).toContain('aria-label="Adjust simulation amount"');
     expect(html).toContain('name="simulation-balance-amount"');
     expect(html).toContain("Hypothetical amount only");
@@ -758,10 +758,12 @@ describe("DashboardApp", () => {
     expect(html).toContain("1 USD = 0.901 EUR");
     expect(html).toContain("Historical line chart");
     expect(html).toContain("Historical reference only, not a forecast.");
-    expect(html).toContain("Manual allocation historical preview");
-    expect(html).toContain('class="simulation-preview-layout"');
-    expect(html).toContain('data-layout-slot="allocation-left"');
+    expect(html).toContain("Allocation history preview");
+    expect(html).toContain('class="simulation-control-row"');
+    expect(html).toContain('data-layout-slot="amount-left"');
     expect(html).toContain('data-layout-slot="conversion-right"');
+    expect(html).toContain("Simulation balance");
+    expect(html).toContain("Adjust simulation amount");
     expect(html).toContain("Choose currencies and allocation");
     expect(html).toContain('aria-label="First allocation currency"');
     expect(html).toContain('aria-label="Second allocation currency"');
@@ -780,9 +782,14 @@ describe("DashboardApp", () => {
     expect(html).toContain("Manual 50% USD / 50% EUR allocation moved");
     expect(html).toContain("50% USD");
     expect(html).toContain("50% EUR");
+    expect(html).toContain('data-chart-type="allocation-history-line"');
+    expect(html).toContain('aria-label="Historical allocation value line chart"');
+    expect(html).toContain("2024-08-23: 9,761.9 USD");
+    expect(html).toContain("Latest simulated value");
     expect(html).toContain("9,761.9 USD");
     expect(html).toContain("2,500 USD");
     expect(html).toContain("2,252.5 EUR");
+    expect(html).not.toContain('class="allocation-points"');
     expect(html).not.toContain("Trade");
     expect(html).not.toContain("Buy");
     expect(html).not.toContain("Sell");
@@ -978,17 +985,19 @@ describe("DashboardApp", () => {
     }
   });
 
-  it("places allocation and conversion preview side by side on desktop", () => {
+  it("places simulation controls above the allocation history chart", () => {
     const styles = readFileSync(
       resolve(process.cwd(), "src/client/styles.css"),
       "utf8",
     );
 
-    expect(styles).toContain(".simulation-preview-layout {\n  display: grid;");
+    expect(styles).toContain(".simulation-control-row {\n  display: grid;");
     expect(styles).toContain(
       "grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);",
     );
-    expect(styles).toContain(".allocation-preview-card {\n  grid-column: 1;");
+    expect(styles).toContain(".simulation-balance-editor {\n  grid-column: 1;");
     expect(styles).toContain(".conversion-preview-card {\n  grid-column: 2;");
+    expect(styles).toContain(".allocation-preview-card {\n  grid-column: 1 / -1;");
+    expect(styles).toContain(".allocation-chart-tooltip");
   });
 });

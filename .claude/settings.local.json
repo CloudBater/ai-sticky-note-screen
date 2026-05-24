@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git -C \"c:\\\\Users\\\\heeta\\\\OneDrive\\\\Desktop\\\\CloudMile\\\\meteorfall-call\" log --oneline -60)",
+      "Bash(git -C \"c:\\\\Users\\\\heeta\\\\OneDrive\\\\Desktop\\\\CloudMile\\\\meteorfall-call\" diff HEAD -- src/client/DashboardApp.tsx)",
+      "Bash(git -C \"c:\\\\Users\\\\heeta\\\\OneDrive\\\\Desktop\\\\CloudMile\\\\meteorfall-call\" diff HEAD -- src/client/styles.css)"
+    ]
+  }
+}

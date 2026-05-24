@@ -1,0 +1,9 @@
+services:
+  marketmage:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      # Optional: point to a self-hosted Frankfurter instance
+      # - FRANKFURTER_BASE_URL=https://api.frankfurter.app

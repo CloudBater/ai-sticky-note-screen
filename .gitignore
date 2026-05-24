@@ -44,3 +44,8 @@ venv/
 coverage/
 .coverage
 htmlcov/
+
+# Screenshots (captured locally for PR visual proof)
+*.png
+*.jpg
+*.jpeg

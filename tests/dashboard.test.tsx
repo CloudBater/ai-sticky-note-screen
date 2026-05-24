@@ -727,6 +727,7 @@ describe("DashboardApp", () => {
     expect(html).toContain('class="app-header"');
     expect(html).toContain("Simulation balance");
     expect(html).toContain("10,000 USD");
+    expect(html).toContain('class="simulation-balance-editor"');
     expect(html).toContain("Adjust amount");
     expect(html).toContain('aria-label="Adjust simulation amount"');
     expect(html).toContain('name="simulation-balance-amount"');
@@ -734,10 +735,11 @@ describe("DashboardApp", () => {
     expect(html).toContain('class="trust-strip"');
     expect(html).toContain("Daily reference rates, not real-time quotes.");
     expect(html).toContain("No deposits, withdrawals, or trades.");
-    expect(html).toContain('aria-label="Quick actions"');
-    expect(html).toContain("View trend");
-    expect(html).toContain("Preview conversion");
-    expect(html).toContain("Review history");
+    expect(html).not.toContain('aria-label="Quick actions"');
+    expect(html).not.toContain('class="quick-action-strip"');
+    expect(html).not.toContain("View trend");
+    expect(html).not.toContain("Preview conversion</button>");
+    expect(html).not.toContain("Review history");
     expect(html).toContain("Supported currencies");
     expect(html).toContain("USD");
     expect(html).toContain("Unsupported requested currencies");
@@ -843,7 +845,7 @@ describe("DashboardApp", () => {
     expect(html).toContain("TWD");
   });
 
-  it("renders quick actions separately from bottom navigation", () => {
+  it("renders bottom navigation without duplicate quick actions", () => {
     const html = renderToStaticMarkup(
       <DashboardApp
         viewModel={{
@@ -895,8 +897,8 @@ describe("DashboardApp", () => {
       />,
     );
 
-    expect(html).toContain('aria-label="Quick actions"');
-    expect(html).toContain('class="quick-action-strip"');
+    expect(html).not.toContain('aria-label="Quick actions"');
+    expect(html).not.toContain('class="quick-action-strip"');
     expect(html).not.toContain('aria-label="Main actions"');
     expect(html).toContain('data-section-target="trend"');
     expect(html).toContain('data-section-target="simulation"');
@@ -930,11 +932,15 @@ describe("DashboardApp", () => {
     expect(styles).toContain("grid-template-columns: minmax(0, 1fr) auto;");
     expect(styles).toContain("padding: 18px 20px;");
     expect(styles).toContain(".brand-lockup h1 {");
-    expect(styles).toContain("font-size: clamp(1.45rem, 2.4vw, 2.1rem);");
+    expect(styles).toContain("grid-template-columns: 54px minmax(0, auto);");
+    expect(styles).toContain("font-size: clamp(2.25rem, 4vw, 3.2rem);");
+    expect(styles).toContain("line-height: 1.16;");
+    expect(styles).toContain("padding-bottom: 0.08em;");
     expect(styles).toContain(".trust-strip {");
     expect(styles).toContain("box-shadow: none;");
     expect(styles).toContain(".watchlist-panel,\n.support-panel {");
     expect(styles).toContain("padding: 18px;");
+    expect(styles).not.toContain(".quick-action-strip {");
     expect(styles).not.toContain("font-size: clamp(3rem, 7.5vw, 5.6rem);");
   });
 

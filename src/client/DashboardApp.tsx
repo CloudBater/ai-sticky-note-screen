@@ -374,10 +374,12 @@ export function DashboardApp({ viewModel }: DashboardAppProps) {
           </p>
           <div className="simulation-preview-layout">
             <AllocationPreviewCard
+              key={viewModel.allocationPreview.status}
               preview={viewModel.allocationPreview}
               startingAmount={simulationBalanceAmount}
             />
             <SimulatedConversionPreviewCard
+              key={viewModel.latestRates.dataDate}
               baseCurrency={viewModel.latestRates.baseCurrency}
               dataDate={viewModel.latestRates.dataDate}
               latestRates={viewModel.latestRates.cards}
@@ -468,7 +470,7 @@ function SimulatedConversionPreviewCard({
     String(Math.min(simulationBalanceAmount, 2500)),
   );
   const [referenceDate, setReferenceDate] = useState(
-    dataDate === "Unavailable" ? "" : dataDate,
+    dataDate === "Unavailable" || dataDate === "Loading..." ? "" : dataDate,
   );
   const [preview, setPreview] = useState<SimulatedConversionPreview | null>(null);
   const [previewError, setPreviewError] = useState<string | null>(null);

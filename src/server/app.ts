@@ -46,6 +46,14 @@ export function createApp(options: CreateAppOptions = {}) {
     }
 
     if (request.method === "GET" && request.url === "/api/currencies") {
+      const cacheKey = "currencies";
+      const cachedBody = responseCache.get(cacheKey);
+
+      if (cachedBody !== undefined) {
+        sendJson(response, 200, cachedBody);
+        return;
+      }
+
       const upstreamUrl = new URL("/currencies", frankfurterBaseUrl);
       const upstreamResponse = await fetchFrankfurter(upstreamUrl);
 
@@ -59,7 +67,10 @@ export function createApp(options: CreateAppOptions = {}) {
       const currencies =
         (await upstreamResponse.json()) as FrankfurterCurrenciesResponse;
 
-      sendJson(response, 200, { currencies });
+      const responseBody = { currencies };
+
+      responseCache.set(cacheKey, responseBody);
+      sendJson(response, 200, responseBody);
       return;
     }
 
@@ -79,18 +90,30 @@ export function createApp(options: CreateAppOptions = {}) {
       const sourceCurrency = requestBody.sourceCurrency.toUpperCase();
       const targetCurrency = requestBody.targetCurrency.toUpperCase();
 
-      const upstreamUrl = new URL(`/${requestBody.date}`, frankfurterBaseUrl);
-      upstreamUrl.searchParams.set("from", sourceCurrency);
-      upstreamUrl.searchParams.set("to", targetCurrency);
+      const cacheKey = `conversion-rate:${requestBody.date}:${sourceCurrency}:${targetCurrency}`;
+      const cachedBody = responseCache.get(cacheKey) as
+        | { date: string; dailyReferenceRate: number }
+        | undefined;
+      let rateDate = cachedBody?.date;
+      let dailyReferenceRate = cachedBody?.dailyReferenceRate;
 
-      const upstreamResponse = await fetchFrankfurter(upstreamUrl);
-      const upstreamBody =
-        (await upstreamResponse.json()) as FrankfurterLatestResponse;
-      const dailyReferenceRate = upstreamBody.rates[targetCurrency];
+      if (cachedBody === undefined) {
+        const upstreamUrl = new URL(`/${requestBody.date}`, frankfurterBaseUrl);
+        upstreamUrl.searchParams.set("from", sourceCurrency);
+        upstreamUrl.searchParams.set("to", targetCurrency);
+
+        const upstreamResponse = await fetchFrankfurter(upstreamUrl);
+        const upstreamBody =
+          (await upstreamResponse.json()) as FrankfurterLatestResponse;
+
+        rateDate = upstreamBody.date;
+        dailyReferenceRate = upstreamBody.rates[targetCurrency];
+      }
 
       if (
         typeof dailyReferenceRate !== "number" ||
-        !Number.isFinite(dailyReferenceRate)
+        !Number.isFinite(dailyReferenceRate) ||
+        typeof rateDate !== "string"
       ) {
         sendJson(response, 502, {
           error: "Unable to fetch conversion reference rate",
@@ -98,12 +121,17 @@ export function createApp(options: CreateAppOptions = {}) {
         return;
       }
 
+      responseCache.set(cacheKey, {
+        date: rateDate,
+        dailyReferenceRate,
+      });
+
       sendJson(response, 200, {
         preview: previewSimulatedConversion({
           sourceCurrency,
           targetCurrency,
           amount: requestBody.amount,
-          date: upstreamBody.date,
+          date: rateDate,
           dailyReferenceRate,
         }),
       });
@@ -137,6 +165,14 @@ export function createApp(options: CreateAppOptions = {}) {
       upstreamUrl.searchParams.set("from", base);
       upstreamUrl.searchParams.set("to", symbol);
 
+      const cacheKey = `history:${base}:${symbol}:${start}:${end}`;
+      const cachedBody = responseCache.get(cacheKey);
+
+      if (cachedBody !== undefined) {
+        sendJson(response, 200, cachedBody);
+        return;
+      }
+
       const upstreamResponse = await fetchFrankfurter(upstreamUrl);
 
       if (!upstreamResponse.ok) {
@@ -167,13 +203,16 @@ export function createApp(options: CreateAppOptions = {}) {
         return;
       }
 
-      sendJson(response, 200, {
+      const responseBody = {
         base: upstreamBody.base,
         symbol,
         startDate: upstreamBody.start_date,
         endDate: upstreamBody.end_date,
         points,
-      });
+      };
+
+      responseCache.set(cacheKey, responseBody);
+      sendJson(response, 200, responseBody);
       return;
     }
 

@@ -53,6 +53,19 @@ type DashboardSection = "overview" | "trend" | "simulation" | "history";
 type CurrencyTransitionState = "idle" | "exiting" | "entering";
 type TrendDirection = "up" | "down" | "flat";
 type TrendWindowDays = 7 | 14 | 30;
+type HistoryRangePreset = "1Y" | "6M" | "3M" | "1M" | "2W" | "1W";
+
+const historyRangePresets: Array<{
+  label: HistoryRangePreset;
+  days: number;
+}> = [
+  { label: "1Y", days: 365 },
+  { label: "6M", days: 183 },
+  { label: "3M", days: 92 },
+  { label: "1M", days: 31 },
+  { label: "2W", days: 14 },
+  { label: "1W", days: 7 },
+];
 
 export function DashboardApp({
   viewModel,
@@ -147,6 +160,34 @@ export function DashboardApp({
   const [selectedCurrency, setSelectedCurrency] = useState(
     selectorCurrencies[0] ?? viewModel.latestRates.baseCurrency,
   );
+  const initialHistoryEndDate = getLatestHistoricalDate(
+    viewModel.historicalTrend.allSeries,
+    viewModel.latestRates.dataDate,
+  );
+  const initialHistoryStartDate = getHistoryStartDateForPreset(
+    initialHistoryEndDate,
+    "1Y",
+  );
+  const [historyBaseCurrency, setHistoryBaseCurrency] = useState(
+    viewModel.latestRates.baseCurrency,
+  );
+  const [historyVisibleCurrencies, setHistoryVisibleCurrencies] = useState<
+    string[]
+  >(() => {
+    const defaultCurrency =
+      selectorCurrencies.find((currency) => currency === "CNY") ??
+      selectorCurrencies.find(
+        (currency) => currency !== viewModel.latestRates.baseCurrency,
+      );
+
+    return defaultCurrency ? [defaultCurrency] : [];
+  });
+  const [historyRangePreset, setHistoryRangePreset] =
+    useState<HistoryRangePreset>("1Y");
+  const [historyStartDate, setHistoryStartDate] = useState(
+    initialHistoryStartDate,
+  );
+  const [historyEndDate, setHistoryEndDate] = useState(initialHistoryEndDate);
   const [trendWindowDays, setTrendWindowDays] = useState<TrendWindowDays>(30);
   const prefersReducedMotion = usePrefersReducedMotion();
   const { displayedCurrency, transitionState } = useDeferredCurrency(
@@ -166,6 +207,60 @@ export function DashboardApp({
         viewModel.latestRates.cards.map((card) => [card.currency, card]),
       ),
     [viewModel.latestRates.cards],
+  );
+  const historyCurrencyOptions = useMemo(() => {
+    const currencies = new Set<string>([viewModel.latestRates.baseCurrency]);
+
+    Object.keys(currencyCatalog).forEach((currency) =>
+      currencies.add(currency.toUpperCase()),
+    );
+    viewModel.latestRates.cards.forEach((card) => currencies.add(card.currency));
+    watchlistEntries.forEach((entry) => {
+      if (entry.supported) {
+        currencies.add(entry.currency);
+      }
+    });
+
+    return [...currencies];
+  }, [
+    currencyCatalog,
+    viewModel.latestRates.baseCurrency,
+    viewModel.latestRates.cards,
+    watchlistEntries,
+  ]);
+  const historyTargetOptions = useMemo(
+    () =>
+      historyCurrencyOptions.filter(
+        (currency) => currency !== historyBaseCurrency,
+      ),
+    [historyBaseCurrency, historyCurrencyOptions],
+  );
+  const historyChartSeries = useMemo(
+    () =>
+      historyVisibleCurrencies
+        .filter((currency) => historyTargetOptions.includes(currency))
+        .map((currency) => ({
+          currency,
+          points: buildPairChartPoints({
+            baseCurrency: viewModel.latestRates.baseCurrency,
+            series: viewModel.historicalTrend.allSeries,
+            sourceCurrency: historyBaseCurrency,
+            targetCurrency: currency,
+          }).filter(
+            (point) =>
+              point.date >= historyStartDate && point.date <= historyEndDate,
+          ),
+        }))
+        .filter((series) => series.points.length > 0),
+    [
+      historyBaseCurrency,
+      historyEndDate,
+      historyStartDate,
+      historyTargetOptions,
+      historyVisibleCurrencies,
+      viewModel.historicalTrend.allSeries,
+      viewModel.latestRates.baseCurrency,
+    ],
   );
   const conversionExposure = useMemo(
     () =>
@@ -235,7 +330,57 @@ export function DashboardApp({
 
   useEffect(() => {
     setSelectedBaseCurrency(viewModel.latestRates.baseCurrency);
+    setHistoryBaseCurrency(viewModel.latestRates.baseCurrency);
   }, [viewModel.latestRates.baseCurrency]);
+
+  useEffect(() => {
+    const nextEndDate = getLatestHistoricalDate(
+      viewModel.historicalTrend.allSeries,
+      viewModel.latestRates.dataDate,
+    );
+
+    setHistoryEndDate(nextEndDate);
+    setHistoryStartDate(
+      getHistoryStartDateForPreset(nextEndDate, historyRangePreset),
+    );
+  }, [
+    historyRangePreset,
+    viewModel.historicalTrend.allSeries,
+    viewModel.latestRates.dataDate,
+  ]);
+
+  useEffect(() => {
+    if (
+      historyBaseCurrency !== viewModel.latestRates.baseCurrency &&
+      !historyCurrencyOptions.includes(historyBaseCurrency)
+    ) {
+      setHistoryBaseCurrency(viewModel.latestRates.baseCurrency);
+      return;
+    }
+
+    setHistoryVisibleCurrencies((currentCurrencies) => {
+      const validCurrencies = currentCurrencies.filter((currency) =>
+        historyTargetOptions.includes(currency),
+      );
+
+      if (validCurrencies.length > 0) {
+        return arraysEqual(validCurrencies, currentCurrencies)
+          ? currentCurrencies
+          : validCurrencies;
+      }
+
+      const defaultCurrency =
+        historyTargetOptions.find((currency) => currency === "CNY") ??
+        historyTargetOptions[0];
+
+      return defaultCurrency ? [defaultCurrency] : [];
+    });
+  }, [
+    historyBaseCurrency,
+    historyCurrencyOptions,
+    historyTargetOptions,
+    viewModel.latestRates.baseCurrency,
+  ]);
 
   const handleGlobalBaseCurrencyChange = (currency: string) => {
     setSelectedBaseCurrency(currency);
@@ -717,6 +862,162 @@ export function DashboardApp({
         {/* History tab */}
         <section className="panel history-panel" hidden={!showHistory} id="history">
           <div className="section-heading">
+            <p className="eyebrow">Historical reference</p>
+            <h2>Reference rates history</h2>
+          </div>
+          <div
+            className="history-reference-workspace"
+            data-history-chart="multi-currency"
+          >
+            <div className="history-currency-row">
+              <label className="history-base-control">
+                <span>Base currency</span>
+                <select
+                  aria-label="History base currency"
+                  data-history-base-currency={historyBaseCurrency}
+                  onChange={(event) => {
+                    const nextBaseCurrency = event.target.value;
+                    setHistoryBaseCurrency(nextBaseCurrency);
+                    setHistoryVisibleCurrencies((currentCurrencies) => {
+                      const nextCurrencies = currentCurrencies.filter(
+                        (currency) => currency !== nextBaseCurrency,
+                      );
+                      const defaultCurrency =
+                        nextCurrencies[0] ??
+                        historyCurrencyOptions.find(
+                          (currency) => currency !== nextBaseCurrency,
+                        );
+
+                      return defaultCurrency ? [defaultCurrency] : [];
+                    });
+                  }}
+                  value={historyBaseCurrency}
+                >
+                  {historyCurrencyOptions.map((currency) => (
+                    <option key={currency} value={currency}>
+                      {currency}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <div
+                aria-label="Toggle visible history currencies"
+                className="history-currency-toggles"
+              >
+                {historyTargetOptions.map((currency) => {
+                  const active = historyVisibleCurrencies.includes(currency);
+
+                  return (
+                    <button
+                      aria-label={`Toggle ${currency} history line`}
+                      data-history-currency={currency}
+                      data-history-currency-active={active}
+                      key={currency}
+                      onClick={() => {
+                        setHistoryVisibleCurrencies((currentCurrencies) => {
+                          if (currentCurrencies.includes(currency)) {
+                            return currentCurrencies.filter(
+                              (currentCurrency) => currentCurrency !== currency,
+                            );
+                          }
+
+                          return [...currentCurrencies, currency];
+                        });
+                      }}
+                      type="button"
+                    >
+                      <Code>{currency}</Code>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+            <div className="history-range-controls">
+              <div className="history-range-presets">
+                {historyRangePresets.map((preset) => (
+                  <button
+                    aria-pressed={historyRangePreset === preset.label}
+                    key={preset.label}
+                    onClick={() => {
+                      setHistoryRangePreset(preset.label);
+                      setHistoryStartDate(
+                        getHistoryStartDateForPreset(
+                          historyEndDate,
+                          preset.label,
+                        ),
+                      );
+                    }}
+                    type="button"
+                  >
+                    {preset.label}
+                  </button>
+                ))}
+              </div>
+              <label>
+                <span>Start</span>
+                <input
+                  aria-label="History start date"
+                  onChange={(event) => {
+                    setHistoryRangePreset("1Y");
+                    setHistoryStartDate(event.target.value);
+                  }}
+                  type="date"
+                  value={historyStartDate}
+                />
+              </label>
+              <label>
+                <span>End</span>
+                <input
+                  aria-label="History end date"
+                  onChange={(event) => {
+                    setHistoryRangePreset("1Y");
+                    setHistoryEndDate(event.target.value);
+                  }}
+                  type="date"
+                  value={historyEndDate}
+                />
+              </label>
+            </div>
+            {historyChartSeries.length > 0 ? (
+              <>
+                <div className="history-chart-window">
+                  <MultiLineHistoryChart
+                    baseCurrency={historyBaseCurrency}
+                    series={historyChartSeries}
+                  />
+                </div>
+                <div className="history-movement-grid">
+                  {historyChartSeries.map((series) => (
+                    <div className="history-movement-card" key={series.currency}>
+                      <span className="eyebrow history-pair-label">
+                        {historyBaseCurrency}/{series.currency}
+                      </span>
+                      <strong
+                        data-history-movement={getMovementState(series.points)}
+                      >
+                        <Num
+                          size="s"
+                          value={formatPercentChange(
+                            getPercentChange(series.points),
+                          )}
+                        />
+                      </strong>
+                      <small>Range movement</small>
+                    </div>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <p className="empty-state">
+                Historical reference data will appear after supported currency
+                rates load.
+              </p>
+            )}
+            <p className="meta-dim">
+              Daily reference rates over the selected range. Historical reference only.
+            </p>
+          </div>
+          <div className="section-heading history-entry-heading">
             <p className="eyebrow">Review</p>
             <h2>Simulation history</h2>
           </div>
@@ -1473,6 +1774,113 @@ function HistoricalLineChart({
   );
 }
 
+function MultiLineHistoryChart({
+  baseCurrency,
+  series,
+}: {
+  baseCurrency: string;
+  series: Array<{
+    currency: string;
+    points: { date: string; rate: number }[];
+  }>;
+}) {
+  const allPoints = series.flatMap((chartSeries) => chartSeries.points);
+
+  if (allPoints.length === 0) {
+    return null;
+  }
+
+  const width = 800;
+  const height = 320;
+  const paddingX = 28;
+  const paddingY = 24;
+  const chartWidth = width - paddingX * 2;
+  const chartHeight = height - paddingY * 2;
+  const rates = allPoints.map((point) => point.rate);
+  const minRate = Math.min(...rates);
+  const maxRate = Math.max(...rates);
+  const rateRange = maxRate - minRate || 1;
+  const palette = [
+    "var(--text-primary)",
+    "var(--up)",
+    "var(--down)",
+    "var(--text-secondary)",
+    "var(--text-tertiary)",
+  ];
+
+  return (
+    <svg
+      aria-label={`${baseCurrency} reference rates comparison line chart`}
+      className="history-multi-line-chart"
+      data-chart-type="history-multi-line"
+      preserveAspectRatio="none"
+      viewBox={`0 0 ${width} ${height}`}
+    >
+      {[0.25, 0.5, 0.75].map((pct) => (
+        <line
+          key={pct}
+          stroke="var(--border-subtle)"
+          strokeDasharray="2 4"
+          x1={paddingX}
+          x2={width - paddingX}
+          y1={paddingY + chartHeight * pct}
+          y2={paddingY + chartHeight * pct}
+        />
+      ))}
+      {series.map((chartSeries, seriesIndex) => {
+        const points = chartSeries.points.map((point, pointIndex) => {
+          const x =
+            paddingX +
+            (pointIndex / Math.max(chartSeries.points.length - 1, 1)) *
+              chartWidth;
+          const y =
+            paddingY +
+            chartHeight -
+            ((point.rate - minRate) / rateRange) * chartHeight;
+
+          return { ...point, x, y };
+        });
+        const polylinePoints = points
+          .map((point) => `${point.x},${point.y}`)
+          .join(" ");
+        const lastPoint = points[points.length - 1];
+
+        return (
+          <g key={chartSeries.currency}>
+            <polyline
+              fill="none"
+              points={polylinePoints}
+              stroke={palette[seriesIndex % palette.length]}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+            />
+            {lastPoint ? (
+              <>
+                <circle
+                  cx={lastPoint.x}
+                  cy={lastPoint.y}
+                  fill={palette[seriesIndex % palette.length]}
+                  r="3.5"
+                />
+                <text
+                  fill="var(--text-primary)"
+                  fontFamily="var(--font-mono)"
+                  fontSize="12"
+                  x={Math.min(lastPoint.x + 8, width - 72)}
+                  y={Math.max(lastPoint.y - 8, 14)}
+                >
+                  {chartSeries.currency}
+                </text>
+              </>
+            ) : null}
+          </g>
+        );
+      })}
+    </svg>
+  );
+}
+ 
 function usePrefersReducedMotion(): boolean {
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
 
@@ -1732,6 +2140,70 @@ function formatSignedAmount(value: number): string {
   return `${sign}${roundedValue.toLocaleString("en-US", {
     maximumFractionDigits: 2,
   })}`;
+}
+
+function getLatestHistoricalDate(
+  series: HistoricalTrendChartSeries[],
+  fallbackDate: string,
+): string {
+  const latestDate = series
+    .flatMap((chartSeries) => chartSeries.points.map((point) => point.date))
+    .sort()
+    .at(-1);
+
+  return latestDate ?? (isDateOnlyString(fallbackDate) ? fallbackDate : "");
+}
+
+function getHistoryStartDateForPreset(
+  endDate: string,
+  preset: HistoryRangePreset,
+): string {
+  if (!isDateOnlyString(endDate)) {
+    return "";
+  }
+
+  const presetDays =
+    historyRangePresets.find((option) => option.label === preset)?.days ?? 365;
+  const parsedDate = new Date(`${endDate}T00:00:00.000Z`);
+
+  parsedDate.setUTCDate(parsedDate.getUTCDate() - presetDays);
+
+  return parsedDate.toISOString().slice(0, 10);
+}
+
+function getPercentChange(points: { rate: number }[]): number {
+  const firstPoint = points[0];
+  const lastPoint = points[points.length - 1];
+
+  if (!firstPoint || !lastPoint || firstPoint.rate === 0) {
+    return 0;
+  }
+
+  return ((lastPoint.rate - firstPoint.rate) / firstPoint.rate) * 100;
+}
+
+function formatPercentChange(value: number): string {
+  const sign = value > 0 ? "+" : "";
+
+  return `${sign}${value.toFixed(2)}%`;
+}
+
+function getMovementState(points: { rate: number }[]): "up" | "down" | "flat" {
+  const percentChange = getPercentChange(points);
+
+  if (Math.abs(percentChange) < 0.01) {
+    return "flat";
+  }
+
+  return percentChange > 0 ? "up" : "down";
+}
+
+function isDateOnlyString(value: string): boolean {
+  return /^\d{4}-\d{2}-\d{2}$/.test(value);
+}
+
+function arraysEqual(left: string[], right: string[]): boolean {
+  return left.length === right.length && left.every((item, index) => item === right[index]);
 }
 
 function formatRate(value: number, decimals = getRateDecimals(value)): string {

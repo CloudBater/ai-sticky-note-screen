@@ -223,7 +223,12 @@ export async function loadDashboardViewModel(
     latestRates: referenceData.latestRates.rates,
   });
   viewModel.currencyCatalog = referenceData.currencies;
-  const historicalSymbols = Object.keys(referenceData.latestRates.rates).sort();
+  const historicalSymbols = Object.keys(referenceData.currencies)
+    .map((currency) => currency.toUpperCase())
+    .filter(
+      (currency) => currency !== referenceData.latestRates.base.toUpperCase(),
+    )
+    .sort();
   const historicalSymbol = historicalSymbols[0];
   const historicalWindow = getHistoricalWindow(referenceData.latestRates.date);
 
@@ -410,7 +415,7 @@ function getHistoricalWindow(
 
   const parsedStartDate = new Date(parsedEndDate);
 
-  parsedStartDate.setUTCDate(parsedStartDate.getUTCDate() - 30);
+  parsedStartDate.setUTCDate(parsedStartDate.getUTCDate() - 365);
 
   return {
     startDate: formatIsoDate(parsedStartDate),

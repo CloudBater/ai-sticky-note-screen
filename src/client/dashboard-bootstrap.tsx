@@ -9,23 +9,43 @@ import {
 
 type MountDashboardOptions = {
   render: (node: ReactNode) => void;
-  loadViewModel?: () => Promise<DashboardViewModel>;
+  loadViewModel?: (requestedCurrencies?: string[]) => Promise<DashboardViewModel>;
 };
 
 const REQUESTED_CURRENCIES = ["USD", "EUR", "JPY", "TWD", "GBP", "CNY", "SGD"];
 
 export async function mountDashboard({
   render,
-  loadViewModel = () =>
+  loadViewModel = (requestedCurrencies = REQUESTED_CURRENCIES) =>
     loadDashboardViewModel({
       simulationBalance: 10_000,
-      requestedCurrencies: REQUESTED_CURRENCIES,
+      requestedCurrencies,
     }),
 }: MountDashboardOptions): Promise<void> {
   render(<DashboardApp viewModel={buildFallbackViewModel()} />);
 
+  let currentViewModel: DashboardViewModel;
+
+  const renderDashboard = (viewModel: DashboardViewModel) => {
+    render(
+      <DashboardApp
+        viewModel={viewModel}
+        onWatchlistChange={async (currencies) => {
+          try {
+            const nextViewModel = await loadViewModel(currencies);
+            currentViewModel = nextViewModel;
+            renderDashboard(currentViewModel);
+          } catch {
+            // Ignore for now
+          }
+        }}
+      />
+    );
+  };
+
   try {
-    render(<DashboardApp viewModel={await loadViewModel()} />);
+    currentViewModel = await loadViewModel();
+    renderDashboard(currentViewModel);
   } catch {
     render(<p role="alert">Unable to load backend reference data.</p>);
   }

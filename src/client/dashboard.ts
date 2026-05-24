@@ -9,7 +9,7 @@ export type HistoricalTrendChartPoint = {
 };
 
 export type HistoricalTrendChartSeries = {
-  symbol: string;
+  symbols: string[];
   points: HistoricalTrendChartPoint[];
 };
 
@@ -262,31 +262,33 @@ export async function loadDashboardViewModel(
 
   if (historicalSymbol !== undefined && historicalWindow !== undefined) {
     try {
-      const historicalRatesResponses = await Promise.all(
-        historicalSymbols.map((symbol) =>
-          fetchHistoricalRates({
-            baseCurrency: referenceData.latestRates.base,
-            symbol,
-            startDate: historicalWindow.startDate,
-            endDate: historicalWindow.endDate,
-          }),
-        ),
-      );
-      const historicalRates = historicalRatesResponses[0];
+      const allHistories: HistoricalReferenceRatesResponse[] = [];
 
-      if (historicalRates === undefined) {
+      for (const sym of historicalSymbols) {
+        const history = await fetchHistoricalRates({
+          baseCurrency: referenceData.latestRates.base,
+          symbols: [sym],
+          startDate: historicalWindow.startDate,
+          endDate: historicalWindow.endDate,
+        });
+        allHistories.push(history);
+      }
+
+      const primaryHistory = allHistories[0];
+
+      if (primaryHistory === undefined) {
         return viewModel;
       }
 
       const summary = summarizeHistoricalTrend({
-        baseCurrency: historicalRates.base,
-        symbol: historicalRates.symbol,
-        points: historicalRates.points,
+        baseCurrency: primaryHistory.base,
+        symbol: primaryHistory.symbol,
+        points: primaryHistory.points,
       });
 
-      const allSeries = historicalRatesResponses.map((response) => ({
-        symbol: response.symbol.toUpperCase(),
-        points: response.points.map((point) => ({
+      const allSeries = allHistories.map((h) => ({
+        symbols: [h.symbol.toUpperCase()],
+        points: h.points.map((point) => ({
           date: point.date,
           rate: point.rate,
         })),
@@ -294,18 +296,18 @@ export async function loadDashboardViewModel(
 
       viewModel.historicalTrend = {
         summary: summary.summary,
-        baseCurrency: historicalRates.base,
-        symbol: historicalRates.symbol.toUpperCase(),
-        points: historicalRates.points.map((point) => ({
+        baseCurrency: primaryHistory.base,
+        symbol: primaryHistory.symbol.toUpperCase(),
+        points: primaryHistory.points.map((point) => ({
           date: point.date,
           rate: point.rate,
         })),
         allSeries,
       };
       viewModel.allocationPreview = buildManualAllocationPreview({
-        baseCurrency: historicalRates.base,
+        baseCurrency: primaryHistory.base,
         startingAmount: input.simulationBalance,
-        histories: historicalRatesResponses,
+        histories: allHistories,
       });
     } catch {
       viewModel.historicalTrend = {
@@ -328,7 +330,7 @@ export async function loadDashboardViewModel(
 
 export type HistoricalReferenceRatesInput = {
   baseCurrency: string;
-  symbol: string;
+  symbols: string[];
   startDate: string;
   endDate: string;
   fetchJson?: FetchJson;
@@ -352,9 +354,10 @@ export async function fetchHistoricalReferenceRates(
 ): Promise<HistoricalReferenceRatesResponse> {
   const fetchJson = input.fetchJson ?? defaultFetchJson;
   const url = new URL("/api/rates/history", "http://localhost");
+  const symbol = (input.symbols[0] ?? "").toUpperCase();
 
   url.searchParams.set("base", input.baseCurrency.toUpperCase());
-  url.searchParams.set("symbol", input.symbol.toUpperCase());
+  url.searchParams.set("symbols", symbol);
   url.searchParams.set("start", input.startDate);
   url.searchParams.set("end", input.endDate);
 

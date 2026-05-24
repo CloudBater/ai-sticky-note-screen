@@ -42,6 +42,7 @@ import type { SimulatedConversionPreview } from "../shared/conversion-preview";
 
 type DashboardAppProps = {
   viewModel: DashboardViewModel;
+  onWatchlistChange?: (currencies: string[]) => void;
 };
 
 type DashboardSection = "overview" | "trend" | "simulation" | "history";
@@ -49,7 +50,7 @@ type CurrencyTransitionState = "idle" | "exiting" | "entering";
 type TrendDirection = "up" | "down" | "flat";
 type TrendWindowDays = 7 | 14 | 30;
 
-export function DashboardApp({ viewModel }: DashboardAppProps) {
+export function DashboardApp({ viewModel, onWatchlistChange }: DashboardAppProps) {
   const [activeSection, setActiveSection] =
     useState<DashboardSection>("overview");
   const [simulationBalanceAmount, setSimulationBalanceAmount] = useState(
@@ -141,17 +142,17 @@ export function DashboardApp({ viewModel }: DashboardAppProps) {
     const refSeries = viewModel.historicalTrend.allSeries[0] ?? { points: [] };
 
     // Get target series
-    const targetSeries = displayedCurrency === originalBase 
+    const targetSeries = displayedCurrency === originalBase
       ? { points: refSeries.points.map(p => ({ date: p.date, rate: 1 })) }
       : viewModel.historicalTrend.allSeries.find(
-          (series) => series.symbol === displayedCurrency,
+          (series) => series.symbols[0] === displayedCurrency,
         );
-    
+
     // Get base series
-    const baseSeries = selectedBaseCurrency === originalBase 
+    const baseSeries = selectedBaseCurrency === originalBase
       ? { points: refSeries.points.map(p => ({ date: p.date, rate: 1 })) }
       : viewModel.historicalTrend.allSeries.find(
-          (series) => series.symbol === selectedBaseCurrency,
+          (series) => series.symbols[0] === selectedBaseCurrency,
         );
 
     if (!targetSeries || !baseSeries || !baseSeries.points) {
@@ -205,9 +206,13 @@ export function DashboardApp({ viewModel }: DashboardAppProps) {
       return;
     }
 
-    setWatchlistCurrencies((currentCurrencies) =>
-      addCurrencyToWatchlist(currentCurrencies, normalizedCurrency),
-    );
+    setWatchlistCurrencies((currentCurrencies) => {
+      const nextCurrencies = addCurrencyToWatchlist(currentCurrencies, normalizedCurrency);
+      if (nextCurrencies.length !== currentCurrencies.length && onWatchlistChange) {
+        onWatchlistChange(nextCurrencies);
+      }
+      return nextCurrencies;
+    });
     setWatchlistCurrencyInput("");
   };
 

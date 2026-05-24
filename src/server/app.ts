@@ -167,7 +167,7 @@ export function createApp(options: CreateAppOptions = {}) {
     ) {
       const requestUrl = new URL(request.url, "http://localhost");
       const base = requestUrl.searchParams.get("base")?.toUpperCase() ?? "USD";
-      const symbol = requestUrl.searchParams.get("symbol")?.toUpperCase() ?? "";
+      const symbol = (requestUrl.searchParams.get("symbols") ?? "").trim().toUpperCase();
       const start = requestUrl.searchParams.get("start") ?? "";
       const end = requestUrl.searchParams.get("end") ?? "";
 
@@ -184,10 +184,6 @@ export function createApp(options: CreateAppOptions = {}) {
         return;
       }
 
-      const upstreamUrl = new URL(`/${start}..${end}`, frankfurterBaseUrl);
-      upstreamUrl.searchParams.set("from", base);
-      upstreamUrl.searchParams.set("to", symbol);
-
       const cacheKey = `history:${base}:${symbol}:${start}:${end}`;
       const cachedBody = responseCache.get(cacheKey);
 
@@ -195,6 +191,10 @@ export function createApp(options: CreateAppOptions = {}) {
         sendJson(response, 200, cachedBody);
         return;
       }
+
+      const upstreamUrl = new URL(`/${start}..${end}`, frankfurterBaseUrl);
+      upstreamUrl.searchParams.set("from", base);
+      upstreamUrl.searchParams.set("to", symbol);
 
       const upstreamResponse = await fetchFrankfurter(upstreamUrl);
 
@@ -216,18 +216,13 @@ export function createApp(options: CreateAppOptions = {}) {
       }
 
       const points = Object.entries(upstreamBody.rates)
-        .sort(([leftDate], [rightDate]) => leftDate.localeCompare(rightDate))
+        .sort(([a], [b]) => a.localeCompare(b))
         .map(([date, dailyRates]) => ({
           date,
           rate: dailyRates[symbol],
         }));
 
-      if (
-        points.some(
-          (point) =>
-            typeof point.rate !== "number" || !Number.isFinite(point.rate),
-        )
-      ) {
+      if (points.some((p) => typeof p.rate !== "number" || !Number.isFinite(p.rate))) {
         sendJson(response, 502, {
           error: "Unable to fetch historical reference rates",
         });

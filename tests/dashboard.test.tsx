@@ -914,7 +914,7 @@ describe("DashboardApp", () => {
     expect(html).toContain(">Simulate</button>");
     expect(html).toContain(">Trend</button>");
     expect(html).toContain('aria-current="page"');
-    expect(html).not.toContain("繚");
+    expect(html).not.toContain(String.fromCharCode(0xfffd));
   });
 
   it("keeps bottom navigation fixed to the viewport bottom", () => {

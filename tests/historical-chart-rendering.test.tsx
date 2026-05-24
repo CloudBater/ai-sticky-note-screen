@@ -80,8 +80,9 @@ describe("historical chart rendering", () => {
       <DashboardApp viewModel={viewModelWithChartData} />,
     );
 
-    expect(html).toContain("2024-08-21");
-    expect(html).toContain("2024-08-23");
+    expect(html).toContain(
+      '<p class="chart-date-range">2024-08-21 to 2024-08-23</p>',
+    );
   });
 
   it("renders an empty chart state when no historical points exist", () => {

@@ -5,18 +5,13 @@ import {
   type FormEvent,
 } from "react";
 
-import type {
-  DashboardAllocationPreview,
-  DashboardViewModel,
-  LatestRateCard,
-} from "./dashboard";
+import type { DashboardViewModel, LatestRateCard } from "./dashboard";
 import {
   Code,
   DisclaimerPanel,
   Eyebrow,
   Num,
   RateCard,
-  Slider,
   Tab,
 } from "./components";
 import {
@@ -24,7 +19,6 @@ import {
   buildCurrencyWatchlistEntries,
   normalizeCurrencyCodeInput,
 } from "./currency-watchlist";
-import { previewPortfolioAllocation } from "../shared/portfolio-preview";
 import { currencyContentTransition } from "./motion";
 import {
   applySimulatedConversionToBalance,
@@ -732,11 +726,6 @@ export function DashboardApp({
               simulationBalanceAmount={simulationBalanceAmount}
             />
           </div>
-          <AllocationPreviewCard
-            key={viewModel.allocationPreview.status}
-            preview={viewModel.allocationPreview}
-            startingAmount={simulationBalanceAmount}
-          />
         </section>
 
         {/* History tab */}
@@ -1025,226 +1014,6 @@ function SimulatedConversionPreviewCard({
   );
 }
 
-/* Allocation preview card */
-function AllocationPreviewCard({
-  preview,
-  startingAmount,
-}: {
-  preview: DashboardAllocationPreview;
-  startingAmount: number;
-}) {
-  const [firstCurrency, setFirstCurrency] = useState(
-    preview.allocations[0]?.currency ?? preview.baseCurrency,
-  );
-  const [secondCurrency, setSecondCurrency] = useState(
-    preview.allocations[1]?.currency ??
-      preview.currencyOptions.find((option) => option.currency !== firstCurrency)
-        ?.currency ??
-      preview.baseCurrency,
-  );
-  const [firstPercent, setFirstPercent] = useState(
-    preview.allocations[0]?.percent ?? 50,
-  );
-  const configuredPreview = buildConfiguredAllocationPreview({
-    firstCurrency,
-    firstPercent,
-    preview,
-    secondCurrency,
-    startingAmount,
-  });
-  const canConfigure =
-    preview.status === "ready" && preview.currencyOptions.length >= 2;
-
-  return (
-    <article className="allocation-preview-card" data-layout-slot="allocation-history">
-      <div className="section-heading">
-        <p className="eyebrow">Allocation history</p>
-        <h3>Allocation history preview</h3>
-      </div>
-      <p className="meta">
-        {configuredPreview.summary}
-      </p>
-      {canConfigure ? (
-        <fieldset className="allocation-controls">
-          <legend>Choose currencies and allocation</legend>
-          <label>
-            <span>First currency</span>
-            <select
-              aria-label="First allocation currency"
-              name="first-allocation-currency"
-              onChange={(event) => setFirstCurrency(event.target.value)}
-              value={firstCurrency}
-            >
-              {preview.currencyOptions.map((option) => (
-                <option key={option.currency} value={option.currency}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            <span>Second currency</span>
-            <select
-              aria-label="Second allocation currency"
-              name="second-allocation-currency"
-              onChange={(event) => setSecondCurrency(event.target.value)}
-              value={secondCurrency}
-            >
-              {preview.currencyOptions.map((option) => (
-                <option key={option.currency} value={option.currency}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="allocation-slider">
-            <span>{firstPercent}% first currency</span>
-            <Slider
-              aria-label="First allocation percent"
-              ariaLabel="First allocation percent"
-              max="95"
-              min="5"
-              name="first-allocation-percent"
-              onChange={(event) => setFirstPercent(Number(event.target.value))}
-              step="5"
-              value={firstPercent}
-            />
-          </label>
-        </fieldset>
-      ) : null}
-      {configuredPreview.status === "ready" ? (
-        <>
-          <div className="allocation-pills">
-            {configuredPreview.allocations.map((allocation) => (
-              <span key={allocation.currency}>{allocation.label}</span>
-            ))}
-          </div>
-          <div className="allocation-chart-window">
-            <AllocationHistoryLineChart
-              points={configuredPreview.points}
-              summary={configuredPreview.allocations
-                .map((allocation) => allocation.label)
-                .join(" / ")}
-            />
-          </div>
-          <div className="allocation-summary-row">
-            <span>
-              {configuredPreview.points[0]?.date} to{" "}
-              {configuredPreview.points[configuredPreview.points.length - 1]?.date}
-            </span>
-            <span>
-              Latest simulated value{" "}
-              <strong>
-                {
-                  configuredPreview.points[configuredPreview.points.length - 1]
-                    ?.label
-                }
-              </strong>
-            </span>
-            <span>Historical reference only.</span>
-          </div>
-        </>
-      ) : (
-        <p className="empty-state">
-          Historical allocation preview will appear after daily history loads.
-        </p>
-      )}
-    </article>
-  );
-}
-
-/* Allocation history line chart */
-function AllocationHistoryLineChart({
-  points,
-  summary,
-}: {
-  points: { date: string; value: number; label: string }[];
-  summary: string;
-}) {
-  if (points.length === 0) {
-    return null;
-  }
-
-  const width = 720;
-  const height = 220;
-  const paddingX = 0;
-  const paddingY = 16;
-  const chartWidth = width - paddingX * 2;
-  const chartHeight = height - paddingY * 2;
-  const values = points.map((point) => point.value);
-  const minValue = Math.min(...values);
-  const maxValue = Math.max(...values);
-  const valueRange = maxValue - minValue || 1;
-  const coordinates = points.map((point, index) => {
-    const x =
-      paddingX + (index / Math.max(points.length - 1, 1)) * chartWidth;
-    const y =
-      paddingY +
-      chartHeight -
-      ((point.value - minValue) / valueRange) * chartHeight;
-
-    return { ...point, x, y };
-  });
-  const polylinePoints = coordinates
-    .map((point) => `${point.x},${point.y}`)
-    .join(" ");
-  const areaD =
-    `M${coordinates.map((c) => `${c.x},${c.y}`).join(" L")} ` +
-    `L${width},${height} L0,${height} Z`;
-  const gridYs = [0.25, 0.5, 0.75].map(
-    (pct) => paddingY + chartHeight * pct,
-  );
-
-  return (
-    <svg
-      aria-label="Historical allocation value line chart"
-      className="allocation-history-chart"
-      data-chart-type="allocation-history-line"
-      viewBox={`0 0 ${width} ${height}`}
-      preserveAspectRatio="none"
-    >
-      <defs>
-        <linearGradient id="alloc-area-grad" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="var(--accent-glow)" />
-          <stop offset="100%" stopColor="transparent" />
-        </linearGradient>
-      </defs>
-      {gridYs.map((y, i) => (
-        <line
-          key={i}
-          className="allocation-chart-grid"
-          x1={paddingX}
-          x2={width - paddingX}
-          y1={y}
-          y2={y}
-          strokeDasharray="2 4"
-        />
-      ))}
-      <path d={areaD} fill="url(#alloc-area-grad)" />
-      <polyline
-        className="allocation-chart-line"
-        fill="none"
-        points={polylinePoints}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      {coordinates.map((point) => (
-        <g className="allocation-chart-point" key={point.date} tabIndex={0}>
-          <circle cx={point.x} cy={point.y} r="4" />
-          <title>{`${point.date}: ${point.label} - ${summary}`}</title>
-          <text
-            className="allocation-chart-tooltip"
-            x={Math.min(point.x + 10, width - 190)}
-            y={Math.max(point.y - 12, 24)}
-          >
-            {point.date}: {point.label}
-          </text>
-        </g>
-      ))}
-    </svg>
-  );
-}
-
 /* Overview trend card */
 function OverviewTrendCard({
   availableCurrencies,
@@ -1455,80 +1224,6 @@ function HistoricalLineChart({
       </text>
     </svg>
   );
-}
-
-/* Utility helpers */
-
-function buildConfiguredAllocationPreview({
-  firstCurrency,
-  firstPercent,
-  preview,
-  secondCurrency,
-  startingAmount,
-}: {
-  firstCurrency: string;
-  firstPercent: number;
-  preview: DashboardAllocationPreview;
-  secondCurrency: string;
-  startingAmount: number;
-}): DashboardAllocationPreview {
-  const secondPercent = 100 - firstPercent;
-
-  if (
-    preview.status !== "ready" ||
-    firstCurrency === secondCurrency ||
-    firstPercent <= 0 ||
-    secondPercent <= 0
-  ) {
-    return preview;
-  }
-
-  try {
-    const configuredPreview = previewPortfolioAllocation({
-      baseCurrency: preview.baseCurrency,
-      startingAmount,
-      allocations: [
-        { currency: firstCurrency, percent: firstPercent },
-        { currency: secondCurrency, percent: secondPercent },
-      ],
-      referenceRatesByDate: preview.referenceRatesByDate,
-    });
-    const points = configuredPreview.points.map((point) => {
-      const value = roundDisplayAmount(point.value);
-
-      return {
-        date: point.date,
-        value,
-        label: formatDisplayAmount(value, preview.baseCurrency),
-      };
-    });
-    const firstPoint = points[0];
-    const lastPoint = points[points.length - 1];
-
-    if (firstPoint === undefined || lastPoint === undefined) {
-      return preview;
-    }
-
-    return {
-      ...preview,
-      summary: `Manual ${firstPercent}% ${firstCurrency} / ${secondPercent}% ${secondCurrency} allocation moved from ${firstPoint.label} to ${lastPoint.label}. Historical reference only.`,
-      allocations: [
-        {
-          currency: firstCurrency,
-          percent: firstPercent,
-          label: `${firstPercent}% ${firstCurrency}`,
-        },
-        {
-          currency: secondCurrency,
-          percent: secondPercent,
-          label: `${secondPercent}% ${secondCurrency}`,
-        },
-      ],
-      points,
-    };
-  } catch {
-    return preview;
-  }
 }
 
 function usePrefersReducedMotion(): boolean {
@@ -1752,14 +1447,4 @@ function getTrendDirection(summary: string, currency: string): TrendDirection {
   }
 
   return "flat";
-}
-
-function roundDisplayAmount(value: number): number {
-  return Math.round(value * 10) / 10;
-}
-
-function formatDisplayAmount(value: number, currency: string): string {
-  return `${value.toLocaleString("en-US", {
-    maximumFractionDigits: 1,
-  })} ${currency}`;
 }

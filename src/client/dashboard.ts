@@ -1,5 +1,4 @@
 import { splitRequestedCurrenciesBySupport } from "../shared/currency-support";
-import { previewPortfolioAllocation } from "../shared/portfolio-preview";
 import { summarizeHistoricalTrend } from "./historical-trend-summary";
 import type { SimulationHistoryEntry } from "./simulation-history";
 
@@ -50,7 +49,6 @@ export type DashboardViewModel = {
     points: HistoricalTrendChartPoint[];
     allSeries: HistoricalTrendChartSeries[];
   };
-  allocationPreview: DashboardAllocationPreview;
   simulationHistory: {
     entries: SimulationHistoryEntry[];
   };
@@ -60,34 +58,6 @@ export type LatestRateCard = {
   currency: string;
   label: string;
   rate: number;
-};
-
-export type DashboardAllocationPreview = {
-  baseCurrency: string;
-  startingAmount: number;
-  status: "pending" | "ready";
-  summary: string;
-  currencyOptions: DashboardAllocationPreviewCurrencyOption[];
-  referenceRatesByDate: Record<string, Record<string, number>>;
-  allocations: DashboardAllocationPreviewAllocation[];
-  points: DashboardAllocationPreviewPoint[];
-};
-
-export type DashboardAllocationPreviewCurrencyOption = {
-  currency: string;
-  label: string;
-};
-
-export type DashboardAllocationPreviewAllocation = {
-  currency: string;
-  percent: number;
-  label: string;
-};
-
-export type DashboardAllocationPreviewPoint = {
-  date: string;
-  value: number;
-  label: string;
 };
 
 export type NavigationItem = {
@@ -151,10 +121,6 @@ export function buildDashboardViewModel(
       points: [],
       allSeries: [],
     },
-    allocationPreview: buildPendingAllocationPreview(
-      baseCurrency,
-      input.simulationBalance,
-    ),
     simulationHistory: {
       entries: [],
     },
@@ -305,11 +271,6 @@ export async function loadDashboardViewModel(
         })),
         allSeries,
       };
-      viewModel.allocationPreview = buildManualAllocationPreview({
-        baseCurrency: primaryHistory.base,
-        startingAmount: input.simulationBalance,
-        histories: allHistories,
-      });
     } catch {
       viewModel.historicalTrend = {
         summary:
@@ -319,10 +280,6 @@ export async function loadDashboardViewModel(
         points: [],
         allSeries: [],
       };
-      viewModel.allocationPreview = buildPendingAllocationPreview(
-        referenceData.latestRates.base,
-        input.simulationBalance,
-      );
     }
   }
 
@@ -463,111 +420,4 @@ function getHistoricalWindow(
 
 function formatIsoDate(date: Date): string {
   return date.toISOString().slice(0, 10);
-}
-
-function buildPendingAllocationPreview(
-  baseCurrency: string,
-  startingAmount: number,
-): DashboardAllocationPreview {
-  return {
-    baseCurrency,
-    startingAmount,
-    status: "pending",
-    summary:
-      "Manual allocation historical preview will appear after daily history loads.",
-    currencyOptions: [{ currency: baseCurrency, label: baseCurrency }],
-    referenceRatesByDate: {},
-    allocations: [],
-    points: [],
-  };
-}
-
-function buildManualAllocationPreview(input: {
-  baseCurrency: string;
-  startingAmount: number;
-  histories: HistoricalReferenceRatesResponse[];
-}): DashboardAllocationPreview {
-  const baseCurrency = input.baseCurrency.toUpperCase();
-  const primaryHistory = input.histories[0];
-
-  if (primaryHistory === undefined) {
-    return buildPendingAllocationPreview(baseCurrency, input.startingAmount);
-  }
-
-  const primarySymbol = primaryHistory.symbol.toUpperCase();
-  const referenceRatesByDate = mergeHistoricalReferenceRates(input.histories);
-  const preview = previewPortfolioAllocation({
-    baseCurrency,
-    startingAmount: input.startingAmount,
-    allocations: [
-      { currency: baseCurrency, percent: 50 },
-      { currency: primarySymbol, percent: 50 },
-    ],
-    referenceRatesByDate,
-  });
-  const points = preview.points.map((point) => {
-    const value = roundDisplayAmount(point.value);
-
-    return {
-      date: point.date,
-      value,
-      label: formatDisplayAmount(value, baseCurrency),
-    };
-  });
-  const firstPoint = points[0];
-  const lastPoint = points[points.length - 1];
-
-  return {
-    baseCurrency,
-    startingAmount: input.startingAmount,
-    status: "ready",
-    summary:
-      firstPoint !== undefined && lastPoint !== undefined
-        ? `Manual 50% ${baseCurrency} / 50% ${primarySymbol} allocation moved from ${firstPoint.label} to ${lastPoint.label}. Historical reference only.`
-        : "Manual allocation historical preview will appear after daily history loads.",
-    currencyOptions: [
-      { currency: baseCurrency, label: baseCurrency },
-      ...input.histories.map((history) => {
-        const symbol = history.symbol.toUpperCase();
-
-        return { currency: symbol, label: symbol };
-      }),
-    ],
-    referenceRatesByDate,
-    allocations: [
-      { currency: baseCurrency, percent: 50, label: `50% ${baseCurrency}` },
-      { currency: primarySymbol, percent: 50, label: `50% ${primarySymbol}` },
-    ],
-    points,
-  };
-}
-
-function mergeHistoricalReferenceRates(
-  histories: HistoricalReferenceRatesResponse[],
-): Record<string, Record<string, number>> {
-  return histories.reduce<Record<string, Record<string, number>>>(
-    (referenceRatesByDate, history) => {
-      const symbol = history.symbol.toUpperCase();
-
-      history.points.forEach((point) => {
-        referenceRatesByDate[point.date] = {
-          ...referenceRatesByDate[point.date],
-          [symbol]: point.rate,
-        };
-      });
-
-      return referenceRatesByDate;
-    },
-    {},
-  );
-}
-
-function roundDisplayAmount(value: number): number {
-  return Math.round(value * 10) / 10;
-}
-
-function formatDisplayAmount(value: number, currency: string): string {
-  return `${value.toLocaleString("en-US", {
-    maximumFractionDigits: 1,
-  })} ${currency}`;
 }

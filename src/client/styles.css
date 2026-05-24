@@ -359,8 +359,7 @@ output {
   grid-column: span 12;
 }
 
-.currency-pills,
-.allocation-pills {
+.currency-pills {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-2);
@@ -398,8 +397,7 @@ output {
   margin-bottom: var(--space-4);
 }
 
-.currency-pill,
-.allocation-pills span {
+.currency-pill {
   display: inline-flex;
   align-items: center;
   min-height: 34px;
@@ -489,8 +487,7 @@ output {
 
 .currency-detail-card,
 .simulation-balance-editor,
-.conversion-preview-card,
-.allocation-preview-card {
+.conversion-preview-card {
   display: grid;
   gap: var(--space-4);
   padding: var(--space-5);
@@ -505,7 +502,6 @@ output {
 
 .overview-trend-header,
 .overview-trend-meta,
-.allocation-summary-row,
 .chart-meta-row {
   display: flex;
   flex-wrap: wrap;
@@ -516,16 +512,14 @@ output {
 
 .trend-window-control,
 .simulation-balance-editor label,
-.conversion-controls label,
-.allocation-controls label {
+.conversion-controls label {
   display: grid;
   gap: var(--space-2);
 }
 
 .trend-window-control span,
 .simulation-balance-editor label span,
-.conversion-controls label span,
-.allocation-controls label span {
+.conversion-controls label span {
   color: var(--text-tertiary);
   font-size: 11px;
   font-weight: 500;
@@ -581,7 +575,6 @@ select:focus {
 }
 
 .conversion-controls,
-.allocation-controls,
 .simulation-control-row,
 .trend-kpi-row {
   display: grid;
@@ -610,8 +603,7 @@ select:focus {
 .history-list strong,
 .history-list span,
 .history-list small,
-.overview-trend-meta,
-.allocation-summary-row {
+.overview-trend-meta {
   font-family: var(--font-mono);
   font-weight: 400;
 }
@@ -634,8 +626,7 @@ select:focus {
 }
 
 .trend-summary,
-.conversion-controls legend,
-.allocation-controls legend {
+.conversion-controls legend {
   color: var(--text-secondary);
   font-size: 13px;
   line-height: 20px;
@@ -646,8 +637,7 @@ select:focus {
 }
 
 .overview-chart-window,
-.chart-window,
-.allocation-chart-window {
+.chart-window {
   height: 280px;
   padding: var(--space-5);
   border: 1px solid var(--border-subtle);
@@ -656,8 +646,7 @@ select:focus {
   overflow: hidden;
 }
 
-.historical-line-chart,
-.allocation-history-chart {
+.historical-line-chart {
   display: block;
   width: 100%;
   height: 100%;
@@ -667,34 +656,9 @@ select:focus {
   animation: chart-line-draw 600ms cubic-bezier(.2, .8, .2, 1) both;
 }
 
-.chart-line,
-.allocation-chart-line {
+.chart-line {
   stroke: var(--accent-dim);
   stroke-width: 1.5;
-}
-
-.allocation-chart-grid {
-  stroke: var(--border-subtle);
-}
-
-.allocation-chart-point circle {
-  fill: var(--surface-inset);
-  stroke: var(--accent-dim);
-  stroke-width: 2;
-}
-
-.allocation-chart-tooltip {
-  opacity: 0;
-  fill: var(--text-primary);
-  font-family: var(--font-mono);
-  font-size: 11px;
-  pointer-events: none;
-  transition: opacity 120ms ease-out;
-}
-
-.allocation-chart-point:hover .allocation-chart-tooltip,
-.allocation-chart-point:focus .allocation-chart-tooltip {
-  opacity: 1;
 }
 
 .market-status {
@@ -787,16 +751,6 @@ select:focus {
 
 .history-link-button:hover {
   color: var(--text-secondary);
-}
-
-.allocation-slider,
-.allocation-preview-card,
-.allocation-chart-window {
-  grid-column: 1 / -1;
-}
-
-.allocation-slider span {
-  font-family: var(--font-mono);
 }
 
 .slider {
@@ -937,7 +891,6 @@ select:focus {
 
   .disclaimer-panel ul,
   .conversion-controls,
-  .allocation-controls,
   .simulation-control-row,
   .trend-kpi-row,
   .trend-layout {
@@ -958,8 +911,7 @@ select:focus {
   }
 
   .overview-chart-window,
-  .chart-window,
-  .allocation-chart-window {
+  .chart-window {
     height: 220px;
   }
 

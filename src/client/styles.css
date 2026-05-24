@@ -335,18 +335,41 @@ h3 {
 }
 
 .simulation-balance-editor {
+  grid-column: 1;
   display: grid;
-  max-width: 320px;
-  gap: 7px;
-  margin-bottom: 14px;
-  padding: 14px;
+  min-height: 100%;
+  gap: 12px;
+  margin-bottom: 0;
+  padding: 18px;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: var(--panel-strong);
+  box-shadow: var(--inner-highlight), 0 12px 26px rgb(30 55 50 / 0.06);
+}
+
+.simulation-balance-editor .section-heading {
+  margin-bottom: 0;
+}
+
+.simulation-balance-editor h3 {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 1.02rem;
+}
+
+.simulation-balance-editor strong {
+  color: var(--accent-strong);
+  font-size: clamp(1.75rem, 3vw, 2.35rem);
+  line-height: 1;
+}
+
+.simulation-balance-editor label {
+  display: grid;
+  gap: 6px;
 }
 
 .simulation-balance-editor span {
-  color: var(--text-secondary);
+  color: var(--text-muted);
   font-size: 0.72rem;
   font-weight: 800;
   letter-spacing: 0.08em;
@@ -775,32 +798,32 @@ h3 {
   color: var(--danger);
 }
 
-.simulation-preview-layout {
+.simulation-control-row {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 18px;
-  align-items: start;
-  margin-top: 18px;
+  align-items: stretch;
+  margin-top: 0;
+  margin-bottom: 18px;
 }
 
 .allocation-preview-card {
-  grid-column: 1;
+  grid-column: 1 / -1;
   display: grid;
   gap: 14px;
   margin-top: 0;
-  padding: 18px;
+  padding: 20px;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background:
-    linear-gradient(135deg, var(--panel-glass), transparent),
-    var(--accent-soft);
-  box-shadow: var(--inner-highlight), 0 12px 26px rgb(30 55 50 / 0.07);
+  background: var(--panel-strong);
+  box-shadow: var(--inner-highlight), 0 12px 26px rgb(30 55 50 / 0.06);
 }
 
 .conversion-preview-card {
   grid-column: 2;
   display: grid;
   gap: 14px;
+  min-height: 100%;
   margin-top: 0;
   padding: 18px;
   border: 1px solid var(--line);
@@ -993,7 +1016,7 @@ h3 {
 }
 
 .allocation-pills,
-.allocation-points {
+.allocation-summary-row {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
@@ -1009,24 +1032,70 @@ h3 {
   font-weight: 760;
 }
 
-.allocation-points span {
-  display: grid;
-  gap: 4px;
-  min-width: 150px;
+.allocation-chart-window {
+  height: 240px;
   padding: 12px;
+  overflow: hidden;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: var(--panel-strong);
+  background:
+    linear-gradient(180deg, rgb(15 143 120 / 0.08), transparent),
+    var(--bg-soft);
+  box-shadow: var(--inner-highlight);
 }
 
-.allocation-points small {
-  color: var(--muted);
+.allocation-history-chart {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.allocation-chart-grid {
+  stroke: var(--line);
+  stroke-width: 1;
+}
+
+.allocation-chart-line {
+  stroke: var(--accent);
+  stroke-width: 2.5;
+}
+
+.allocation-chart-point circle {
+  fill: var(--panel-strong);
+  stroke: var(--accent);
+  stroke-width: 2;
+}
+
+.allocation-chart-tooltip {
+  opacity: 0;
+  paint-order: stroke;
+  stroke: var(--panel-strong);
+  stroke-linejoin: round;
+  stroke-width: 5px;
+  fill: var(--text-primary);
   font-size: 0.76rem;
+  font-weight: 760;
+  pointer-events: none;
 }
 
-.allocation-points strong {
+.allocation-chart-point:hover .allocation-chart-tooltip,
+.allocation-chart-point:focus .allocation-chart-tooltip {
+  opacity: 1;
+}
+
+.allocation-chart-point:hover circle,
+.allocation-chart-point:focus circle {
+  fill: var(--accent);
+}
+
+.allocation-summary-row {
+  color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.allocation-summary-row strong {
   color: var(--accent-strong);
-  font-size: 1.05rem;
 }
 
 .history-list {
@@ -1280,10 +1349,11 @@ h3 {
     grid-template-columns: 1fr;
   }
 
-  .simulation-preview-layout {
+  .simulation-control-row {
     grid-template-columns: 1fr;
   }
 
+  .simulation-balance-editor,
   .allocation-preview-card,
   .conversion-preview-card {
     grid-column: 1;

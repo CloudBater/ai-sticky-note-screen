@@ -386,32 +386,33 @@ export function DashboardApp({ viewModel }: DashboardAppProps) {
             <p className="eyebrow">Simulation</p>
             <h2>Simulated conversion preview</h2>
           </div>
-          <label className="simulation-balance-editor">
-            <span>Adjust amount</span>
-            <input
-              aria-label="Adjust simulation amount"
-              max={MAX_SIMULATION_BALANCE}
-              min={MIN_SIMULATION_BALANCE}
-              name="simulation-balance-amount"
-              onChange={(event) =>
-                handleSimulationBalanceChange(event.target.value)
-              }
-              step="100"
-              type="number"
-              value={simulationBalanceInput}
-            />
-            <small>Hypothetical amount only</small>
-          </label>
-          <p>
-            Preview a simulated conversion using daily reference rates before
-            adding it to simulation history.
-          </p>
-          <div className="simulation-preview-layout">
-            <AllocationPreviewCard
-              key={viewModel.allocationPreview.status}
-              preview={viewModel.allocationPreview}
-              startingAmount={simulationBalanceAmount}
-            />
+          <div className="simulation-control-row">
+            <article className="simulation-balance-editor" data-layout-slot="amount-left">
+              <div className="section-heading">
+                <p className="eyebrow">Simulation balance</p>
+                <h3>Adjust simulation amount</h3>
+              </div>
+              <strong>
+                {simulationBalanceAmount.toLocaleString("en-US")}{" "}
+                {viewModel.simulationBalance.currency}
+              </strong>
+              <label>
+                <span>Amount</span>
+                <input
+                  aria-label="Adjust simulation amount"
+                  max={MAX_SIMULATION_BALANCE}
+                  min={MIN_SIMULATION_BALANCE}
+                  name="simulation-balance-amount"
+                  onChange={(event) =>
+                    handleSimulationBalanceChange(event.target.value)
+                  }
+                  step="100"
+                  type="number"
+                  value={simulationBalanceInput}
+                />
+              </label>
+              <small>Hypothetical amount only.</small>
+            </article>
             <SimulatedConversionPreviewCard
               key={viewModel.latestRates.dataDate}
               baseCurrency={viewModel.latestRates.baseCurrency}
@@ -428,6 +429,11 @@ export function DashboardApp({ viewModel }: DashboardAppProps) {
               simulationBalanceAmount={simulationBalanceAmount}
             />
           </div>
+          <AllocationPreviewCard
+            key={viewModel.allocationPreview.status}
+            preview={viewModel.allocationPreview}
+            startingAmount={simulationBalanceAmount}
+          />
         </section>
 
         <section className="panel history-panel" hidden={!showHistory} id="history">
@@ -617,8 +623,7 @@ function SimulatedConversionPreviewCard({
       ) : null}
       {previewError ? <p className="warning-text">{previewError}</p> : null}
       <p className="empty-state">
-        Preview only. Daily reference rates are informational and no simulated
-        conversion becomes a real transaction.
+        Preview only. No trades are executed.
       </p>
     </article>
   );
@@ -654,10 +659,10 @@ function AllocationPreviewCard({
     preview.status === "ready" && preview.currencyOptions.length >= 2;
 
   return (
-    <article className="allocation-preview-card" data-layout-slot="allocation-left">
+    <article className="allocation-preview-card" data-layout-slot="allocation-history">
       <div className="section-heading">
-        <p className="eyebrow">Manual allocation</p>
-        <h3>Manual allocation historical preview</h3>
+        <p className="eyebrow">Allocation history</p>
+        <h3>Allocation history preview</h3>
       </div>
       <p>{configuredPreview.summary}</p>
       {canConfigure ? (
@@ -715,13 +720,29 @@ function AllocationPreviewCard({
               <span key={allocation.currency}>{allocation.label}</span>
             ))}
           </div>
-          <div className="allocation-points">
-            {configuredPreview.points.map((point) => (
-              <span key={point.date}>
-                <small>{point.date}</small>
-                <strong>{point.label}</strong>
-              </span>
-            ))}
+          <div className="allocation-chart-window">
+            <AllocationHistoryLineChart
+              points={configuredPreview.points}
+              summary={configuredPreview.allocations
+                .map((allocation) => allocation.label)
+                .join(" / ")}
+            />
+          </div>
+          <div className="allocation-summary-row">
+            <span>
+              {configuredPreview.points[0]?.date} to{" "}
+              {configuredPreview.points[configuredPreview.points.length - 1]?.date}
+            </span>
+            <span>
+              Latest simulated value{" "}
+              <strong>
+                {
+                  configuredPreview.points[configuredPreview.points.length - 1]
+                    ?.label
+                }
+              </strong>
+            </span>
+            <span>Historical reference only.</span>
           </div>
         </>
       ) : (
@@ -730,6 +751,79 @@ function AllocationPreviewCard({
         </p>
       )}
     </article>
+  );
+}
+
+function AllocationHistoryLineChart({
+  points,
+  summary,
+}: {
+  points: { date: string; value: number; label: string }[];
+  summary: string;
+}) {
+  if (points.length === 0) {
+    return null;
+  }
+
+  const width = 720;
+  const height = 220;
+  const paddingX = 18;
+  const paddingY = 18;
+  const chartWidth = width - paddingX * 2;
+  const chartHeight = height - paddingY * 2;
+  const values = points.map((point) => point.value);
+  const minValue = Math.min(...values);
+  const maxValue = Math.max(...values);
+  const valueRange = maxValue - minValue || 1;
+  const coordinates = points.map((point, index) => {
+    const x =
+      paddingX + (index / Math.max(points.length - 1, 1)) * chartWidth;
+    const y =
+      paddingY +
+      chartHeight -
+      ((point.value - minValue) / valueRange) * chartHeight;
+
+    return { ...point, x, y };
+  });
+  const polylinePoints = coordinates
+    .map((point) => `${point.x},${point.y}`)
+    .join(" ");
+
+  return (
+    <svg
+      aria-label="Historical allocation value line chart"
+      className="allocation-history-chart"
+      data-chart-type="allocation-history-line"
+      viewBox={`0 0 ${width} ${height}`}
+    >
+      <line
+        className="allocation-chart-grid"
+        x1={paddingX}
+        x2={width - paddingX}
+        y1={height - paddingY}
+        y2={height - paddingY}
+      />
+      <polyline
+        className="allocation-chart-line"
+        fill="none"
+        points={polylinePoints}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      {coordinates.map((point) => (
+        <g className="allocation-chart-point" key={point.date} tabIndex={0}>
+          <circle cx={point.x} cy={point.y} r="4" />
+          <title>{`${point.date}: ${point.label} - ${summary}`}</title>
+          <text
+            className="allocation-chart-tooltip"
+            x={Math.min(point.x + 10, width - 190)}
+            y={Math.max(point.y - 12, 24)}
+          >
+            {point.date}: {point.label}
+          </text>
+        </g>
+      ))}
+    </svg>
   );
 }
 

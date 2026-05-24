@@ -70,6 +70,9 @@ def test_history_rejects_invalid_days(client):
 
 
 def test_cache_is_used_on_second_call(client):
+    import main
+    main._cache.clear()
+
     call_count = 0
 
     async def counting_fetch(*args, **kwargs):

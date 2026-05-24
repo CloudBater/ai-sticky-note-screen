@@ -670,6 +670,7 @@ describe("DashboardApp", () => {
                 symbol: "EUR",
                 points: [
                   { date: "2024-08-21", rate: 0.9 },
+                  { date: "2024-08-22", rate: 0.902 },
                   { date: "2024-08-23", rate: 0.945 },
                 ],
               },
@@ -738,8 +739,12 @@ describe("DashboardApp", () => {
     expect(html).toContain('data-currency-selector="true"');
     expect(html).toContain('data-motion-role="active-currency-indicator"');
     expect(html).toContain('data-selected-currency="EUR"');
-    expect(html).toContain('data-currency-detail="EUR"');
-    expect(html).toContain('data-rate-value="0.901"');
+    expect(html).toContain('data-overview-trend="EUR"');
+    expect(html).toContain('aria-label="Overview daily rate trend chart"');
+    expect(html).toContain('aria-label="Historical trend range"');
+    expect(html).toContain('value="30" selected=""');
+    expect(html).toContain("Last 30 daily points");
+    expect(html).toContain("0.945");
     expect(html).toContain("2024-08-23");
     expect(html).toContain("1 USD = 0.901 EUR");
     expect(html).toContain("Historical line chart");

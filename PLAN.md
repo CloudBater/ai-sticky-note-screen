@@ -59,14 +59,27 @@ Topic 3 — DevScore
    - Optional `GITHUB_TOKEN` via `.env` to lift unauthenticated 60 req/h to 5,000 req/h
 
 2. **FE**: React + Vite + TypeScript single-page app
-   - Username search form
+   - Username search form with recent-searches persistence (localStorage, max 5)
    - Profile card (avatar, name, bio, account stats)
-   - Score breakdown panel (each component labelled with its weight and value, "staleness" badge showing cache age)
+   - **Profile activity summary**: 2–3 sentence data-driven narrative of public GitHub activity — delivers the counter-proposal above (no employment labels, no AI hallucination)
+   - Score breakdown panel with **tier badge** ("Notable Developer", "Active Contributor", etc.) and per-component bar chart
+   - Staleness badge (cache age) + `X-RateLimit-Remaining` display
    - Explicit methodology note: "Score is a heuristic based on public GitHub activity. It is not a validated employment predictor."
+   - Friendly error states: 404 (user not found), 429 (rate-limit exhausted + `GITHUB_TOKEN` hint), 502 (upstream failure)
+   - Skeleton loading state (shimmer placeholder while fetching)
+   - "Search another developer →" CTA after each result (closes the discovery loop)
 
 3. **Tests**: Vitest unit tests for the scorer module, committed *before* the scorer implementation (TDD red→green)
 
-## How to run locally
+## How to run
+
+### Option A — Docker (one-click, no Node.js required)
+
+```bash
+docker compose up --build   # build + start; visit http://localhost:3001
+```
+
+### Option B — Local dev
 
 ```bash
 npm install          # installs root + workspaces
@@ -75,4 +88,4 @@ npm run dev          # starts BE on :3001 and FE on :5173 concurrently
 
 What environment variables are needed (names only — no values):
 
-- `GITHUB_TOKEN` — optional; lifts GitHub API rate limit from 60 req/h to 5000 req/h
+- `GITHUB_TOKEN` — optional; lifts GitHub API rate limit from 60 req/h to 5000 req/h; add to `.env`

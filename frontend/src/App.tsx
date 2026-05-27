@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react'
 import { SearchForm } from './components/SearchForm'
 import { ProfileCard } from './components/ProfileCard'
+import { SkeletonCard } from './components/SkeletonCard'
 import type { FetchState, UserProfile } from './types'
 
 const RECENT_KEY = 'devscore-recent'
@@ -70,11 +71,7 @@ export default function App() {
           />
         )}
 
-        {state.status === 'loading' && (
-          <div className="loading-state" aria-live="polite">
-            Fetching GitHub profile…
-          </div>
-        )}
+        {state.status === 'loading' && <SkeletonCard />}
 
         {state.status === 'error' && (
           <div className={`error-state ${state.isRateLimit ? 'error-state--rate-limit' : ''}`} role="alert">

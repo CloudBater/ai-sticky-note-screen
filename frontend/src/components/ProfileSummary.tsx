@@ -1,4 +1,5 @@
 import type { GitHubUser, TopRepo } from '../types'
+import { accountAgeInYears } from '../utils'
 
 interface Props {
   user: GitHubUser
@@ -6,8 +7,7 @@ interface Props {
 }
 
 export function ProfileSummary({ user, topRepos }: Props) {
-  const years = (Date.now() - new Date(user.created_at).getTime()) / (1000 * 60 * 60 * 24 * 365.25)
-  const wholeYears = Math.floor(years)
+  const wholeYears = Math.floor(accountAgeInYears(user.created_at))
   const name = user.name ?? user.login
 
   const sentence1 = wholeYears < 1
@@ -25,9 +25,13 @@ export function ProfileSummary({ user, topRepos }: Props) {
       ? `They have an active following of ${user.followers.toLocaleString()} developers.`
       : null
 
+  const fallback = sentence2 === null && sentence3 === null
+    ? `They have ${user.public_repos.toLocaleString()} public ${user.public_repos === 1 ? 'repository' : 'repositories'}.`
+    : null
+
   return (
     <div className="profile-summary">
-      {sentence1} {sentence2} {sentence3}
+      {sentence1} {sentence2 ?? fallback} {sentence3}
     </div>
   )
 }

@@ -1,6 +1,7 @@
 import type { UserProfile } from '../types'
 import { ScoreBreakdownPanel } from './ScoreBreakdown'
 import { ProfileSummary } from './ProfileSummary'
+import { accountAgeInYears } from '../utils'
 
 interface Props {
   profile: UserProfile
@@ -19,8 +20,8 @@ function timeAgo(iso: string): string {
   return `${Math.floor(diffMins / 60)}h ago`
 }
 
-function accountAgeYears(createdAt: string): string {
-  const years = (Date.now() - new Date(createdAt).getTime()) / (1000 * 60 * 60 * 24 * 365.25)
+function formatAccountAge(createdAt: string): string {
+  const years = accountAgeInYears(createdAt)
   if (years < 1) return `${Math.floor(years * 12)} months`
   return `${years.toFixed(1)} years`
 }
@@ -46,7 +47,7 @@ export function ProfileCard({ profile, onSearchAnother }: Props) {
           <div className="profile-meta">
             {user.company && <span>🏢 {user.company}</span>}
             {user.location && <span>📍 {user.location}</span>}
-            <span>🗓 {accountAgeYears(user.created_at)} on GitHub</span>
+            <span>🗓 {formatAccountAge(user.created_at)} on GitHub</span>
           </div>
           <div className="profile-stats">
             <span>{pluralise(user.public_repos, 'repo')}</span>

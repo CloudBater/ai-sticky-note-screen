@@ -225,14 +225,28 @@ code {
 }
 .profile-stats span { font-weight: 500; color: var(--text); }
 
+/* ── Profile summary ─────────────────────────────────────────── */
+.profile-summary {
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid var(--border);
+  font-size: .875rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
 /* ── Score breakdown ─────────────────────────────────────────── */
 .score-breakdown { padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border); }
 
 .score-total-row {
   display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.25rem;
+}
+.score-total-left {
+  display: flex;
   align-items: baseline;
   gap: .3rem;
-  margin-bottom: 1.25rem;
 }
 .score-total-value {
   font-size: 3.5rem;
@@ -242,6 +256,19 @@ code {
   line-height: 1;
 }
 .score-total-label { font-size: 1.1rem; color: var(--text-muted); }
+
+.tier-badge {
+  font-size: .75rem;
+  font-weight: 600;
+  padding: .25rem .65rem;
+  border-radius: 99px;
+  border: 1px solid currentColor;
+  white-space: nowrap;
+}
+.tier--blue   { color: var(--accent); }
+.tier--green  { color: var(--green); }
+.tier--yellow { color: var(--yellow); }
+.tier--muted  { color: var(--text-muted); }
 
 .score-components { display: flex; flex-direction: column; gap: .7rem; }
 

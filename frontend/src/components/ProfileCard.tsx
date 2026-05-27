@@ -1,5 +1,6 @@
 import type { UserProfile } from '../types'
 import { ScoreBreakdownPanel } from './ScoreBreakdown'
+import { ProfileSummary } from './ProfileSummary'
 
 interface Props {
   profile: UserProfile
@@ -54,6 +55,8 @@ export function ProfileCard({ profile, onSearchAnother }: Props) {
           </div>
         </div>
       </div>
+
+      <ProfileSummary user={user} topRepos={topRepos} />
 
       <ScoreBreakdownPanel score={score} />
 

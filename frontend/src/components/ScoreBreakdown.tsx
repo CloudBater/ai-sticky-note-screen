@@ -4,6 +4,19 @@ interface Props {
   score: ScoreBreakdown
 }
 
+interface Tier {
+  label: string
+  cls: string
+}
+
+function getTier(total: number): Tier {
+  if (total >= 80) return { label: 'High-Visibility',    cls: 'tier--blue' }
+  if (total >= 60) return { label: 'Notable Developer',  cls: 'tier--green' }
+  if (total >= 40) return { label: 'Active Contributor', cls: 'tier--yellow' }
+  if (total >= 20) return { label: 'Building Presence',  cls: 'tier--muted' }
+  return              { label: 'New to Open Source',  cls: 'tier--muted' }
+}
+
 const COMPONENTS: { key: keyof Omit<ScoreBreakdown, 'total'>; label: string; max: number; description: string }[] = [
   { key: 'stars', label: 'Stars', max: 30, description: 'Total stars on non-forked repos (log scale)' },
   { key: 'followers', label: 'Followers', max: 20, description: 'GitHub follower count (log scale)' },
@@ -22,11 +35,15 @@ function ScoreBar({ value, max }: { value: number; max: number }) {
 }
 
 export function ScoreBreakdownPanel({ score }: Props) {
+  const tier = getTier(score.total)
   return (
     <div className="score-breakdown">
       <div className="score-total-row">
-        <span className="score-total-value">{score.total}</span>
-        <span className="score-total-label">/ 100</span>
+        <div className="score-total-left">
+          <span className="score-total-value">{score.total}</span>
+          <span className="score-total-label">/ 100</span>
+        </div>
+        <span className={`tier-badge ${tier.cls}`}>{tier.label}</span>
       </div>
 
       <div className="score-components">

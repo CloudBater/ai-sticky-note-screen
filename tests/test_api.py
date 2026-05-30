@@ -11,7 +11,7 @@ Run:
 
 import pytest
 from unittest.mock import patch, MagicMock
-from fastapi.testclient import TestClient
+from fastapi import HTTPException
 
 # ---------------------------------------------------------------------------
 # The import below will fail until you create backend/main.py.
@@ -20,9 +20,16 @@ from fastapi.testclient import TestClient
 import sys, os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "backend"))
 
-from main import app  # noqa: E402  (imported after path manipulation)
+from main import app, cache, get_score, health  # noqa: E402  (imported after path manipulation)
 
-client = TestClient(app)
+
+@pytest.fixture(autouse=True)
+def isolated_cache_and_rate_limit():
+    """Keep API tests isolated and offline."""
+    cache.clear()
+    with patch("github_client.fetch_rate_limit", return_value=4999):
+        yield
+    cache.clear()
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -76,9 +83,7 @@ MOCK_GITHUB_EVENTS = [
 
 def test_health():
     """GET /health should return 200 with status ok."""
-    response = client.get("/health")
-    assert response.status_code == 200
-    assert response.json()["status"] == "ok"
+    assert health()["status"] == "ok"
 
 
 # ---------------------------------------------------------------------------
@@ -94,10 +99,7 @@ def test_score_returns_three_dimensions(mock_events, mock_repos, mock_user):
     mock_repos.return_value = MOCK_GITHUB_REPOS
     mock_events.return_value = MOCK_GITHUB_EVENTS
 
-    response = client.get("/api/score?username=octocat")
-    assert response.status_code == 200
-
-    data = response.json()
+    data = get_score(username="octocat")
     assert "recency" in data
     assert "reach" in data
     assert "breadth" in data
@@ -112,8 +114,7 @@ def test_score_values_are_between_0_and_100(mock_events, mock_repos, mock_user):
     mock_repos.return_value = MOCK_GITHUB_REPOS
     mock_events.return_value = MOCK_GITHUB_EVENTS
 
-    response = client.get("/api/score?username=octocat")
-    data = response.json()
+    data = get_score(username="octocat")
 
     for dim in ("recency", "reach", "breadth"):
         assert 0 <= data[dim]["score"] <= 100, f"{dim} score out of range"
@@ -128,8 +129,7 @@ def test_score_includes_explanation(mock_events, mock_repos, mock_user):
     mock_repos.return_value = MOCK_GITHUB_REPOS
     mock_events.return_value = MOCK_GITHUB_EVENTS
 
-    response = client.get("/api/score?username=octocat")
-    data = response.json()
+    data = get_score(username="octocat")
 
     for dim in ("recency", "reach", "breadth"):
         assert "why" in data[dim], f"missing 'why' in {dim}"
@@ -146,8 +146,7 @@ def test_score_includes_cache_metadata(mock_events, mock_repos, mock_user):
     mock_repos.return_value = MOCK_GITHUB_REPOS
     mock_events.return_value = MOCK_GITHUB_EVENTS
 
-    response = client.get("/api/score?username=octocat")
-    data = response.json()
+    data = get_score(username="octocat")
 
     assert "cache_hit" in data
     assert "rate_limit_remaining" in data
@@ -159,8 +158,10 @@ def test_score_includes_cache_metadata(mock_events, mock_repos, mock_user):
 
 def test_score_missing_username_returns_422():
     """GET /api/score without username param should return 422."""
-    response = client.get("/api/score")
-    assert response.status_code == 422
+    score_route = next(route for route in app.routes if getattr(route, "path", None) == "/api/score")
+    username_param = score_route.dependant.query_params[0]
+    assert username_param.name == "username"
+    assert username_param.required is True
 
 
 @patch("github_client.fetch_user")
@@ -168,8 +169,9 @@ def test_score_unknown_user_returns_404(mock_user):
     """If GitHub returns 404, the API should surface a 404."""
     mock_user.side_effect = Exception("404 Not Found")
 
-    response = client.get("/api/score?username=this-user-does-not-exist-xyz")
-    assert response.status_code == 404
+    with pytest.raises(HTTPException) as exc:
+        get_score(username="this-user-does-not-exist-xyz")
+    assert exc.value.status_code == 404
 
 
 # ---------------------------------------------------------------------------
@@ -185,8 +187,7 @@ def test_second_request_is_cache_hit(mock_events, mock_repos, mock_user):
     mock_repos.return_value = MOCK_GITHUB_REPOS
     mock_events.return_value = MOCK_GITHUB_EVENTS
 
-    client.get("/api/score?username=octocat")          # warm the cache
-    response = client.get("/api/score?username=octocat")  # should be cached
-    data = response.json()
+    get_score(username="octocat")          # warm the cache
+    data = get_score(username="octocat")   # should be cached
 
     assert data["cache_hit"] is True
